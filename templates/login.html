@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Taller SaaS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card-login { background-color: #1e293b; border: 1px solid #334155; border-radius: 16px; color: #fff; width: 100%; max-width: 400px; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+        .btn-custom { background-color: #3b82f6; border: none; font-weight: 600; padding: 0.75rem; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="card-login">
+        <div class="text-center mb-4">
+            <h3 class="fw-bold text-primary">🔧 Taller Manager</h3>
+            <p class="text-muted small">Ingresa con las credenciales de tu taller</p>
+        </div>
+        {% if error %}
+            <div class="alert alert-danger py-2 small" role="alert">{{ error }}</div>
+        {% endif %}
+        <form action="/login" method="POST">
+            <div class="mb-3">
+                <label class="form-label text-slate-300">Usuario</label>
+                <input type="text" name="usuario" class="form-control bg-dark text-white border-secondary" placeholder="Ej: admin" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label text-slate-300">Contraseña</label>
+                <input type="password" name="password" class="form-control bg-dark text-white border-secondary" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 btn-custom">Iniciar Sesión</button>
+        </form>
+    </div>
+</body>
+</html>
