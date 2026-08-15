@@ -1,115 +1,142 @@
-import sqlite3
 import os
+import urllib.parse
 
-DB_PATH = "base_datos/taller.db"
+# Si existe la variable DATABASE_URL (en Render), usa PostgreSQL; de lo contrario, SQLite local.
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL:
+    import psycopg2
+    # Fix para compatibilidad con versiones de PostgreSQL en Render (postgres:// -> postgresql://)
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+def obtener_conexion():
+    if DATABASE_URL:
+        return psycopg2.connect(DATABASE_URL)
+    else:
+        import sqlite3
+        return sqlite3.connect("base_datos/taller.db")
 
 def inicializar_db_saas():
-    # Crear la carpeta base_datos si no existe
-    if not os.path.exists("base_datos"):
-        os.makedirs("base_datos")
-
-    conexion = sqlite3.connect(DB_PATH)
+    conexion = obtener_conexion()
     cursor = conexion.cursor()
 
-    # 1. TABLA DE TALLERES (Clientes SaaS)
-    cursor.execute("""
+    # Formato de variables de auto-incremento según motor
+    serial_pk = "SERIAL PRIMARY KEY" if DATABASE_URL else "INTEGER PRIMARY KEY AUTOINCREMENT"
+    bool_type = "BOOLEAN DEFAULT TRUE" if DATABASE_URL else "INTEGER DEFAULT 1"
+
+    # 1. TABLA DE TALLERES
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS talleres (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre_taller TEXT NOT NULL,
-            rut_empresa TEXT UNIQUE,
+            id {serial_pk},
+            nombre_taller VARCHAR(150) NOT NULL,
+            rut_empresa VARCHAR(30) UNIQUE,
             logo_url TEXT DEFAULT '/static/logo_defecto.png',
-            color_primario TEXT DEFAULT '#3b82f6',
-            modulo_inventario INTEGER DEFAULT 1,
-            modulo_citas_web INTEGER DEFAULT 1,
-            modulo_correos INTEGER DEFAULT 0,
-            fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
+            color_primario VARCHAR(20) DEFAULT '#3b82f6',
+            modulo_inventario {bool_type},
+            modulo_citas_web {bool_type},
+            modulo_correos {bool_type},
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
-    # 2. TABLA DE USUARIOS (Inicios de sesión)
-    cursor.execute("""
+    # 2. TABLA DE USUARIOS
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            taller_id INTEGER NOT NULL,
-            usuario TEXT UNIQUE NOT NULL,
+            id {serial_pk},
+            taller_id INT NOT NULL,
+            usuario VARCHAR(50) UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            rol TEXT DEFAULT 'mecanico',
+            rol VARCHAR(20) DEFAULT 'mecanico',
             FOREIGN KEY (taller_id) REFERENCES talleres(id)
         )
     """)
 
-    # 3. TABLA DE CLIENTES (Asociada a un Taller)
-    cursor.execute("""
+    # 3. TABLA DE CLIENTES
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS clientes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            taller_id INTEGER NOT NULL,
-            nombre TEXT NOT NULL,
-            rut TEXT NOT NULL,
-            telefono TEXT,
-            correo TEXT,
+            id {serial_pk},
+            taller_id INT NOT NULL,
+            nombre VARCHAR(100) NOT NULL,
+            rut VARCHAR(30) NOT NULL,
+            telefono VARCHAR(30),
+            correo VARCHAR(100),
             FOREIGN KEY (taller_id) REFERENCES talleres(id)
         )
     """)
 
-    # 4. TABLA DE VEHÍCULOS (Asociada a un Cliente)
-    cursor.execute("""
+    # 4. TABLA DE VEHÍCULOS
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS vehiculos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            cliente_id INTEGER NOT NULL,
-            patente_vin TEXT NOT NULL,
-            marca TEXT,
-            modelo TEXT,
-            anio INTEGER,
-            kilometraje INTEGER,
+            id {serial_pk},
+            cliente_id INT NOT NULL,
+            patente_vin VARCHAR(30) NOT NULL,
+            marca VARCHAR(50),
+            modelo VARCHAR(50),
+            anio INT,
+            kilometraje INT,
             FOREIGN KEY (cliente_id) REFERENCES clientes(id)
         )
     """)
 
-    # 5. TABLA DE INVENTARIO (Asociada a un Taller con Compatibilidades)
-    cursor.execute("""
+    # 5. TABLA DE INVENTARIO
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS inventario (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            taller_id INTEGER NOT NULL,
-            codigo TEXT NOT NULL,
-            nombre TEXT NOT NULL,
-            stock INTEGER DEFAULT 0,
-            precio_costo REAL DEFAULT 0,
-            precio_venta REAL DEFAULT 0,
-            mano_obra REAL DEFAULT 0,
+            id {serial_pk},
+            taller_id INT NOT NULL,
+            codigo VARCHAR(50) NOT NULL,
+            nombre VARCHAR(150) NOT NULL,
+            stock INT DEFAULT 0,
+            precio_costo FLOAT DEFAULT 0,
+            precio_venta FLOAT DEFAULT 0,
+            mano_obra FLOAT DEFAULT 0,
             modelos_compatibles TEXT,
             FOREIGN KEY (taller_id) REFERENCES talleres(id)
         )
     """)
 
     # 6. TABLA DE FICHAS DE TRABAJO
-    cursor.execute("""
+    cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS fichas_trabajo (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            vehiculo_id INTEGER NOT NULL,
+            id {serial_pk},
+            vehiculo_id INT NOT NULL,
             observaciones_mecanico TEXT,
-            costo_total REAL,
-            fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+            costo_total FLOAT,
+            fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id)
         )
     """)
 
-    # --- CREAR UN TALLER DE PRUEBA INICIAL ---
+    # Crear Taller y Usuario Administrador de prueba si la tabla está vacía
     cursor.execute("SELECT COUNT(*) FROM talleres")
-    if cursor.fetchone()[0] == 0:
-        # Taller de demostración
-        cursor.execute("""
-            INSERT INTO talleres (nombre_taller, rut_empresa, color_primario, modulo_inventario, modulo_citas_web, modulo_correos)
-            VALUES ('Taller Mecánico Central', '76.123.456-7', '#1e293b', 1, 1, 1)
-        """)
-        taller_id = cursor.lastrowid
+    count = cursor.fetchone()[0]
+    
+    if count == 0:
+        if DATABASE_URL:
+            cursor.execute("""
+                INSERT INTO talleres (nombre_taller, rut_empresa, color_primario, modulo_inventario, modulo_citas_web, modulo_correos)
+                VALUES ('Taller Mecánico Central', '76.123.456-7', '#1e293b', TRUE, TRUE, TRUE)
+                RETURNING id;
+            """)
+            taller_id = cursor.fetchone()[0]
+            
+            cursor.execute("""
+                INSERT INTO usuarios (taller_id, usuario, password, rol)
+                VALUES (%s, 'admin', 'admin123', 'administrador')
+            """, (taller_id,))
+        else:
+            cursor.execute("""
+                INSERT INTO talleres (nombre_taller, rut_empresa, color_primario, modulo_inventario, modulo_citas_web, modulo_correos)
+                VALUES ('Taller Mecánico Central', '76.123.456-7', '#1e293b', 1, 1, 1)
+            """)
+            taller_id = cursor.lastrowid
+            
+            cursor.execute("""
+                INSERT INTO usuarios (taller_id, usuario, password, rol)
+                VALUES (?, 'admin', 'admin123', 'administrador')
+            """, (taller_id,))
 
-        # Usuario administrador por defecto
-        cursor.execute("""
-            INSERT INTO usuarios (taller_id, usuario, password, rol)
-            VALUES (?, 'admin', 'admin123', 'administrador')
-        """, (taller_id,))
-
-        print("✅ Base de datos SaaS inicializada con Taller y Usuario de prueba ('admin' / 'admin123').")
+        print("✅ Base de datos PostgreSQL/SQLite inicializada con usuario 'admin' / 'admin123'.")
 
     conexion.commit()
     conexion.close()

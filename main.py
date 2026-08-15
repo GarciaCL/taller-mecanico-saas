@@ -1,3 +1,8 @@
+from base_datos.crear_db import inicializar_db_saas
+
+# Inicializa la base de datos (crea tablas e inserts iniciales si no existen)
+inicializar_db_saas()
+
 from flask import Flask, render_template, request, redirect, session
 import webbrowser
 import threading
