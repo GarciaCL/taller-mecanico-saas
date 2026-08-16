@@ -1,62 +1,61 @@
-from flask import Flask, render_template, request, redirect, session, jsonify
 import os
-from werkzeug.utils import secure_filename
+from flask import Flask, render_template, request, redirect, session, jsonify
 from base_datos.crear_db import inicializar_db_saas
-from modulos.gestion_db import actualizar_orden_trabajo # Importar la nueva función
-
-@app.route("/editar_ot", methods=["POST"])
-def editar_ot_web():
-    if "taller_id" not in session:
-        return redirect("/login")
-    
-    orden_id = int(request.form["orden_id"])
-    km = int(request.form["km"]) if request.form.get("km") else 0
-    combustible = request.form.get("combustible", "1/2")
-    tiempo_horas = int(request.form.get("tiempo_estimado", 4))
-    sintomas = request.form.get("sintomas", "")
-    costo = float(request.form["costo"]) if request.form.get("costo") else 0.0
-
-    actualizar_orden_trabajo(session["taller_id"], orden_id, km, combustible, tiempo_horas, sintomas, costo)
-    return redirect("/")
+from modulos.gestion_db import (
+    validar_login, crear_orden_recepcion_guiada, obtener_ordenes_kanban,
+    actualizar_estado_orden, obtener_detalle_orden_por_token,
+    obtener_inventario, agregar_repuesto, actualizar_orden_trabajo
+)
 
 app = Flask(__name__)
-app.secret_key = "CLAVE-SUPER-SECRETA-SAAS-TALLER"
+app.secret_key = "clave_secreta_saas_taller"
 
-UPLOAD_FOLDER = "static/uploads"
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
+# Inicializar DB al arrancar
 inicializar_db_saas()
+
+# Auxiliar para guardar imágenes
+def guardar_foto(file, nombre_base):
+    if not file or file.filename == '':
+        return ''
+    from werkzeug.utils import secure_filename
+    filename = secure_filename(f"{nombre_base}_{file.filename}")
+    path = os.path.join('static', 'uploads', filename)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    file.save(path)
+    return f"/static/uploads/{filename}"
 
 @app.route("/")
 def inicio():
     if "taller_id" not in session:
         return redirect("/login")
     
-    taller_id = session["taller_id"]
-    repuestos = obtener_inventario(taller_id)
-    ordenes = obtener_ordenes_kanban(taller_id)
-    
-    taller_info = {
-        "nombre": session.get("nombre_taller"),
-        "color": session.get("color_primario", "#1e293b"),
+    taller = {
+        "nombre": session.get("nombre_taller", "Taller Mecánico"),
+        "logo": session.get("logo_url", "/static/logo_defecto.png"),
+        "color": session.get("color_primario", "#3b82f6")
     }
-    return render_template("index.html", taller=taller_info, repuestos=repuestos, ordenes=ordenes)
+    
+    taller_id = session["taller_id"]
+    ordenes = obtener_ordenes_kanban(taller_id)
+    inventario = obtener_inventario(taller_id)
+    
+    return render_template("index.html", taller=taller, ordenes=ordenes, inventario=inventario)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        user = request.form["usuario"]
-        pwd = request.form["password"]
-        datos = validar_login(user, pwd)
+        usuario = request.form["usuario"]
+        password = request.form["password"]
         
-        if datos:
-            session["user_id"] = datos[0]
-            session["taller_id"] = datos[1]
-            session["usuario"] = datos[2]
-            session["nombre_taller"] = datos[4]
+        user = validar_login(usuario, password)
+        if user:
+            session["usuario_id"] = user[0]
+            session["taller_id"] = user[1]
+            session["usuario"] = user[2]
+            session["rol"] = user[3]
+            session["nombre_taller"] = user[4]
+            session["logo_url"] = user[5]
+            session["color_primario"] = user[6]
             return redirect("/")
         else:
             return render_template("login.html", error="Usuario o contraseña incorrectos")
@@ -68,15 +67,6 @@ def logout():
     session.clear()
     return redirect("/login")
 
-def guardar_foto(file, prefijo):
-    if file and file.filename != '':
-        filename = secure_filename(f"{prefijo}_{file.filename}")
-        path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(path)
-        return f"/static/uploads/{filename}"
-    return ""
-
-@app.route("/crear_ot", methods=["POST"])
 @app.route("/crear_ot", methods=["POST"])
 def crear_ot_web():
     if "taller_id" not in session:
@@ -101,41 +91,29 @@ def crear_ot_web():
     crear_orden_recepcion_guiada(session["taller_id"], patente, sintomas, costo, km, combustible, detalles, fotos, tiempo_horas)
     return redirect("/")
 
+@app.route("/editar_ot", methods=["POST"])
+def editar_ot_web():
+    if "taller_id" not in session:
+        return redirect("/login")
+    
+    orden_id = int(request.form["orden_id"])
+    km = int(request.form["km"]) if request.form.get("km") else 0
+    combustible = request.form.get("combustible", "1/2")
+    tiempo_horas = int(request.form.get("tiempo_estimado", 4))
+    sintomas = request.form.get("sintomas", "")
+    costo = float(request.form["costo"]) if request.form.get("costo") else 0.0
+
+    actualizar_orden_trabajo(session["taller_id"], orden_id, km, combustible, tiempo_horas, sintomas, costo)
+    return redirect("/")
+
 @app.route("/cambiar_estado_ot", methods=["POST"])
 def cambiar_estado_ot_web():
     if "taller_id" not in session:
-        return jsonify({"status": "error", "message": "No autorizado"}), 401
+        return jsonify({"success": False}), 401
     
-    data = request.json
-    orden_id = data.get("orden_id")
-    nuevo_estado = data.get("nuevo_estado")
-    
-    actualizar_estado_orden(orden_id, session["taller_id"], nuevo_estado)
-    return jsonify({"status": "ok"})
-
-@app.route("/guardar_repuesto", methods=["POST"])
-def guardar_repuesto_web():
-    if "taller_id" not in session:
-        return redirect("/login")
-    agregar_repuesto(
-        taller_id=session["taller_id"],
-        codigo=request.form["codigo"],
-        categoria=request.form.get("categoria", "General"),
-        nombre=request.form["nombre"],
-        stock=int(request.form["stock"]) if request.form.get("stock") else 0,
-        costo=float(request.form["costo"]) if request.form.get("costo") else 0.0,
-        venta=float(request.form["venta"]) if request.form.get("venta") else 0.0,
-        mano_obra=float(request.form["mano_obra"]) if request.form.get("mano_obra") else 0.0,
-        compatabilidades=""
-    )
-    return redirect("/")
-
-if __name__ == "__main__":
-    app.run(port=5000, debug=True)
-
-    from modulos.gestion_db import obtener_detalle_orden_publico  # Asegúrate de agregarla a la importación
-
-from modulos.gestion_db import obtener_detalle_orden_por_token
+    data = request.get_json()
+    actualizar_estado_orden(data["orden_id"], session["taller_id"], data["nuevo_estado"])
+    return jsonify({"success": True})
 
 @app.route("/seguimiento/<token>")
 def seguimiento_cliente(token):
@@ -144,5 +122,22 @@ def seguimiento_cliente(token):
         return render_template("seguimiento.html", error="Orden no encontrada"), 404
     return render_template("seguimiento.html", o=orden)
 
-from modulos.gestion_db import obtener_detalle_orden_por_token
+@app.route("/guardar_repuesto", methods=["POST"])
+def guardar_repuesto_web():
+    if "taller_id" not in session:
+        return redirect("/login")
+    
+    codigo = request.form["codigo"]
+    categoria = request.form.get("categoria", "General")
+    nombre = request.form["nombre"]
+    stock = int(request.form["stock"]) if request.form.get("stock") else 0
+    costo = float(request.form["costo"]) if request.form.get("costo") else 0.0
+    venta = float(request.form["venta"]) if request.form.get("venta") else 0.0
+    mano_obra = float(request.form["mano_obra"]) if request.form.get("mano_obra") else 0.0
+    compatabilidades = request.form.get("compatibilidades", "Universal")
 
+    agregar_repuesto(session["taller_id"], codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades)
+    return redirect("/")
+
+if __name__ == "__main__":
+    app.run(debug=True)
