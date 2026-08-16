@@ -52,7 +52,7 @@ def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, k
     vehiculo_id = vehiculo[0]
     cursor.execute(f"UPDATE vehiculos SET kilometraje = {p} WHERE id = {p}", (km_ingreso, vehiculo_id))
 
-    # Generar Token Único: PATENTE-HASH (ej. PTBR56-A8F9X2)
+    # Token con formato seguro: PATENTE-HASH (ej. AA123BB-A8F9X2)
     hash_unico = secrets.token_hex(3).upper()
     token_orden = f"{patente.strip().upper()}-{hash_unico}"
 
@@ -76,7 +76,7 @@ def obtener_ordenes_kanban(taller_id):
     cursor = conexion.cursor()
     p = obtener_placeholder()
 
-    # 1. Parche preventivo: asignar token a cualquier orden antigua que no lo tenga
+    # Asignar token a órdenes antiguas que no tengan uno
     cursor.execute(f"""
         SELECT ot.id, v.patente_vin 
         FROM ordenes_trabajo ot 
@@ -92,13 +92,13 @@ def obtener_ordenes_kanban(taller_id):
     if ordenes_sin_token:
         conexion.commit()
 
-    # 2. Consultar solo órdenes activas en el taller (excluyendo 'finalizado')
+    # Consultar órdenes activas (excluyendo finalizadas)
     cursor.execute(f"""
         SELECT ot.id, ot.estado, COALESCE(ot.sintomas_cliente, ''), COALESCE(ot.costo_estimado, 0),
                v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''),
                c.nombre, COALESCE(c.telefono, ''),
                COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'),
-               ot.token,
+               COALESCE(ot.token, v.patente_vin),
                ot.fecha_creacion, COALESCE(ot.tiempo_estimado_horas, 4)
         FROM ordenes_trabajo ot
         JOIN vehiculos v ON ot.vehiculo_id = v.id
@@ -137,19 +137,7 @@ def actualizar_estado_orden(orden_id, taller_id, nuevo_estado):
 
 def finalizar_orden_trabajo(orden_id, taller_id):
     """Marca una orden de trabajo como finalizada para archivarla del Kanban."""
-    conexion = obtener_conexion()
-    cursor = conexion.cursor()
-    p = obtener_placeholder()
-
-    cursor.execute(f"""
-        UPDATE ordenes_trabajo
-        SET estado = 'finalizado'
-        WHERE id = {p} AND taller_id = {p}
-    """, (orden_id, taller_id))
-
-    conexion.commit()
-    conexion.close()
-    return True
+    return actualizar_estado_orden(orden_id, taller_id, 'finalizado')
 
 def obtener_detalle_orden_por_token(token_o_id):
     conexion = obtener_conexion()
@@ -195,6 +183,28 @@ def actualizar_orden_trabajo(taller_id, orden_id, km, combustible, tiempo_horas,
     conexion.close()
     return True
 
+def obtener_historial_vehiculo(taller_id, patente):
+    """Obtiene todas las órdenes asociadas a una patente para el módulo de historial."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"""
+        SELECT ot.id, ot.estado, COALESCE(ot.sintomas_cliente, ''), COALESCE(ot.costo_estimado, 0),
+               COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'), ot.token, ot.fecha_creacion,
+               v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''), COALESCE(v.anio, 0),
+               c.nombre, COALESCE(c.telefono, '')
+        FROM ordenes_trabajo ot
+        JOIN vehiculos v ON ot.vehiculo_id = v.id
+        JOIN clientes c ON v.cliente_id = c.id
+        WHERE ot.taller_id = {p} AND UPPER(v.patente_vin) = UPPER({p})
+        ORDER BY ot.id DESC
+    """, (taller_id, patente.strip()))
+
+    filas = cursor.fetchall()
+    conexion.close()
+    return filas
+
 # --- INVENTARIO ---
 
 def obtener_inventario(taller_id):
@@ -221,25 +231,3 @@ def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, 
     """, (taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades))
     conexion.commit()
     conexion.close()
-
-    def obtener_historial_vehiculo(taller_id, patente):
-        """Obtiene todas las órdenes de trabajo (activas e históricas/finalizadas) asociadas a una patente."""
-    conexion = obtener_conexion()
-    cursor = conexion.cursor()
-    p = obtener_placeholder()
-
-    cursor.execute(f"""
-        SELECT ot.id, ot.estado, COALESCE(ot.sintomas_cliente, ''), COALESCE(ot.costo_estimado, 0),
-               COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'), ot.token, ot.fecha_creacion,
-               v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''), COALESCE(v.anio, 0),
-               c.nombre, COALESCE(c.telefono, '')
-        FROM ordenes_trabajo ot
-        JOIN vehiculos v ON ot.vehiculo_id = v.id
-        JOIN clientes c ON v.cliente_id = c.id
-        WHERE ot.taller_id = {p} AND UPPER(v.patente_vin) = UPPER({p})
-        ORDER BY ot.id DESC
-    """, (taller_id, patente.strip()))
-
-    filas = cursor.fetchall()
-    conexion.close()
-    return filas
