@@ -6,6 +6,7 @@ from modulos.gestion_db import (
     validar_login,
     obtener_clientes_y_vehiculos,
     obtener_inventario,
+    obtener_historial_por_patente,
     agregar_cliente_y_vehiculo,
     agregar_repuesto,
     crear_ficha_trabajo,
@@ -27,6 +28,12 @@ def inicio():
     clientes = obtener_clientes_y_vehiculos(taller_id)
     repuestos = obtener_inventario(taller_id)
     
+    # Búsqueda de historial por patente
+    patente_busqueda = request.args.get("patente_busqueda", "").strip()
+    historial = []
+    if patente_busqueda:
+        historial = obtener_historial_por_patente(taller_id, patente_busqueda)
+    
     taller_info = {
         "nombre": session.get("nombre_taller"),
         "color": session.get("color_primario", "#1e293b"),
@@ -34,7 +41,16 @@ def inicio():
         "mod_citas": session.get("mod_citas"),
         "mod_correos": session.get("mod_correos")
     }
-    return render_template("index.html", taller=taller_info, clientes=clientes, repuestos=repuestos)
+    return render_template(
+        "index.html", 
+        taller=taller_info, 
+        clientes=clientes, 
+        repuestos=repuestos,
+        historial=historial,
+        patente_buscada=patente_busqueda
+    )
+
+# (El resto de rutas /login, /logout, /guardar_cliente, /guardar_repuesto, /guardar_ficha permanecen iguales)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():

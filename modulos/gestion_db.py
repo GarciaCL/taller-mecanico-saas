@@ -170,3 +170,24 @@ def crear_copia_seguridad_zip():
         with zipfile.ZipFile(nombre_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
             zipf.write(db_local, arcname="taller.db")
     return nombre_zip
+
+def obtener_historial_por_patente(taller_id, patente):
+    """Consulta todas las mantenciones realizadas a una patente específica dentro del taller."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+    
+    cursor.execute(f"""
+        SELECT f.id, f.fecha, COALESCE(f.observaciones_mecanico, ''), COALESCE(f.costo_total, 0),
+               v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''), COALESCE(v.anio, 0), COALESCE(v.kilometraje, 0),
+               c.nombre, c.rut, COALESCE(c.telefono, '')
+        FROM fichas_trabajo f
+        JOIN vehiculos v ON f.vehiculo_id = v.id
+        JOIN clientes c ON v.cliente_id = c.id
+        WHERE c.taller_id = {p} AND UPPER(v.patente_vin) = UPPER({p})
+        ORDER BY f.fecha DESC
+    """, (taller_id, patente.strip()))
+    
+    filas = cursor.fetchall()
+    conexion.close()
+    return filas
