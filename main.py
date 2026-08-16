@@ -69,6 +69,7 @@ def guardar_foto(file, prefijo):
     return ""
 
 @app.route("/crear_ot", methods=["POST"])
+@app.route("/crear_ot", methods=["POST"])
 def crear_ot_web():
     if "taller_id" not in session:
         return redirect("/login")
@@ -79,8 +80,8 @@ def crear_ot_web():
     km = int(request.form["km"]) if request.form.get("km") else 0
     combustible = request.form.get("combustible", "1/2")
     detalles = request.form.get("detalles", "")
+    tiempo_horas = int(request.form.get("tiempo_estimado", 4))
 
-    # Procesar imágenes subidas
     fotos = {
         'frontal': guardar_foto(request.files.get('foto_frontal'), f"{patente}_frontal"),
         'trasera': guardar_foto(request.files.get('foto_trasera'), f"{patente}_trasera"),
@@ -89,7 +90,7 @@ def crear_ot_web():
         'tablero': guardar_foto(request.files.get('foto_tablero'), f"{patente}_tablero")
     }
     
-    crear_orden_recepcion_guiada(session["taller_id"], patente, sintomas, costo, km, combustible, detalles, fotos)
+    crear_orden_recepcion_guiada(session["taller_id"], patente, sintomas, costo, km, combustible, detalles, fotos, tiempo_horas)
     return redirect("/")
 
 @app.route("/cambiar_estado_ot", methods=["POST"])

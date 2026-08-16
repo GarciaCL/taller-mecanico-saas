@@ -1,6 +1,5 @@
 import os
 import secrets
-import zipfile
 from datetime import datetime
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -36,9 +35,9 @@ def validar_login(usuario, password):
     conexion.close()
     return resultado
 
-# --- RECEPCIÓN GUIADA Y ÓRDENES KANBAN CON TOKEN UNICO ---
+# --- RECEPCIÓN Y ÓRDENES KANBAN ---
 
-def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, km_ingreso, combustible, detalles, fotos):
+def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, km_ingreso, combustible, detalles, fotos, tiempo_horas=4):
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -53,17 +52,17 @@ def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, k
     vehiculo_id = vehiculo[0]
     cursor.execute(f"UPDATE vehiculos SET kilometraje = {p} WHERE id = {p}", (km_ingreso, vehiculo_id))
 
-    # Generar token único (ej: AA123BB-a8f9x2)
+    # Token con formato seguro: PATENTE-HASH (ej. AA123BB-a8f9x2)
     hash_unico = secrets.token_hex(3)
     token_orden = f"{patente.strip().upper()}-{hash_unico}"
 
     cursor.execute(f"""
         INSERT INTO ordenes_trabajo 
-        (taller_id, vehiculo_id, token, estado, sintomas_cliente, costo_estimado, km_ingreso, nivel_combustible, detalles_carrocería,
+        (taller_id, vehiculo_id, token, estado, sintomas_cliente, costo_estimado, km_ingreso, nivel_combustible, detalles_carrocería, tiempo_estimado_horas,
          foto_frontal, foto_trasera, foto_costado_izq, foto_costado_der, foto_tablero)
-        VALUES ({p}, {p}, {p}, 'recepcion', {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
+        VALUES ({p}, {p}, {p}, 'recepcion', {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
     """, (
-        taller_id, vehiculo_id, token_orden, sintomas, costo_estimado, km_ingreso, combustible, detalles,
+        taller_id, vehiculo_id, token_orden, sintomas, costo_estimado, km_ingreso, combustible, detalles, tiempo_horas,
         fotos.get('frontal', ''), fotos.get('trasera', ''), fotos.get('costado_izq', ''),
         fotos.get('costado_der', ''), fotos.get('tablero', '')
     ))
@@ -82,7 +81,8 @@ def obtener_ordenes_kanban(taller_id):
                v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''),
                c.nombre, COALESCE(c.telefono, ''),
                COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'),
-               COALESCE(ot.token, v.patente_vin)
+               COALESCE(ot.token, v.patente_vin),
+               ot.fecha_creacion, COALESCE(ot.tiempo_estimado_horas, 4)
         FROM ordenes_trabajo ot
         JOIN vehiculos v ON ot.vehiculo_id = v.id
         JOIN clientes c ON v.cliente_id = c.id
@@ -92,7 +92,18 @@ def obtener_ordenes_kanban(taller_id):
 
     filas = cursor.fetchall()
     conexion.close()
-    return filas
+
+    # Formatear la fecha a ISO string para que JavaScript la procese fácilmente
+    resultado = []
+    for f in filas:
+        f_list = list(f)
+        if isinstance(f_list[12], datetime):
+            f_list[12] = f_list[12].isoformat()
+        else:
+            f_list[12] = str(f_list[12])
+        resultado.append(f_list)
+
+    return resultado
 
 def actualizar_estado_orden(orden_id, taller_id, nuevo_estado):
     conexion = obtener_conexion()
@@ -109,7 +120,6 @@ def actualizar_estado_orden(orden_id, taller_id, nuevo_estado):
     conexion.close()
 
 def obtener_detalle_orden_por_token(token_o_id):
-    """Consulta la orden pública por token seguro o por ID si es antiguo."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()

@@ -104,6 +104,7 @@ def inicializar_db_saas():
             km_ingreso INT DEFAULT 0,
             nivel_combustible VARCHAR(20) DEFAULT '1/2',
             detalles_carrocería TEXT,
+            tiempo_estimado_horas INT DEFAULT 4,
             foto_frontal TEXT,
             foto_trasera TEXT,
             foto_costado_izq TEXT,
@@ -116,9 +117,10 @@ def inicializar_db_saas():
     """)
     conexion.commit()
 
-    # MIGRACIÓN PREVENTIVA DE COLUMNA TOKEN
+    # Migraciones preventivas
     try:
         cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN token VARCHAR(80);")
+        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN tiempo_estimado_horas INT DEFAULT 4;")
         conexion.commit()
     except Exception:
         conexion.rollback()
