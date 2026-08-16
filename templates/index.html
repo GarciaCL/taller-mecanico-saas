@@ -1,17 +1,11 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full dark">
+<html lang="es" class="h-full bg-slate-950">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ taller.nombre }} - Control del Taller</title>
     <link rel="manifest" href="/static/manifest.json">
     
-    <!-- Configuración Tailwind para modo oscuro por clases -->
-    <script>
-        tailwind = {
-            darkMode: 'class'
-        }
-    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -21,118 +15,108 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
 </head>
-<body class="h-full text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-900 flex overflow-hidden transition-colors duration-200">
+<body class="h-full text-slate-100 bg-slate-950 flex overflow-hidden">
 
     <!-- BARRA LATERAL -->
-    <aside class="w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between p-4 transition-colors">
+    <aside class="w-64 bg-slate-900/80 border-r border-slate-800/80 flex flex-col justify-between p-4">
         <div>
             <!-- BRANDING DEL TALLER -->
-            <div class="flex items-center gap-3 px-2 py-3 mb-4">
-                <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-blue-500/30">
+            <div class="flex items-center gap-3 px-2 py-3 mb-6">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-blue-500/20">
                     🔧
                 </div>
                 <div>
-                    <h1 class="font-bold text-sm text-slate-900 dark:text-white leading-tight truncate w-36">{{ taller.nombre }}</h1>
-                    <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sistema En Vivo
+                    <h1 class="font-bold text-sm text-white leading-tight truncate w-36">{{ taller.nombre }}</h1>
+                    <span class="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Sistema En Vivo
                     </span>
                 </div>
-            </div>
-
-            <!-- BOTÓN CAMBIO DÍA / NOCHE -->
-            <div class="mb-4 px-2">
-                <button onclick="toggleTema()" class="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:border-blue-500 transition-all">
-                    <span class="flex items-center gap-2" id="label-tema">
-                        <i data-lucide="moon" class="w-4 h-4 text-indigo-400"></i> Modo Noche
-                    </span>
-                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 font-mono">Cambiar</span>
-                </button>
             </div>
 
             <!-- NAVEGACIÓN PRINCIPAL -->
             <nav class="space-y-1">
-                <button onclick="cambiarPestana('dash')" id="btn-dash" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900 transition-all active-nav">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard General
+                <button onclick="cambiarPestana('dash')" id="btn-dash" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white bg-slate-800/80 transition-all">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 text-blue-400"></i> Dashboard General
                 </button>
-                <button onclick="cambiarPestana('ot')" id="btn-ot" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900 transition-all">
+                <button onclick="cambiarPestana('ot')" id="btn-ot" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
                     <i data-lucide="clipboard-list" class="w-4 h-4"></i> Órdenes de Trabajo
                 </button>
-                <button onclick="cambiarPestana('inv')" id="btn-inv" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900 transition-all">
+                <button onclick="cambiarPestana('inv')" id="btn-inv" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
                     <i data-lucide="boxes" class="w-4 h-4"></i> Inventario & Stock
                 </button>
-                <button onclick="cambiarPestana('agendamiento')" id="btn-agendamiento" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900 transition-all">
+                <button onclick="cambiarPestana('agendamiento')" id="btn-agendamiento" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
                     <i data-lucide="calendar" class="w-4 h-4"></i> Link Citas Online
                 </button>
             </nav>
         </div>
 
-        <div class="border-t border-slate-200 dark:border-slate-800 pt-4 px-2">
-            <a href="/logout" class="flex items-center gap-3 text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors">
+        <div class="border-t border-slate-800/80 pt-4 px-2">
+            <a href="/logout" class="flex items-center gap-3 text-xs font-semibold text-rose-400 hover:text-rose-300 transition-colors">
                 <i data-lucide="log-out" class="w-4 h-4"></i> Cerrar Sesión
             </a>
         </div>
     </aside>
 
     <!-- PANEL PRINCIPAL -->
-    <main class="flex-1 overflow-y-auto p-8">
+    <main class="flex-1 overflow-y-auto p-8 bg-slate-950">
 
         <!-- 1. DASHBOARD INTELIGENTE -->
         <section id="sec-dash" class="space-y-6">
             <div class="flex justify-between items-center">
                 <div>
-                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Panel de Control Inteligente</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Análisis operativo y métricas del taller en tiempo real.</p>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">Panel de Control Inteligente</h2>
+                    <p class="text-xs text-slate-400">Análisis operativo y métricas del taller en tiempo real.</p>
                 </div>
             </div>
 
             <!-- TARJETAS DE KPIS -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-sm">
-                    <div class="flex justify-between items-center text-slate-500 dark:text-slate-400 mb-2">
+                <div class="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl">
+                    <div class="flex justify-between items-center text-slate-400 mb-2">
                         <span class="text-xs font-medium">Órdenes Activas</span>
-                        <i data-lucide="wrench" class="w-4 h-4 text-blue-500"></i>
+                        <i data-lucide="wrench" class="w-4 h-4 text-blue-400"></i>
                     </div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-white">8 Vehículos</div>
-                    <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">En proceso de reparación</span>
+                    <div class="text-2xl font-bold text-white">8 Vehículos</div>
+                    <span class="text-[11px] text-emerald-400 font-medium">En proceso de reparación</span>
                 </div>
 
-                <div class="bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-sm">
-                    <div class="flex justify-between items-center text-slate-500 dark:text-slate-400 mb-2">
+                <div class="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl">
+                    <div class="flex justify-between items-center text-slate-400 mb-2">
                         <span class="text-xs font-medium">Facturación Estimada</span>
-                        <i data-lucide="dollar-sign" class="w-4 h-4 text-emerald-500"></i>
+                        <i data-lucide="dollar-sign" class="w-4 h-4 text-emerald-400"></i>
                     </div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-white">$1.850.000</div>
-                    <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">+12% vs mes anterior</span>
+                    <div class="text-2xl font-bold text-white">$1.850.000</div>
+                    <span class="text-[11px] text-emerald-400 font-medium">+12% vs mes anterior</span>
                 </div>
 
-                <div class="bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-sm">
-                    <div class="flex justify-between items-center text-slate-500 dark:text-slate-400 mb-2">
+                <div class="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl">
+                    <div class="flex justify-between items-center text-slate-400 mb-2">
                         <span class="text-xs font-medium">Alertas Bajo Stock</span>
-                        <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
                     </div>
-                    <div class="text-2xl font-bold text-amber-500">3 Repuestos</div>
-                    <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Requieren reponer stock</span>
+                    <div class="text-2xl font-bold text-amber-400">3 Repuestos</div>
+                    <span class="text-[11px] text-slate-400 font-medium">Requieren reponer stock</span>
                 </div>
 
-                <div class="bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl shadow-sm">
-                    <div class="flex justify-between items-center text-slate-500 dark:text-slate-400 mb-2">
+                <div class="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl">
+                    <div class="flex justify-between items-center text-slate-400 mb-2">
                         <span class="text-xs font-medium">Citas Agendadas Web</span>
-                        <i data-lucide="calendar-check" class="w-4 h-4 text-indigo-500"></i>
+                        <i data-lucide="calendar-check" class="w-4 h-4 text-indigo-400"></i>
                     </div>
-                    <div class="text-2xl font-bold text-slate-900 dark:text-white">5 Reservas</div>
-                    <span class="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">Próximos 7 días</span>
+                    <div class="text-2xl font-bold text-white">5 Reservas</div>
+                    <span class="text-[11px] text-indigo-400 font-medium">Próximos 7 días</span>
                 </div>
             </div>
 
             <!-- GRÁFICOS APEXCHARTS -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-6 rounded-2xl shadow-sm">
-                    <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4">Trabajos Realizados y Comparativa de Ingresos</h3>
+                <div class="lg:col-span-2 bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl">
+                    <h3 class="text-sm font-bold text-white mb-4">Trabajos Realizados y Comparativa de Ingresos</h3>
                     <div id="chart-rendimiento" class="w-full h-64"></div>
                 </div>
 
-                <div class="bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-6 rounded-2xl shadow-sm">
-                    <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4">Vehículos Atendidos por Marca</h3>
+                <div class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl">
+                    <h3 class="text-sm font-bold text-white mb-4">Vehículos Atendidos por Marca</h3>
                     <div id="chart-marcas" class="w-full h-64"></div>
                 </div>
             </div>
@@ -140,17 +124,17 @@
 
         <!-- 2. INVENTARIO -->
         <section id="sec-inv" class="space-y-6 hidden">
-            <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Inventario y Repuestos</h2>
+            <h2 class="text-2xl font-bold text-white">Inventario y Repuestos</h2>
 
-            <div class="bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-6 rounded-2xl shadow-sm">
+            <div class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl">
                 <form action="/guardar_repuesto" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Código</label>
-                        <input type="text" name="codigo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white" required>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Código</label>
+                        <input type="text" name="codigo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Categoría</label>
-                        <select name="categoria" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white">
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Categoría</label>
+                        <select name="categoria" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                             <option value="Frenos">Frenos</option>
                             <option value="Motor">Motor</option>
                             <option value="Suspensión">Suspensión</option>
@@ -159,24 +143,24 @@
                         </select>
                     </div>
                     <div class="md:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Nombre del Repuesto</label>
-                        <input type="text" name="nombre" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white" required>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre del Repuesto</label>
+                        <input type="text" name="nombre" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Stock Initial</label>
-                        <input type="number" name="stock" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white">
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Stock Inicial</label>
+                        <input type="number" name="stock" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Precio Costo ($)</label>
-                        <input type="number" name="costo" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white">
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Precio Costo ($)</label>
+                        <input type="number" name="costo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Precio Venta ($)</label>
-                        <input type="number" name="venta" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white">
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Precio Venta ($)</label>
+                        <input type="number" name="venta" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Mano de Obra ($)</label>
-                        <input type="number" name="mano_obra" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white">
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Mano de Obra ($)</label>
+                        <input type="number" name="mano_obra" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                     </div>
                     <div class="md:col-span-4 text-right">
                         <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-2 rounded-xl text-xs shadow-lg shadow-emerald-600/20 transition-all">
@@ -186,9 +170,9 @@
                 </form>
             </div>
 
-            <div class="bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl overflow-hidden shadow-sm">
-                <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
-                    <thead class="bg-slate-50 dark:bg-slate-900 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase border-b border-slate-200 dark:border-slate-800">
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-900 text-xs font-semibold text-slate-400 uppercase border-b border-slate-800">
                         <tr>
                             <th class="p-4">Código</th>
                             <th class="p-4">Categoría</th>
@@ -197,23 +181,23 @@
                             <th class="p-4">Precio Venta</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800/60">
+                    <tbody class="divide-y divide-slate-800/60">
                         {% for r in repuestos %}
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                            <td class="p-4 font-mono text-xs text-slate-500 dark:text-slate-400">{{ r[1] }}</td>
-                            <td class="p-4"><span class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium">{{ r[2] }}</span></td>
-                            <td class="p-4 font-semibold text-slate-900 dark:text-white">{{ r[3] }}</td>
+                        <tr class="hover:bg-slate-800/40 transition-colors">
+                            <td class="p-4 font-mono text-xs text-slate-400">{{ r[1] }}</td>
+                            <td class="p-4"><span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs font-medium">{{ r[2] }}</span></td>
+                            <td class="p-4 font-semibold text-white">{{ r[3] }}</td>
                             <td class="p-4">
                                 {% if r[4] < 3 %}
-                                    <span class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-bold text-xs">{{ r[4] }} un.</span>
+                                    <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold text-xs">{{ r[4] }} un.</span>
                                 {% else %}
-                                    <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs">{{ r[4] }} un.</span>
+                                    <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-xs">{{ r[4] }} un.</span>
                                 {% endif %}
                             </td>
-                            <td class="p-4 font-bold text-emerald-600 dark:text-emerald-400">${{ "{:,.0f}".format(r[6]) }}</td>
+                            <td class="p-4 font-bold text-emerald-400">${{ "{:,.0f}".format(r[6]) }}</td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="5" class="p-8 text-center text-slate-400">No hay repuestos registrados aún.</td></tr>
+                        <tr><td colspan="5" class="p-8 text-center text-slate-500">No hay repuestos registrados aún.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -222,11 +206,11 @@
 
         <!-- 3. AUTOAGENDAMIENTO -->
         <section id="sec-agendamiento" class="space-y-6 hidden">
-            <div class="bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-6 rounded-2xl shadow-sm">
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Enlace Público de Autoagendamiento 24/7</h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Comparte este enlace para que tus clientes agenden sus citas sin llamadas.</p>
+            <div class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl">
+                <h2 class="text-xl font-bold text-white mb-2">Enlace Público de Autoagendamiento 24/7</h2>
+                <p class="text-xs text-slate-400 mb-4">Comparte este enlace para que tus clientes agenden sus citas sin llamadas.</p>
                 <div class="flex gap-2">
-                    <input type="text" readonly id="link-citas" value="https://taller-mecanico-saas.onrender.com/agendar/{{ taller.nombre|lower|replace(' ', '-') }}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-emerald-600 dark:text-emerald-400 font-mono">
+                    <input type="text" readonly id="link-citas" value="https://taller-mecanico-saas.onrender.com/agendar/{{ taller.nombre|lower|replace(' ', '-') }}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-emerald-400 font-mono">
                     <button onclick="copiarLink()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
                         <i data-lucide="copy" class="w-4 h-4"></i> Copiar
                     </button>
@@ -239,41 +223,16 @@
     <script>
         lucide.createIcons();
 
-        // CONTROL DE TEMA DÍA / NOCHE (Guardado en LocalStorage)
-        function aplicarTemaInicial() {
-            const temaGuardado = localStorage.getItem('tema_taller');
-            if (temaGuardado === 'claro') {
-                document.documentElement.classList.remove('dark');
-                actualizarBotonTema(false);
-            } else {
-                document.documentElement.classList.add('dark');
-                actualizarBotonTema(true);
-            }
-        }
-
-        function toggleTema() {
-            const esOscuro = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('tema_taller', esOscuro ? 'oscuro' : 'claro');
-            actualizarBotonTema(esOscuro);
-        }
-
-        function actualizarBotonTema(esOscuro) {
-            const label = document.getElementById('label-tema');
-            if (esOscuro) {
-                label.innerHTML = `<i data-lucide="moon" class="w-4 h-4 text-indigo-400"></i> Modo Noche`;
-            } else {
-                label.innerHTML = `<i data-lucide="sun" class="w-4 h-4 text-amber-500"></i> Modo Día`;
-            }
-            lucide.createIcons();
-        }
-
-        aplicarTemaInicial();
-
         function cambiarPestana(id) {
             document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
             document.getElementById('sec-' + id).classList.remove('hidden');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('text-blue-600', 'dark:text-white', 'bg-slate-100', 'dark:bg-slate-900'));
-            document.getElementById('btn-' + id).classList.add('text-blue-600', 'dark:text-white', 'bg-slate-100', 'dark:bg-slate-900');
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('text-white', 'bg-slate-800/80');
+                b.classList.add('text-slate-400');
+            });
+            const btn = document.getElementById('btn-' + id);
+            btn.classList.remove('text-slate-400');
+            btn.classList.add('text-white', 'bg-slate-800/80');
         }
 
         function copiarLink() {
@@ -286,16 +245,17 @@
         // ApexCharts
         var optionsRendimiento = {
             chart: { type: 'bar', height: 230, toolbar: { show: false }, background: 'transparent' },
-            theme: { mode: document.documentElement.classList.contains('dark') ? 'dark' : 'light' },
+            theme: { mode: 'dark' },
             colors: ['#3b82f6'],
             series: [{ name: 'Fichas Cerradas', data: [12, 18, 14, 22, 25, 30] }],
             xaxis: { categories: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'] },
-            grid: { borderColor: '#334155' }
+            grid: { borderColor: '#1e293b' }
         };
         new ApexCharts(document.querySelector("#chart-rendimiento"), optionsRendimiento).render();
 
         var optionsMarcas = {
             chart: { type: 'donut', height: 230, background: 'transparent' },
+            theme: { mode: 'dark' },
             colors: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'],
             series: [44, 25, 18, 13],
             labels: ['Toyota', 'Nissan', 'Hyundai', 'Chevrolet']
