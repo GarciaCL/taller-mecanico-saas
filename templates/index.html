@@ -8,13 +8,17 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <!-- SWEETALERT2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .kanban-ghost { opacity: 0.4; background-color: #1e293b !important; }
+        .swal2-popup { background: #0f172a !important; color: #f8fafc !important; border: 1px solid #334155 !important; border-radius: 1rem !important; }
+        .swal2-title { color: #f8fafc !important; }
+        .swal2-html-container { color: #94a3b8 !important; }
     </style>
 </head>
 <body class="h-full text-slate-100 bg-slate-950 flex overflow-hidden">
@@ -241,10 +245,10 @@
                 </div>
             </form>
 
-            <!-- FORMULARIO DE ARCHIVADO / FINALIZACIÓN DE TRABAJO -->
-            <form action="/finalizar_ot" method="POST" class="border-t border-slate-800 pt-3">
+            <!-- FORMULARIO DE ARCHIVADO CON SWEETALERT2 -->
+            <form id="form-archivar" action="/finalizar_ot" method="POST" class="border-t border-slate-800 pt-3">
                 <input type="hidden" name="orden_id" id="archivar-orden-id">
-                <button type="submit" onclick="return confirm('¿Confirmas que el vehículo fue retirado y deseas archivar esta orden en el historial?')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+                <button type="button" onclick="confirmarArchivado()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
                     🏁 Entregar Vehículo y Archivar Orden
                 </button>
             </form>
@@ -349,6 +353,24 @@
             document.getElementById('sec-' + id).classList.remove('hidden');
         }
 
+        // CONFIRMACIÓN CON SWEETALERT2
+        function confirmarArchivado() {
+            Swal.fire({
+                title: '¿Entregar y Archivar?',
+                text: "El vehículo será removido del Kanban diario y quedará registrado en el historial de la patente.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#334155',
+                confirmButtonText: 'Sí, Entregar y Archivar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('form-archivar').submit();
+                }
+            });
+        }
+
         // CONTROL DE TIEMPOS DE REPARACIÓN
         function evaluarTiemposKanban() {
             const tarjetas = document.querySelectorAll('.card-orden');
@@ -391,7 +413,6 @@
 
             document.getElementById('btn-historial-patente').setAttribute('href', '/historial/' + patente);
 
-            // Construir URL asegurando el formato PATENTE-HASH
             const urlSeguimiento = "https://taller-mecanico-saas.onrender.com/seguimiento/" + token;
 
             const ahora = new Date();
