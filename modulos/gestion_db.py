@@ -44,12 +44,10 @@ def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, k
 
     patente_limpia = patente.strip().upper()
 
-    # 1. Buscar si la patente existe
     cursor.execute(f"SELECT id FROM vehiculos WHERE UPPER(patente_vin) = {p}", (patente_limpia,))
     vehiculo = cursor.fetchone()
 
     if not vehiculo:
-        # Buscar o crear cliente genérico/nuevo
         cursor.execute(f"SELECT id FROM clientes WHERE taller_id = {p} AND (telefono = {p} OR nombre = {p})", (taller_id, telefono_cliente, nombre_cliente))
         cliente = cursor.fetchone()
         
@@ -64,7 +62,6 @@ def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, k
 
         cliente_id = cliente[0]
 
-        # Crear el vehículo nuevo
         cursor.execute(f"""
             INSERT INTO vehiculos (cliente_id, patente_vin, marca, modelo, kilometraje)
             VALUES ({p}, {p}, {p}, {p}, {p})
@@ -77,7 +74,6 @@ def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, k
     vehiculo_id = vehiculo[0]
     cursor.execute(f"UPDATE vehiculos SET kilometraje = {p} WHERE id = {p}", (km_ingreso, vehiculo_id))
 
-    # Token con formato seguro: PATENTE-HASH
     hash_unico = secrets.token_hex(3).upper()
     token_orden = f"{patente_limpia}-{hash_unico}"
 
@@ -95,28 +91,12 @@ def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, k
     conexion.commit()
     conexion.close()
     return True
+
 def obtener_ordenes_kanban(taller_id):
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
 
-    # Asignar token a órdenes antiguas que no tengan uno
-    cursor.execute(f"""
-        SELECT ot.id, v.patente_vin 
-        FROM ordenes_trabajo ot 
-        JOIN vehiculos v ON ot.vehiculo_id = v.id 
-        WHERE ot.taller_id = {p} AND (ot.token IS NULL OR ot.token = '')
-    """, (taller_id,))
-    ordenes_sin_token = cursor.fetchall()
-    
-    for ot_id, patente in ordenes_sin_token:
-        h = secrets.token_hex(3).upper()
-        nuevo_token = f"{patente.strip().upper()}-{h}"
-        cursor.execute(f"UPDATE ordenes_trabajo SET token = {p} WHERE id = {p}", (nuevo_token, ot_id))
-    if ordenes_sin_token:
-        conexion.commit()
-
-    # Consultar órdenes activas (excluyendo finalizadas)
     cursor.execute(f"""
         SELECT ot.id, ot.estado, COALESCE(ot.sintomas_cliente, ''), COALESCE(ot.costo_estimado, 0),
                v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''),
@@ -160,7 +140,6 @@ def actualizar_estado_orden(orden_id, taller_id, nuevo_estado):
     conexion.close()
 
 def finalizar_orden_trabajo(orden_id, taller_id):
-    """Marca una orden de trabajo como finalizada para archivarla del Kanban."""
     return actualizar_estado_orden(orden_id, taller_id, 'finalizado')
 
 def obtener_detalle_orden_por_token(token_o_id):
@@ -208,7 +187,6 @@ def actualizar_orden_trabajo(taller_id, orden_id, km, combustible, tiempo_horas,
     return True
 
 def obtener_historial_vehiculo(taller_id, patente):
-    """Obtiene todas las órdenes asociadas a una patente para el módulo de historial."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -229,7 +207,7 @@ def obtener_historial_vehiculo(taller_id, patente):
     conexion.close()
     return filas
 
-# --- INVENTARIO & CONTROL DE STOCK ---
+# --- INVENTARIO & GESTIÓN DE STOCK POR OT ---
 
 def obtener_inventario(taller_id):
     conexion = obtener_conexion()
@@ -257,7 +235,6 @@ def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, 
     conexion.close()
 
 def agregar_repuesto_a_orden(orden_id, inventario_id, cantidad=1):
-    """Asocia un repuesto del inventario a una orden de trabajo."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -275,8 +252,26 @@ def agregar_repuesto_a_orden(orden_id, inventario_id, cantidad=1):
     conexion.close()
     return True
 
+def obtener_repuestos_orden(orden_id):
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    try:
+        cursor.execute(f"""
+            SELECT nr.id, i.nombre, nr.cantidad, nr.precio_unidad, nr.descontado
+            FROM ordenes_repuestos nr
+            JOIN inventario i ON nr.inventario_id = i.id
+            WHERE nr.orden_id = {p}
+        """, (orden_id,))
+        items = cursor.fetchall()
+    except Exception:
+        items = []
+    finally:
+        conexion.close()
+    return items
+
 def descontar_stock_orden(orden_id, taller_id):
-    """Descuenta del inventario los repuestos utilizados en la orden que no hayan sido descontados previamente."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -309,21 +304,22 @@ def descontar_stock_orden(orden_id, taller_id):
         conexion.close()
     return True
 
-def obtener_repuestos_orden(orden_id):
-    """Obtiene la lista de repuestos asociados a una orden de trabajo."""
+# --- MARCAS Y MODELOS DINÁMICOS ---
+
+def obtener_marcas_y_modelos():
     conexion = obtener_conexion()
     cursor = conexion.cursor()
-    p = obtener_placeholder()
+    cursor.execute("SELECT DISTINCT COALESCE(marca, ''), COALESCE(modelo, '') FROM vehiculos WHERE marca IS NOT NULL AND marca != ''")
+    filas = cursor.fetchall()
+    conexion.close()
 
-    try:
-        cursor.execute(f"""
-            SELECT id, inventario_id, cantidad, precio_unidad
-            FROM ordenes_repuestos
-            WHERE orden_id = {p}
-        """, (orden_id,))
-        items = cursor.fetchall()
-    except Exception:
-        items = []
-    finally:
-        conexion.close()
-    return items
+    marcas_dict = {}
+    for m, mod in filas:
+        m = m.strip().title()
+        mod = mod.strip().title()
+        if m not in marcas_dict:
+            marcas_dict[m] = []
+        if mod and mod not in marcas_dict[m]:
+            marcas_dict[m].append(mod)
+
+    return marcas_dict

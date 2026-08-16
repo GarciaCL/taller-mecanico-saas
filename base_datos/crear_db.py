@@ -123,6 +123,21 @@ def inicializar_db_saas():
     """)
     conexion.commit()
 
+# 7. TABLA VÍNCULO ÓRDENES - REPUESTOS
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS ordenes_repuestos (
+            id {serial_pk},
+            orden_id INT NOT NULL,
+            inventario_id INT NOT NULL,
+            cantidad INT DEFAULT 1,
+            precio_unidad FLOAT DEFAULT 0,
+            descontado {bool_type},
+            FOREIGN KEY (orden_id) REFERENCES ordenes_trabajo(id),
+            FOREIGN KEY (inventario_id) REFERENCES inventario(id)
+        );
+    """)
+    conexion.commit()
+
     # MIGRACIONES INDIVIDUALES AISLADAS
     migraciones = [
         "ALTER TABLE ordenes_trabajo ADD COLUMN token VARCHAR(80);",
