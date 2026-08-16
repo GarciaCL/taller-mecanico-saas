@@ -21,7 +21,6 @@ def inicializar_db_saas():
     serial_pk = "SERIAL PRIMARY KEY" if DATABASE_URL else "INTEGER PRIMARY KEY AUTOINCREMENT"
     bool_type = "BOOLEAN DEFAULT TRUE" if DATABASE_URL else "INTEGER DEFAULT 1"
 
-    # 1. TABLA TALLERES
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS talleres (
             id {serial_pk},
@@ -37,7 +36,6 @@ def inicializar_db_saas():
     """)
     conexion.commit()
 
-    # 2. TABLA USUARIOS
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS usuarios (
             id {serial_pk},
@@ -50,7 +48,6 @@ def inicializar_db_saas():
     """)
     conexion.commit()
 
-    # 3. TABLA CLIENTES
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS clientes (
             id {serial_pk},
@@ -64,7 +61,6 @@ def inicializar_db_saas():
     """)
     conexion.commit()
 
-    # 4. TABLA VEHÍCULOS
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS vehiculos (
             id {serial_pk},
@@ -79,7 +75,6 @@ def inicializar_db_saas():
     """)
     conexion.commit()
 
-    # 5. TABLA INVENTARIO
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS inventario (
             id {serial_pk},
@@ -97,12 +92,12 @@ def inicializar_db_saas():
     """)
     conexion.commit()
 
-    # 6. TABLA ÓRDENES DE TRABAJO (CON RECEPCIÓN GUIADA)
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS ordenes_trabajo (
             id {serial_pk},
             taller_id INT NOT NULL,
             vehiculo_id INT NOT NULL,
+            token VARCHAR(80) UNIQUE,
             estado VARCHAR(50) DEFAULT 'recepcion',
             sintomas_cliente TEXT,
             costo_estimado FLOAT DEFAULT 0,
@@ -121,16 +116,9 @@ def inicializar_db_saas():
     """)
     conexion.commit()
 
-    # Migraciones preventivas
+    # MIGRACIÓN PREVENTIVA DE COLUMNA TOKEN
     try:
-        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN km_ingreso INT DEFAULT 0;")
-        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN nivel_combustible VARCHAR(20) DEFAULT '1/2';")
-        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN detalles_carrocería TEXT;")
-        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN foto_frontal TEXT;")
-        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN foto_trasera TEXT;")
-        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN foto_costado_izq TEXT;")
-        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN foto_costado_der TEXT;")
-        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN foto_tablero TEXT;")
+        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN token VARCHAR(80);")
         conexion.commit()
     except Exception:
         conexion.rollback()

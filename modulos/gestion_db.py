@@ -1,4 +1,5 @@
 import os
+import secrets
 import zipfile
 from datetime import datetime
 
@@ -35,7 +36,7 @@ def validar_login(usuario, password):
     conexion.close()
     return resultado
 
-# --- RECEPCIÓN GUIADA Y ÓRDENES KANBAN ---
+# --- RECEPCIÓN GUIADA Y ÓRDENES KANBAN CON TOKEN UNICO ---
 
 def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, km_ingreso, combustible, detalles, fotos):
     conexion = obtener_conexion()
@@ -52,13 +53,17 @@ def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, k
     vehiculo_id = vehiculo[0]
     cursor.execute(f"UPDATE vehiculos SET kilometraje = {p} WHERE id = {p}", (km_ingreso, vehiculo_id))
 
+    # Generar token único (ej: AA123BB-a8f9x2)
+    hash_unico = secrets.token_hex(3)
+    token_orden = f"{patente.strip().upper()}-{hash_unico}"
+
     cursor.execute(f"""
         INSERT INTO ordenes_trabajo 
-        (taller_id, vehiculo_id, estado, sintomas_cliente, costo_estimado, km_ingreso, nivel_combustible, detalles_carrocería,
+        (taller_id, vehiculo_id, token, estado, sintomas_cliente, costo_estimado, km_ingreso, nivel_combustible, detalles_carrocería,
          foto_frontal, foto_trasera, foto_costado_izq, foto_costado_der, foto_tablero)
-        VALUES ({p}, {p}, 'recepcion', {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
+        VALUES ({p}, {p}, {p}, 'recepcion', {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
     """, (
-        taller_id, vehiculo_id, sintomas, costo_estimado, km_ingreso, combustible, detalles,
+        taller_id, vehiculo_id, token_orden, sintomas, costo_estimado, km_ingreso, combustible, detalles,
         fotos.get('frontal', ''), fotos.get('trasera', ''), fotos.get('costado_izq', ''),
         fotos.get('costado_der', ''), fotos.get('tablero', '')
     ))
@@ -73,12 +78,11 @@ def obtener_ordenes_kanban(taller_id):
     p = obtener_placeholder()
 
     cursor.execute(f"""
-        SELECT ot.id, ot.estado, ot.sintomas_cliente, COALESCE(ot.costo_estimado, 0),
+        SELECT ot.id, ot.estado, COALESCE(ot.sintomas_cliente, ''), COALESCE(ot.costo_estimado, 0),
                v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''),
                c.nombre, COALESCE(c.telefono, ''),
                COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'),
-               COALESCE(ot.foto_frontal, ''), COALESCE(ot.foto_tablero, ''),
-               COALESCE(ot.detalles_carrocería, '')
+               COALESCE(ot.token, v.patente_vin)
         FROM ordenes_trabajo ot
         JOIN vehiculos v ON ot.vehiculo_id = v.id
         JOIN clientes c ON v.cliente_id = c.id
@@ -104,8 +108,8 @@ def actualizar_estado_orden(orden_id, taller_id, nuevo_estado):
     conexion.commit()
     conexion.close()
 
-def obtener_detalle_orden_publico(orden_id):
-    """Obtiene el detalle completo de una orden para la vista pública del cliente."""
+def obtener_detalle_orden_por_token(token_o_id):
+    """Consulta la orden pública por token seguro o por ID si es antiguo."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -114,16 +118,17 @@ def obtener_detalle_orden_publico(orden_id):
         SELECT ot.id, ot.estado, COALESCE(ot.sintomas_cliente, ''), COALESCE(ot.costo_estimado, 0),
                COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'), COALESCE(ot.detalles_carrocería, ''),
                COALESCE(ot.foto_frontal, ''), COALESCE(ot.foto_trasera, ''), COALESCE(ot.foto_costado_izq, ''),
-               COALESCE(ot.foto_costado_der, ''), COALESCE(ot.foto_tablero, ''), ot.fecha_creacion,
+               COALESCE(ot.foto_costado_der, ''), COALESCE(ot.foto_tablero, ''),
                v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''), COALESCE(v.anio, 0),
                c.nombre, COALESCE(c.telefono, ''),
-               t.nombre_taller, COALESCE(t.logo_url, '/static/logo_defecto.png'), COALESCE(t.color_primario, '#3b82f6')
+               t.nombre_taller, COALESCE(t.logo_url, '/static/logo_defecto.png'), COALESCE(t.color_primario, '#3b82f6'),
+               COALESCE(ot.token, '')
         FROM ordenes_trabajo ot
         JOIN vehiculos v ON ot.vehiculo_id = v.id
         JOIN clientes c ON v.cliente_id = c.id
         JOIN talleres t ON ot.taller_id = t.id
-        WHERE ot.id = {p}
-    """, (orden_id,))
+        WHERE ot.token = {p} OR CAST(ot.id AS TEXT) = {p}
+    """, (str(token_o_id), str(token_o_id)))
 
     resultado = cursor.fetchone()
     conexion.close()

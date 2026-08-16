@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estado de Tu Vehículo - {{ o[19] }}</title>
+    <title>{% if o %}{{ o[18] }}{% else %}Seguimiento de Vehículo{% endif %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,16 +11,23 @@
 </head>
 <body class="min-h-screen p-4 max-w-lg mx-auto space-y-4">
 
+    {% if error %}
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center space-y-2">
+        <h2 class="text-lg font-bold text-rose-400">⚠️ Enlace No Encontrado</h2>
+        <p class="text-xs text-slate-400">Verifica la URL enviada por tu taller o contáctalos directamente.</p>
+    </div>
+    {% else %}
+
     <!-- CABECERA TALLER -->
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-lg text-white">🔧</div>
             <div>
-                <h1 class="font-bold text-sm text-white">{{ o[19] }}</h1>
+                <h1 class="font-bold text-sm text-white">{{ o[18] }}</h1>
                 <p class="text-[11px] text-slate-400">Estado de Servicio en Vivo</p>
             </div>
         </div>
-        <a href="https://wa.me/{{ o[18]|replace('+', '')|replace(' ', '') }}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-600/20">
+        <a href="https://wa.me/{{ o[17] }}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-600/20">
             <i data-lucide="message-square" class="w-5 h-5"></i>
         </a>
     </div>
@@ -29,10 +36,10 @@
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
         <div class="flex justify-between items-center border-b border-slate-800 pb-3">
             <div>
-                <span class="text-xs text-slate-400">Cliente: {{ o[17] }}</span>
-                <h2 class="text-lg font-bold text-white">{{ o[14] }} {{ o[15] }} ({{ o[16] }})</h2>
+                <span class="text-xs text-slate-400">Cliente: {{ o[16] }}</span>
+                <h2 class="text-lg font-bold text-white">{{ o[13] }} {{ o[14] }} ({{ o[15] }})</h2>
             </div>
-            <span class="bg-slate-800 text-white font-mono font-bold px-3 py-1 rounded-xl text-sm border border-slate-700">{{ o[13] }}</span>
+            <span class="bg-slate-800 text-white font-mono font-bold px-3 py-1 rounded-xl text-sm border border-slate-700">{{ o[12] }}</span>
         </div>
 
         <div class="grid grid-cols-2 gap-2 text-xs">
@@ -83,6 +90,8 @@
             {% if o[11] %}<img src="{{ o[11] }}" class="rounded-xl border border-slate-800 object-cover w-full h-24">{% endif %}
         </div>
     </div>
+    {% endif %}
+
     {% endif %}
 
     <script>lucide.createIcons();</script>

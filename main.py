@@ -126,9 +126,14 @@ if __name__ == "__main__":
 
     from modulos.gestion_db import obtener_detalle_orden_publico  # Asegúrate de agregarla a la importación
 
-@app.route("/seguimiento/<int:orden_id>")
-def seguimiento_cliente(orden_id):
-    orden = obtener_detalle_orden_publico(orden_id)
+from modulos.gestion_db import obtener_detalle_orden_por_token
+
+@app.route("/seguimiento/<token>")
+def seguimiento_cliente(token):
+    orden = obtener_detalle_orden_por_token(token)
     if not orden:
-        return "Orden no encontrada", 404
+        return render_template("seguimiento.html", error="Orden no encontrada"), 404
     return render_template("seguimiento.html", o=orden)
+
+from modulos.gestion_db import obtener_detalle_orden_por_token
+
