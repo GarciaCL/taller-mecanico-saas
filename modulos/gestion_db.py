@@ -37,24 +37,49 @@ def validar_login(usuario, password):
 
 # --- RECEPCIÓN Y ÓRDENES KANBAN ---
 
-def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, km_ingreso, combustible, detalles, fotos, tiempo_horas=4):
+def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, km_ingreso, combustible, detalles, fotos, tiempo_horas=4, nombre_cliente="Cliente General", telefono_cliente="", marca="Marca", modelo="Modelo"):
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
 
-    cursor.execute(f"SELECT id FROM vehiculos WHERE UPPER(patente_vin) = UPPER({p})", (patente.strip(),))
+    patente_limpia = patente.strip().upper()
+
+    # 1. Buscar si la patente existe
+    cursor.execute(f"SELECT id FROM vehiculos WHERE UPPER(patente_vin) = {p}", (patente_limpia,))
     vehiculo = cursor.fetchone()
-    
+
     if not vehiculo:
-        conexion.close()
-        return False
+        # Buscar o crear cliente genérico/nuevo
+        cursor.execute(f"SELECT id FROM clientes WHERE taller_id = {p} AND (telefono = {p} OR nombre = {p})", (taller_id, telefono_cliente, nombre_cliente))
+        cliente = cursor.fetchone()
+        
+        if not cliente:
+            cursor.execute(f"""
+                INSERT INTO clientes (taller_id, nombre, rut, telefono)
+                VALUES ({p}, {p}, 'N/A', {p})
+            """, (taller_id, nombre_cliente, telefono_cliente))
+            conexion.commit()
+            cursor.execute(f"SELECT id FROM clientes WHERE taller_id = {p} ORDER BY id DESC LIMIT 1", (taller_id,))
+            cliente = cursor.fetchone()
+
+        cliente_id = cliente[0]
+
+        # Crear el vehículo nuevo
+        cursor.execute(f"""
+            INSERT INTO vehiculos (cliente_id, patente_vin, marca, modelo, kilometraje)
+            VALUES ({p}, {p}, {p}, {p}, {p})
+        """, (cliente_id, patente_limpia, marca, modelo, km_ingreso))
+        conexion.commit()
+
+        cursor.execute(f"SELECT id FROM vehiculos WHERE UPPER(patente_vin) = {p}", (patente_limpia,))
+        vehiculo = cursor.fetchone()
 
     vehiculo_id = vehiculo[0]
     cursor.execute(f"UPDATE vehiculos SET kilometraje = {p} WHERE id = {p}", (km_ingreso, vehiculo_id))
 
-    # Token con formato seguro: PATENTE-HASH (ej. AA123BB-A8F9X2)
+    # Token con formato seguro: PATENTE-HASH
     hash_unico = secrets.token_hex(3).upper()
-    token_orden = f"{patente.strip().upper()}-{hash_unico}"
+    token_orden = f"{patente_limpia}-{hash_unico}"
 
     cursor.execute(f"""
         INSERT INTO ordenes_trabajo 
@@ -70,7 +95,6 @@ def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, k
     conexion.commit()
     conexion.close()
     return True
-
 def obtener_ordenes_kanban(taller_id):
     conexion = obtener_conexion()
     cursor = conexion.cursor()

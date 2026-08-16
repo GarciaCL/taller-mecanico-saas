@@ -77,6 +77,10 @@ def crear_ot_web():
         return redirect("/login")
     
     patente = request.form["patente"]
+    cliente = request.form.get("cliente", "Cliente General")
+    telefono = request.form.get("telefono", "")
+    marca = request.form.get("marca", "Vehículo")
+    modelo = request.form.get("modelo", "General")
     sintomas = request.form["sintomas"]
     costo = float(request.form["costo"]) if request.form.get("costo") else 0.0
     km = int(request.form["km"]) if request.form.get("km") else 0
@@ -92,7 +96,10 @@ def crear_ot_web():
         'tablero': guardar_foto(request.files.get('foto_tablero'), f"{patente}_tablero")
     }
     
-    crear_orden_recepcion_guiada(session["taller_id"], patente, sintomas, costo, km, combustible, detalles, fotos, tiempo_horas)
+    crear_orden_recepcion_guiada(
+        session["taller_id"], patente, sintomas, costo, km, combustible, 
+        detalles, fotos, tiempo_horas, cliente, telefono, marca, modelo
+    )
     return redirect("/")
 
 @app.route("/editar_ot", methods=["POST"])
