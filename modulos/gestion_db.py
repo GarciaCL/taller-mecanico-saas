@@ -1,4 +1,5 @@
 import os
+import zipfile
 from datetime import datetime
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -16,14 +17,12 @@ def obtener_conexion():
         return sqlite3.connect("base_datos/taller.db")
 
 def obtener_placeholder():
-    """Devuelve %s para PostgreSQL y ? para SQLite"""
     return "%s" if DATABASE_URL else "?"
 
 def validar_login(usuario, password):
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
-    
     query = f"""
         SELECT u.id, u.taller_id, u.usuario, u.rol, t.nombre_taller, t.logo_url, t.color_primario, 
                t.modulo_inventario, t.modulo_citas_web, t.modulo_correos
@@ -35,6 +34,42 @@ def validar_login(usuario, password):
     resultado = cursor.fetchone()
     conexion.close()
     return resultado
+
+# --- CONSULTAS PARA LISTADOS ---
+
+def obtener_clientes_y_vehiculos(taller_id):
+    """Obtiene el listado de clientes junto con sus vehículos asociados."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+    cursor.execute(f"""
+        SELECT c.id, c.nombre, c.rut, c.telefono, c.correo,
+               v.patente_vin, v.marca, v.modelo, v.anio, v.kilometraje
+        FROM clientes c
+        LEFT JOIN vehiculos v ON c.id = v.cliente_id
+        WHERE c.taller_id = {p}
+        ORDER BY c.id DESC
+    """, (taller_id,))
+    filas = cursor.fetchall()
+    conexion.close()
+    return filas
+
+def obtener_inventario(taller_id):
+    """Obtiene el listado completo de repuestos."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+    cursor.execute(f"""
+        SELECT id, codigo, categoria, nombre, stock, precio_costo, precio_venta, mano_obra, modelos_compatibles
+        FROM inventario
+        WHERE taller_id = {p}
+        ORDER BY id DESC
+    """, (taller_id,))
+    filas = cursor.fetchall()
+    conexion.close()
+    return filas
+
+# --- REGISTROS ---
 
 def agregar_cliente_y_vehiculo(taller_id, nombre, rut, telefono, correo, patente, marca, modelo, anio, km):
     conexion = obtener_conexion()
@@ -62,15 +97,15 @@ def agregar_cliente_y_vehiculo(taller_id, nombre, rut, telefono, correo, patente
     conexion.commit()
     conexion.close()
 
-def agregar_repuesto(taller_id, codigo, nombre, stock, costo, venta, mano_obra, compatibilidades):
+def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades):
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
     
     cursor.execute(f"""
-        INSERT INTO inventario (taller_id, codigo, nombre, stock, precio_costo, precio_venta, mano_obra, modelos_compatibles)
-        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
-    """, (taller_id, codigo, nombre, stock, costo, venta, mano_obra, compatibilidades))
+        INSERT INTO inventario (taller_id, codigo, categoria, nombre, stock, precio_costo, precio_venta, mano_obra, modelos_compatibles)
+        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
+    """, (taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades))
     
     conexion.commit()
     conexion.close()
@@ -104,17 +139,13 @@ def crear_ficha_trabajo(vehiculo_id, observaciones, costo_total):
     conexion.commit()
     conexion.close()
 
-    import zipfile
-
 def crear_copia_seguridad_zip():
-    """Genera un archivo comprimido .zip de respaldo de la base de datos"""
     carpeta_respaldos = "respaldos"
     if not os.path.exists(carpeta_respaldos):
         os.makedirs(carpeta_respaldos)
     fecha_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     nombre_zip = os.path.join(carpeta_respaldos, f"respaldo_taller_{fecha_str}.zip")
     
-    # Si estamos en local usa SQLite; en la nube no comprime el archivo local si usa PostgreSQL
     db_local = "base_datos/taller.db"
     if os.path.exists(db_local):
         with zipfile.ZipFile(nombre_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:

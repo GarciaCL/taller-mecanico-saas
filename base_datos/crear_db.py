@@ -79,12 +79,13 @@ def inicializar_db_saas():
         )
     """)
 
-    # 5. TABLA DE INVENTARIO
+   # 5. TABLA DE INVENTARIO (con Categoría)
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS inventario (
             id {serial_pk},
             taller_id INT NOT NULL,
             codigo VARCHAR(50) NOT NULL,
+            categoria VARCHAR(80) DEFAULT 'General',
             nombre VARCHAR(150) NOT NULL,
             stock INT DEFAULT 0,
             precio_costo FLOAT DEFAULT 0,

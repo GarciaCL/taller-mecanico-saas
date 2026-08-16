@@ -1,13 +1,11 @@
-from base_datos.crear_db import inicializar_db_saas
-
-# Inicializa la base de datos (crea tablas e inserts iniciales si no existen)
-inicializar_db_saas()
-
 from flask import Flask, render_template, request, redirect, session
 import webbrowser
 import threading
+from base_datos.crear_db import inicializar_db_saas
 from modulos.gestion_db import (
     validar_login,
+    obtener_clientes_y_vehiculos,
+    obtener_inventario,
     agregar_cliente_y_vehiculo,
     agregar_repuesto,
     crear_ficha_trabajo,
@@ -18,10 +16,16 @@ from modulos.gestion_db import (
 app = Flask(__name__)
 app.secret_key = "CLAVE-SUPER-SECRETA-SAAS-TALLER"
 
+inicializar_db_saas()
+
 @app.route("/")
 def inicio():
     if "taller_id" not in session:
         return redirect("/login")
+    
+    taller_id = session["taller_id"]
+    clientes = obtener_clientes_y_vehiculos(taller_id)
+    repuestos = obtener_inventario(taller_id)
     
     taller_info = {
         "nombre": session.get("nombre_taller"),
@@ -30,7 +34,7 @@ def inicio():
         "mod_citas": session.get("mod_citas"),
         "mod_correos": session.get("mod_correos")
     }
-    return render_template("index.html", taller=taller_info)
+    return render_template("index.html", taller=taller_info, clientes=clientes, repuestos=repuestos)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -40,7 +44,6 @@ def login():
         datos = validar_login(user, pwd)
         
         if datos:
-            # Guardar datos del taller en la sesión del usuario
             session["user_id"] = datos[0]
             session["taller_id"] = datos[1]
             session["usuario"] = datos[2]
@@ -85,12 +88,13 @@ def guardar_repuesto_web():
     agregar_repuesto(
         taller_id=session["taller_id"],
         codigo=request.form["codigo"],
+        categoria=request.form.get("categoria", "General"),
         nombre=request.form["nombre"],
         stock=int(request.form["stock"]) if request.form.get("stock") else 0,
         costo=float(request.form["costo"]) if request.form.get("costo") else 0.0,
         venta=float(request.form["venta"]) if request.form.get("venta") else 0.0,
         mano_obra=float(request.form["mano_obra"]) if request.form.get("mano_obra") else 0.0,
-        compatibilidades=request.form.get("compatibles", "")
+        compatabilidades=request.form.get("compatibles", "")
     )
     return redirect("/")
 
@@ -113,10 +117,5 @@ def respaldar_web():
     crear_copia_seguridad_zip()
     return redirect("/")
 
-def abrir_navegador():
-    webbrowser.open_new("http://127.0.0.1:5000")
-
 if __name__ == "__main__":
-    print("🚀 Iniciando servidor SaaS local...")
-    threading.Timer(1.5, abrir_navegador).start()
-    app.run(port=5000)
+    app.run(port=5000, debug=True)

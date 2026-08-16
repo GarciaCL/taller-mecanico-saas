@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ taller.nombre }} - Panel de Gestión</title>
-    <!-- Enlace PWA para permitir la instalación en Mac y Windows -->
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="{{ taller.color }}">
     
@@ -17,6 +16,8 @@
         .sidebar .nav-link.active, .sidebar .nav-link:hover { background-color: #3b82f6; color: #fff; }
         .card-custom { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .btn-primary-custom { background-color: #3b82f6; border: none; border-radius: 8px; font-weight: 600; }
+        .badge-categoria { background-color: #e2e8f0; color: #1e293b; font-weight: 600; }
+        .badge-compat { background-color: #dbeafe; color: #1e40af; }
     </style>
 </head>
 <body>
@@ -25,98 +26,171 @@
         <div class="row">
             <!-- BARRA LATERAL MODERNA -->
             <div class="col-md-2 sidebar p-3">
-                <h4 class="fw-bold mb-4 text-center text-primary">🔧 Taller SSD</h4>
+                <h4 class="fw-bold mb-4 text-center text-primary">🔧 {{ taller.nombre }}</h4>
                 <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
-                    <button class="nav-link active text-start" id="tab-clientes" data-bs-toggle="pill" data-bs-target="#sec-clientes" type="button">🚗 Clientes y Autos</button>
-                    <button class="nav-link text-start" id="tab-inventario" data-bs-toggle="pill" data-bs-target="#sec-inventario" type="button">📦 Repuestos / Stock</button>
-                    <button class="nav-link text-start" id="tab-fichas" data-bs-toggle="pill" data-bs-target="#sec-fichas" type="button">📝 Fichas y Notas</button>
+                    <button class="nav-link active text-start" id="tab-clientes" data-bs-toggle="pill" data-bs-target="#sec-clientes" type="button">🚗 Clientes y Vehículos</button>
+                    <button class="nav-link text-start" id="tab-inventario" data-bs-toggle="pill" data-bs-target="#sec-inventario" type="button">📦 Inventario de Repuestos</button>
+                    <button class="nav-link text-start" id="tab-fichas" data-bs-toggle="pill" data-bs-target="#sec-fichas" type="button">📝 Fichas de Trabajo</button>
                     <button class="nav-link text-start" id="tab-nube" data-bs-toggle="pill" data-bs-target="#sec-nube" type="button">☁️ Respaldo y Nube</button>
                 </div>
+                <hr class="text-secondary mt-4">
+                <a href="/logout" class="btn btn-outline-danger w-100 btn-sm mt-2">🚪 Cerrar Sesión</a>
             </div>
 
             <!-- CONTENIDO PRINCIPAL -->
             <div class="col-md-10 p-4">
-                
-                <!-- ALERTA ROJA DE 30 DÍAS -->
-                {% if alerta_30_dias %}
-                <div class="alerta-roja mb-4 shadow text-center">
-                    🚨 ¡URGENTE! Llevas más de 1 mes sin respaldar tus datos. Por favor ve a la pestaña "Respaldo y Nube" y presiona "Respaldar Ahora".
-                </div>
-                {% endif %}
 
                 <div class="tab-content" id="v-pills-tabContent">
                     
-                    <!-- 1. SECCIÓN CLIENTES -->
+                    <!-- 1. CLIENTES Y VEHÍCULOS -->
                     <div class="tab-pane fade show active" id="sec-clientes">
-                        <div class="card card-custom p-4">
-                            <h5 class="fw-bold mb-3 text-dark">🚗 Registrar Nuevo Cliente y Vehículo</h5>
+                        <div class="card card-custom p-4 mb-4">
+                            <h5 class="fw-bold mb-3 text-dark">➕ Registrar Nuevo Cliente y Vehículo</h5>
                             <form action="/guardar_cliente" method="POST">
                                 <div class="row g-3">
-                                    <div class="col-md-6"><label class="form-label">Nombre Cliente</label><input type="text" name="nombre" class="form-control" required></div>
-                                    <div class="col-md-6"><label class="form-label">RUT / ID</label><input type="text" name="rut" class="form-control" required></div>
-                                    <div class="col-md-6"><label class="form-label">Teléfono</label><input type="text" name="telefono" class="form-control"></div>
-                                    <div class="col-md-6"><label class="form-label">Correo</label><input type="email" name="correo" class="form-control"></div>
-                                    <hr class="my-3">
-                                    <div class="col-md-4"><label class="form-label">Patente / VIN</label><input type="text" name="patente" class="form-control" required></div>
-                                    <div class="col-md-4"><label class="form-label">Marca</label><input type="text" name="marca" class="form-control"></div>
-                                    <div class="col-md-4"><label class="form-label">Modelo</label><input type="text" name="modelo" class="form-control"></div>
-                                    <div class="col-md-6"><label class="form-label">Año</label><input type="number" name="anio" class="form-control"></div>
-                                    <div class="col-md-6"><label class="form-label">Kilometraje</label><input type="number" name="km" class="form-control"></div>
-                                    <div class="col-12 mt-4"><button type="submit" class="btn btn-primary-custom text-white px-4 py-2">💾 Guardar Vehículo</button></div>
+                                    <div class="col-md-3"><label class="form-label">Nombre Cliente</label><input type="text" name="nombre" class="form-control" required></div>
+                                    <div class="col-md-3"><label class="form-label">RUT / ID</label><input type="text" name="rut" class="form-control" required></div>
+                                    <div class="col-md-3"><label class="form-label">Teléfono</label><input type="text" name="telefono" class="form-control"></div>
+                                    <div class="col-md-3"><label class="form-label">Correo</label><input type="email" name="correo" class="form-control"></div>
+                                    <div class="col-md-3"><label class="form-label">Patente / VIN</label><input type="text" name="patente" class="form-control" required></div>
+                                    <div class="col-md-3"><label class="form-label">Marca</label><input type="text" name="marca" class="form-control"></div>
+                                    <div class="col-md-3"><label class="form-label">Modelo</label><input type="text" name="modelo" class="form-control"></div>
+                                    <div class="col-md-3"><label class="form-label">Año</label><input type="number" name="anio" class="form-control"></div>
+                                    <div class="col-12 text-end"><button type="submit" class="btn btn-primary-custom text-white px-4">💾 Guardar Cliente y Vehículo</button></div>
                                 </div>
                             </form>
                         </div>
+
+                        <!-- LISTADO DE CLIENTES -->
+                        <div class="card card-custom p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold m-0">👥 Listado de Clientes y Vehículos Registrados</h5>
+                                <input type="text" id="buscarCliente" class="form-control w-25" placeholder="🔍 Buscar por Nombre, RUT o Patente..." onkeyup="filtrarClientes()">
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle" id="tablaClientes">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Cliente</th>
+                                            <th>RUT</th>
+                                            <th>Contacto</th>
+                                            <th>Vehículo</th>
+                                            <th>Patente/VIN</th>
+                                            <th>Año</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for c in clientes %}
+                                        <tr>
+                                            <td class="fw-bold">{{ c[1] }}</td>
+                                            <td>{{ c[2] }}</td>
+                                            <td>{{ c[3] }} <br><small class="text-muted">{{ c[4] }}</small></td>
+                                            <td><span class="badge bg-secondary">{{ c[6] }} {{ c[7] }}</span></td>
+                                            <td class="fw-bold text-primary">{{ c[5] }}</td>
+                                            <td>{{ c[8] }}</td>
+                                        </tr>
+                                        {% else %}
+                                        <tr><td colspan="6" class="text-center text-muted">No hay clientes registrados aún.</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- 2. SECCIÓN INVENTARIO -->
+                    <!-- 2. INVENTARIO DE REPUESTOS CON CATEGORÍAS Y COMPATIBILIDAD -->
                     <div class="tab-pane fade" id="sec-inventario">
                         <div class="card card-custom p-4 mb-4">
-                            <h5 class="fw-bold mb-3">📦 Registrar Repuesto con Compatibilidad Múltiple</h5>
+                            <h5 class="fw-bold mb-3">📦 Agregar Nuevo Repuesto</h5>
                             <form action="/guardar_repuesto" method="POST">
                                 <div class="row g-3">
-                                    <div class="col-md-4"><label class="form-label">Código</label><input type="text" name="codigo" class="form-control" required></div>
-                                    <div class="col-md-8"><label class="form-label">Nombre / Descripción</label><input type="text" name="nombre" class="form-control" required></div>
-                                    <div class="col-md-3"><label class="form-label">Stock</label><input type="number" name="stock" class="form-control"></div>
+                                    <div class="col-md-2"><label class="form-label">Código</label><input type="text" name="codigo" class="form-control" required></div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Categoría</label>
+                                        <select name="categoria" class="form-select">
+                                            <option value="Frenos">Frenos</option>
+                                            <option value="Motor">Motor</option>
+                                            <option value="Suspensión">Suspensión / Dirección</option>
+                                            <option value="Eléctrico">Eléctrico / Baterías</option>
+                                            <option value="Filtros y Aceites">Filtros y Aceites</option>
+                                            <option value="Transmisión">Transmisión</option>
+                                            <option value="Carrocería">Carrocería</option>
+                                            <option value="General">General</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-5"><label class="form-label">Nombre del Repuesto</label><input type="text" name="nombre" class="form-control" required></div>
+                                    <div class="col-md-2"><label class="form-label">Stock</label><input type="number" name="stock" class="form-control"></div>
                                     <div class="col-md-3"><label class="form-label">Precio Costo ($)</label><input type="number" name="costo" class="form-control"></div>
                                     <div class="col-md-3"><label class="form-label">Precio Venta ($)</label><input type="number" name="venta" class="form-control"></div>
                                     <div class="col-md-3"><label class="form-label">Mano de Obra ($)</label><input type="number" name="mano_obra" class="form-control"></div>
-                                    <div class="col-12"><label class="form-label">Modelos Compatibles (ej: Toyota Yaris, Nissan Versa, Hyundai HD65)</label><input type="text" name="compatibles" class="form-control"></div>
-                                    <div class="col-12 mt-3"><button type="submit" class="btn btn-success px-4 py-2">📦 Guardar Repuesto</button></div>
+                                    <div class="col-md-3"><label class="form-label">Modelos Compatibles (ej: Toyota Yaris, Nissan Versa)</label><input type="text" name="compatibles" class="form-control"></div>
+                                    <div class="col-12 text-end"><button type="submit" class="btn btn-success px-4">📦 Guardar Repuesto</button></div>
                                 </div>
                             </form>
                         </div>
+
+                        <!-- CATÁLOGO Y BÚSQUEDA DE REPUESTOS -->
+                        <div class="card card-custom p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold m-0">🔍 Catálogo de Repuestos y Compatibilidades</h5>
+                                <input type="text" id="buscarRepuesto" class="form-control w-50" placeholder="🔎 Filtrar por Categoría, Marca, Modelo, Código o Nombre..." onkeyup="filtrarRepuestos()">
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle" id="tablaRepuestos">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Categoría</th>
+                                            <th>Repuesto</th>
+                                            <th>Stock</th>
+                                            <th>Precio Venta</th>
+                                            <th>Mano Obra</th>
+                                            <th>Compatibilidad (Marcas/Modelos)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for r in repuestos %}
+                                        <tr>
+                                            <td class="fw-bold text-secondary">{{ r[1] }}</td>
+                                            <td><span class="badge badge-categoria">{{ r[2] }}</span></td>
+                                            <td class="fw-bold">{{ r[3] }}</td>
+                                            <td>
+                                                {% if r[4] < 3 %}
+                                                    <span class="badge bg-danger">{{ r[4] }} un.</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">{{ r[4] }} un.</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="fw-bold text-success">${{ "{:,.0f}".format(r[6]) }}</td>
+                                            <td>${{ "{:,.0f}".format(r[7]) }}</td>
+                                            <td><span class="badge badge-compat">{{ r[8] if r[8] else 'Universal' }}</span></td>
+                                        </tr>
+                                        {% else %}
+                                        <tr><td colspan="7" class="text-center text-muted">No hay repuestos registrados en el inventario.</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- 3. SECCIÓN FICHAS -->
+                    <!-- 3. FICHAS Y RESPALDO -->
                     <div class="tab-pane fade" id="sec-fichas">
                         <div class="card card-custom p-4">
-                            <h5 class="fw-bold mb-3">📝 Ficha de Trabajo / Observaciones Habladas</h5>
+                            <h5 class="fw-bold mb-3">📝 Nueva Ficha de Trabajo</h5>
                             <form action="/guardar_ficha" method="POST">
-                                <div class="mb-3">
-                                    <label class="form-label">Patente del Vehículo</label>
-                                    <input type="text" name="patente" class="form-control" placeholder="Ej: AA123BB" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Observaciones del Mecánico (Diagnóstico libre)</label>
-                                    <textarea name="observaciones" class="form-control" rows="5" placeholder="Cliente indica ruido metálico..." required></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Costo Total Estimado ($)</label>
-                                    <input type="number" name="costo" class="form-control">
-                                </div>
-                                <button type="submit" class="btn btn-dark px-4 py-2">📝 Guardar Ficha de Trabajo</button>
+                                <div class="mb-3"><label class="form-label">Patente</label><input type="text" name="patente" class="form-control" required></div>
+                                <div class="mb-3"><label class="form-label">Observaciones</label><textarea name="observaciones" class="form-control" rows="4" required></textarea></div>
+                                <div class="mb-3"><label class="form-label">Costo Total ($)</label><input type="number" name="costo" class="form-control"></div>
+                                <button type="submit" class="btn btn-dark">📝 Guardar Ficha</button>
                             </form>
                         </div>
                     </div>
 
-                    <!-- 4. SECCIÓN RESPALDO Y NUBE -->
                     <div class="tab-pane fade" id="sec-nube">
-                        <div class="card card-custom p-4 mb-4">
-                            <h5 class="fw-bold mb-3">☁️ Respaldo de Seguridad (.zip)</h5>
-                            <p class="text-muted">Genera una copia comprimida de la base de datos y desactiva la alerta de 30 días.</p>
-                            <form action="/respaldar" method="POST">
-                                <button type="submit" class="btn btn-warning fw-bold px-4 py-2">☁️ Respaldar Ahora</button>
-                            </form>
+                        <div class="card card-custom p-4">
+                            <h5 class="fw-bold mb-3">☁️ Respaldo de Seguridad</h5>
+                            <form action="/respaldar" method="POST"><button type="submit" class="btn btn-warning fw-bold">☁️ Respaldar Datos (.zip)</button></form>
                         </div>
                     </div>
 
@@ -125,7 +199,26 @@
         </div>
     </div>
 
-    <!-- Script para cambiar pestañas sin recargar la página -->
+    <!-- Buscadores en tiempo real -->
+    <script>
+        function filtrarClientes() {
+            let input = document.getElementById("buscarCliente").value.toLowerCase();
+            let rows = document.querySelectorAll("#tablaClientes tbody tr");
+            rows.forEach(row => {
+                let text = row.innerText.toLowerCase();
+                row.style.display = text.includes(input) ? "" : "none";
+            });
+        }
+
+        function filtrarRepuestos() {
+            let input = document.getElementById("buscarRepuesto").value.toLowerCase();
+            let rows = document.querySelectorAll("#tablaRepuestos tbody tr");
+            rows.forEach(row => {
+                let text = row.innerText.toLowerCase();
+                row.style.display = text.includes(input) ? "" : "none";
+            });
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
