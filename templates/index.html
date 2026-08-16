@@ -101,6 +101,15 @@
                             </div>
                             <h4 class="text-xs font-semibold text-slate-300 mb-1">{{ o[5] }} {{ o[6] }}</h4>
                             <p class="text-[11px] text-slate-400 line-clamp-2 mb-3">{{ o[2] }}</p>
+                            <!-- BADGES: KM y COMBUSTIBLE (Ubicación correcta) -->
+        <div class="flex items-center gap-2 mb-3">
+            <span class="text-[10px] font-semibold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md flex items-center gap-1">
+                🏎️ {{ o[9] if o[9] else '0' }} KM
+            </span>
+            <span class="text-[10px] font-semibold bg-slate-800 text-amber-400 px-2 py-0.5 rounded-md flex items-center gap-1">
+                ⛽ {{ o[10] if o[10] else 'N/I' }}
+            </span>
+        </div>
                             <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between">
                                 <span>👤 {{ o[7] }}</span>
                                 <span>📞 {{ o[8] }}</span>
