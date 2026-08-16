@@ -141,3 +141,19 @@ def guardar_repuesto_web():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+    from modulos.gestion_db import (
+    validar_login, crear_orden_recepcion_guiada, obtener_ordenes_kanban,
+    actualizar_estado_orden, obtener_detalle_orden_por_token,
+    obtener_inventario, agregar_repuesto, actualizar_orden_trabajo,
+    finalizar_orden_trabajo  # <--- Agregada
+)
+
+@app.route("/finalizar_ot", methods=["POST"])
+def finalizar_ot_web():
+    if "taller_id" not in session:
+        return redirect("/login")
+    
+    orden_id = int(request.form["orden_id"])
+    finalizar_orden_trabajo(orden_id, session["taller_id"])
+    return redirect("/")

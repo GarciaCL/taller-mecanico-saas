@@ -52,8 +52,8 @@ def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, k
     vehiculo_id = vehiculo[0]
     cursor.execute(f"UPDATE vehiculos SET kilometraje = {p} WHERE id = {p}", (km_ingreso, vehiculo_id))
 
-    # Token con formato seguro: PATENTE-HASH (ej. AA123BB-a8f9x2)
-    hash_unico = secrets.token_hex(3)
+    # Generar Token Único: PATENTE-HASH (ej. PTBR56-A8F9X2)
+    hash_unico = secrets.token_hex(3).upper()
     token_orden = f"{patente.strip().upper()}-{hash_unico}"
 
     cursor.execute(f"""
@@ -76,17 +76,34 @@ def obtener_ordenes_kanban(taller_id):
     cursor = conexion.cursor()
     p = obtener_placeholder()
 
+    # 1. Parche preventivo: asignar token a cualquier orden antigua que no lo tenga
+    cursor.execute(f"""
+        SELECT ot.id, v.patente_vin 
+        FROM ordenes_trabajo ot 
+        JOIN vehiculos v ON ot.vehiculo_id = v.id 
+        WHERE ot.taller_id = {p} AND (ot.token IS NULL OR ot.token = '')
+    """, (taller_id,))
+    ordenes_sin_token = cursor.fetchall()
+    
+    for ot_id, patente in ordenes_sin_token:
+        h = secrets.token_hex(3).upper()
+        nuevo_token = f"{patente.strip().upper()}-{h}"
+        cursor.execute(f"UPDATE ordenes_trabajo SET token = {p} WHERE id = {p}", (nuevo_token, ot_id))
+    if ordenes_sin_token:
+        conexion.commit()
+
+    # 2. Consultar solo órdenes activas en el taller (excluyendo 'finalizado')
     cursor.execute(f"""
         SELECT ot.id, ot.estado, COALESCE(ot.sintomas_cliente, ''), COALESCE(ot.costo_estimado, 0),
                v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''),
                c.nombre, COALESCE(c.telefono, ''),
                COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'),
-               COALESCE(ot.token, v.patente_vin),
+               ot.token,
                ot.fecha_creacion, COALESCE(ot.tiempo_estimado_horas, 4)
         FROM ordenes_trabajo ot
         JOIN vehiculos v ON ot.vehiculo_id = v.id
         JOIN clientes c ON v.cliente_id = c.id
-        WHERE ot.taller_id = {p}
+        WHERE ot.taller_id = {p} AND ot.estado != 'finalizado'
         ORDER BY ot.id DESC
     """, (taller_id,))
 
@@ -118,6 +135,10 @@ def actualizar_estado_orden(orden_id, taller_id, nuevo_estado):
     conexion.commit()
     conexion.close()
 
+def finalizar_orden_trabajo(orden_id, taller_id):
+    """Marca una orden de trabajo como finalizada para archivarla del Kanban."""
+    return actualizar_estado_orden(orden_id, taller_id, 'finalizado')
+
 def obtener_detalle_orden_por_token(token_o_id):
     conexion = obtener_conexion()
     cursor = conexion.cursor()
@@ -144,7 +165,6 @@ def obtener_detalle_orden_por_token(token_o_id):
     return resultado
 
 def actualizar_orden_trabajo(taller_id, orden_id, km, combustible, tiempo_horas, sintomas, costo):
-    """Permite editar los datos de una orden existente en el taller."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
