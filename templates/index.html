@@ -169,7 +169,9 @@
                     <span id="m-patente" class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded"></span>
                     <h3 id="m-vehiculo" class="text-base font-bold text-white mt-1"></h3>
                 </div>
-                <button onclick="document.getElementById('modal-detalle').classList.add('hidden')" class="text-slate-400 hover:text-white">✕</button>
+                <a id="btn-historial-patente" href="#" target="_blank" class="text-xs text-blue-400 hover:underline font-semibold flex items-center gap-1">
+                    📜 Ver Historial Completo
+                </a>
             </div>
 
             <!-- FORMULARIO DE EDICIÓN -->
@@ -386,6 +388,8 @@
             document.getElementById('edit-tiempo').value = horasEst || '4';
             document.getElementById('edit-sintomas').value = sintomas;
             document.getElementById('edit-costo').value = costo;
+
+            document.getElementById('btn-historial-patente').setAttribute('href', '/historial/' + patente);
 
             // Construir URL asegurando el formato PATENTE-HASH
             const urlSeguimiento = "https://taller-mecanico-saas.onrender.com/seguimiento/" + token;

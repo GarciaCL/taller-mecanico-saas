@@ -4,16 +4,17 @@ from base_datos.crear_db import inicializar_db_saas
 from modulos.gestion_db import (
     validar_login, crear_orden_recepcion_guiada, obtener_ordenes_kanban,
     actualizar_estado_orden, obtener_detalle_orden_por_token,
-    obtener_inventario, agregar_repuesto, actualizar_orden_trabajo
+    obtener_inventario, agregar_repuesto, actualizar_orden_trabajo,
+    finalizar_orden_trabajo, obtener_historial_vehiculo
 )
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta_saas_taller"
 
-# Inicializar DB al arrancar
+# Inicializar Base de Datos al arrancar el servidor
 inicializar_db_saas()
 
-# Auxiliar para guardar imágenes
+# Auxiliar para guardar imágenes en static/uploads
 def guardar_foto(file, nombre_base):
     if not file or file.filename == '':
         return ''
@@ -106,6 +107,15 @@ def editar_ot_web():
     actualizar_orden_trabajo(session["taller_id"], orden_id, km, combustible, tiempo_horas, sintomas, costo)
     return redirect("/")
 
+@app.route("/finalizar_ot", methods=["POST"])
+def finalizar_ot_web():
+    if "taller_id" not in session:
+        return redirect("/login")
+    
+    orden_id = int(request.form["orden_id"])
+    finalizar_orden_trabajo(orden_id, session["taller_id"])
+    return redirect("/")
+
 @app.route("/cambiar_estado_ot", methods=["POST"])
 def cambiar_estado_ot_web():
     if "taller_id" not in session:
@@ -121,6 +131,14 @@ def seguimiento_cliente(token):
     if not orden:
         return render_template("seguimiento.html", error="Orden no encontrada"), 404
     return render_template("seguimiento.html", o=orden)
+
+@app.route("/historial/<patente>")
+def historial_vehiculo_web(patente):
+    if "taller_id" not in session:
+        return redirect("/login")
+    
+    historial = obtener_historial_vehiculo(session["taller_id"], patente)
+    return render_template("historial.html", historial=historial, patente=patente.upper())
 
 @app.route("/guardar_repuesto", methods=["POST"])
 def guardar_repuesto_web():
@@ -141,19 +159,3 @@ def guardar_repuesto_web():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-    from modulos.gestion_db import (
-    validar_login, crear_orden_recepcion_guiada, obtener_ordenes_kanban,
-    actualizar_estado_orden, obtener_detalle_orden_por_token,
-    obtener_inventario, agregar_repuesto, actualizar_orden_trabajo,
-    finalizar_orden_trabajo  # <--- Agregada
-)
-
-@app.route("/finalizar_ot", methods=["POST"])
-def finalizar_ot_web():
-    if "taller_id" not in session:
-        return redirect("/login")
-    
-    orden_id = int(request.form["orden_id"])
-    finalizar_orden_trabajo(orden_id, session["taller_id"])
-    return redirect("/")

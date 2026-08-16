@@ -137,7 +137,19 @@ def actualizar_estado_orden(orden_id, taller_id, nuevo_estado):
 
 def finalizar_orden_trabajo(orden_id, taller_id):
     """Marca una orden de trabajo como finalizada para archivarla del Kanban."""
-    return actualizar_estado_orden(orden_id, taller_id, 'finalizado')
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"""
+        UPDATE ordenes_trabajo
+        SET estado = 'finalizado'
+        WHERE id = {p} AND taller_id = {p}
+    """, (orden_id, taller_id))
+
+    conexion.commit()
+    conexion.close()
+    return True
 
 def obtener_detalle_orden_por_token(token_o_id):
     conexion = obtener_conexion()
@@ -209,3 +221,25 @@ def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, 
     """, (taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades))
     conexion.commit()
     conexion.close()
+
+    def obtener_historial_vehiculo(taller_id, patente):
+        """Obtiene todas las órdenes de trabajo (activas e históricas/finalizadas) asociadas a una patente."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"""
+        SELECT ot.id, ot.estado, COALESCE(ot.sintomas_cliente, ''), COALESCE(ot.costo_estimado, 0),
+               COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'), ot.token, ot.fecha_creacion,
+               v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''), COALESCE(v.anio, 0),
+               c.nombre, COALESCE(c.telefono, '')
+        FROM ordenes_trabajo ot
+        JOIN vehiculos v ON ot.vehiculo_id = v.id
+        JOIN clientes c ON v.cliente_id = c.id
+        WHERE ot.taller_id = {p} AND UPPER(v.patente_vin) = UPPER({p})
+        ORDER BY ot.id DESC
+    """, (taller_id, patente.strip()))
+
+    filas = cursor.fetchall()
+    conexion.close()
+    return filas
