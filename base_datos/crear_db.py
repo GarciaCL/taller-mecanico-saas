@@ -33,8 +33,9 @@ def inicializar_db_saas():
             modulo_citas_web {bool_type},
             modulo_correos {bool_type},
             fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
+        );
     """)
+    conexion.commit()
 
     # 2. TABLA USUARIOS
     cursor.execute(f"""
@@ -45,8 +46,9 @@ def inicializar_db_saas():
             password TEXT NOT NULL,
             rol VARCHAR(20) DEFAULT 'mecanico',
             FOREIGN KEY (taller_id) REFERENCES talleres(id)
-        )
+        );
     """)
+    conexion.commit()
 
     # 3. TABLA CLIENTES
     cursor.execute(f"""
@@ -58,8 +60,9 @@ def inicializar_db_saas():
             telefono VARCHAR(30),
             correo VARCHAR(100),
             FOREIGN KEY (taller_id) REFERENCES talleres(id)
-        )
+        );
     """)
+    conexion.commit()
 
     # 4. TABLA VEHÍCULOS
     cursor.execute(f"""
@@ -72,8 +75,9 @@ def inicializar_db_saas():
             anio INT,
             kilometraje INT,
             FOREIGN KEY (cliente_id) REFERENCES clientes(id)
-        )
+        );
     """)
+    conexion.commit()
 
     # 5. TABLA INVENTARIO
     cursor.execute(f"""
@@ -89,8 +93,9 @@ def inicializar_db_saas():
             mano_obra FLOAT DEFAULT 0,
             modelos_compatibles TEXT,
             FOREIGN KEY (taller_id) REFERENCES talleres(id)
-        )
+        );
     """)
+    conexion.commit()
 
     # 6. TABLA ÓRDENES DE TRABAJO (KANBAN)
     cursor.execute(f"""
@@ -104,17 +109,18 @@ def inicializar_db_saas():
             fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (taller_id) REFERENCES talleres(id),
             FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id)
-        )
+        );
     """)
+    conexion.commit()
 
-    # Migraciones preventivas
+    # MIGRACIÓN PREVENTIVA DE COLUMNA CATEGORIA
     try:
         cursor.execute("ALTER TABLE inventario ADD COLUMN categoria VARCHAR(80) DEFAULT 'General';")
         conexion.commit()
     except Exception:
         conexion.rollback()
 
-    # CREAR TALLER Y USUARIO INICIAL SI NO EXISTE
+    # CREAR TALLER DE PRUEBA SI LA TABLA ESTÁ VACÍA
     cursor.execute("SELECT COUNT(*) FROM talleres")
     if cursor.fetchone()[0] == 0:
         if DATABASE_URL:
@@ -137,8 +143,8 @@ def inicializar_db_saas():
                 INSERT INTO usuarios (taller_id, usuario, password, rol)
                 VALUES (?, 'admin', 'admin123', 'administrador')
             """, (taller_id,))
+        conexion.commit()
 
-    conexion.commit()
     conexion.close()
 
 if __name__ == "__main__":
