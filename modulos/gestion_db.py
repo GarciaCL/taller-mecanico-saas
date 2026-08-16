@@ -103,3 +103,20 @@ def crear_ficha_trabajo(vehiculo_id, observaciones, costo_total):
     
     conexion.commit()
     conexion.close()
+
+    import zipfile
+
+def crear_copia_seguridad_zip():
+    """Genera un archivo comprimido .zip de respaldo de la base de datos"""
+    carpeta_respaldos = "respaldos"
+    if not os.path.exists(carpeta_respaldos):
+        os.makedirs(carpeta_respaldos)
+    fecha_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    nombre_zip = os.path.join(carpeta_respaldos, f"respaldo_taller_{fecha_str}.zip")
+    
+    # Si estamos en local usa SQLite; en la nube no comprime el archivo local si usa PostgreSQL
+    db_local = "base_datos/taller.db"
+    if os.path.exists(db_local):
+        with zipfile.ZipFile(nombre_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            zipf.write(db_local, arcname="taller.db")
+    return nombre_zip
