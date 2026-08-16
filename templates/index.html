@@ -9,10 +9,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <!-- SortableJS para Drag & Drop interactivo -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .kanban-ghost { opacity: 0.4; background-color: #1e293b !important; }
     </style>
 </head>
 <body class="h-full text-slate-100 bg-slate-950 flex overflow-hidden">
@@ -20,7 +23,6 @@
     <!-- BARRA LATERAL -->
     <aside class="w-64 bg-slate-900/80 border-r border-slate-800/80 flex flex-col justify-between p-4">
         <div>
-            <!-- BRANDING DEL TALLER -->
             <div class="flex items-center gap-3 px-2 py-3 mb-6">
                 <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-blue-500/20">
                     🔧
@@ -33,19 +35,15 @@
                 </div>
             </div>
 
-            <!-- NAVEGACIÓN PRINCIPAL -->
             <nav class="space-y-1">
-                <button onclick="cambiarPestana('dash')" id="btn-dash" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white bg-slate-800/80 transition-all">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4 text-blue-400"></i> Dashboard General
+                <button onclick="cambiarPestana('dash')" id="btn-dash" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard General
                 </button>
-                <button onclick="cambiarPestana('ot')" id="btn-ot" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
-                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> Órdenes de Trabajo
+                <button onclick="cambiarPestana('ot')" id="btn-ot" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white bg-slate-800/80 transition-all">
+                    <i data-lucide="kanban" class="w-4 h-4 text-blue-400"></i> Tablero Kanban OT
                 </button>
                 <button onclick="cambiarPestana('inv')" id="btn-inv" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
                     <i data-lucide="boxes" class="w-4 h-4"></i> Inventario & Stock
-                </button>
-                <button onclick="cambiarPestana('agendamiento')" id="btn-agendamiento" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
-                    <i data-lucide="calendar" class="w-4 h-4"></i> Link Citas Online
                 </button>
             </nav>
         </div>
@@ -60,72 +58,139 @@
     <!-- PANEL PRINCIPAL -->
     <main class="flex-1 overflow-y-auto p-8 bg-slate-950">
 
-        <!-- 1. DASHBOARD INTELIGENTE -->
-        <section id="sec-dash" class="space-y-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-bold text-white tracking-tight">Panel de Control Inteligente</h2>
-                    <p class="text-xs text-slate-400">Análisis operativo y métricas del taller en tiempo real.</p>
-                </div>
-            </div>
-
-            <!-- TARJETAS DE KPIS -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- 1. DASHBOARD -->
+        <section id="sec-dash" class="space-y-6 hidden">
+            <h2 class="text-2xl font-bold text-white tracking-tight">Panel de Control Inteligente</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl">
-                    <div class="flex justify-between items-center text-slate-400 mb-2">
-                        <span class="text-xs font-medium">Órdenes Activas</span>
-                        <i data-lucide="wrench" class="w-4 h-4 text-blue-400"></i>
-                    </div>
-                    <div class="text-2xl font-bold text-white">8 Vehículos</div>
-                    <span class="text-[11px] text-emerald-400 font-medium">En proceso de reparación</span>
-                </div>
-
-                <div class="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl">
-                    <div class="flex justify-between items-center text-slate-400 mb-2">
-                        <span class="text-xs font-medium">Facturación Estimada</span>
-                        <i data-lucide="dollar-sign" class="w-4 h-4 text-emerald-400"></i>
-                    </div>
-                    <div class="text-2xl font-bold text-white">$1.850.000</div>
-                    <span class="text-[11px] text-emerald-400 font-medium">+12% vs mes anterior</span>
-                </div>
-
-                <div class="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl">
-                    <div class="flex justify-between items-center text-slate-400 mb-2">
-                        <span class="text-xs font-medium">Alertas Bajo Stock</span>
-                        <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
-                    </div>
-                    <div class="text-2xl font-bold text-amber-400">3 Repuestos</div>
-                    <span class="text-[11px] text-slate-400 font-medium">Requieren reponer stock</span>
-                </div>
-
-                <div class="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl">
-                    <div class="flex justify-between items-center text-slate-400 mb-2">
-                        <span class="text-xs font-medium">Citas Agendadas Web</span>
-                        <i data-lucide="calendar-check" class="w-4 h-4 text-indigo-400"></i>
-                    </div>
-                    <div class="text-2xl font-bold text-white">5 Reservas</div>
-                    <span class="text-[11px] text-indigo-400 font-medium">Próximos 7 días</span>
-                </div>
-            </div>
-
-            <!-- GRÁFICOS APEXCHARTS -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl">
-                    <h3 class="text-sm font-bold text-white mb-4">Trabajos Realizados y Comparativa de Ingresos</h3>
-                    <div id="chart-rendimiento" class="w-full h-64"></div>
-                </div>
-
-                <div class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl">
-                    <h3 class="text-sm font-bold text-white mb-4">Vehículos Atendidos por Marca</h3>
-                    <div id="chart-marcas" class="w-full h-64"></div>
+                    <div class="text-xs text-slate-400 mb-1">Órdenes en Taller</div>
+                    <div class="text-2xl font-bold text-white">{{ ordenes|length }} Vehículos</div>
                 </div>
             </div>
         </section>
 
-        <!-- 2. INVENTARIO -->
+        <!-- 2. TABLERO KANBAN DE ÓRDENES DE TRABAJO -->
+        <section id="sec-ot" class="space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">Tablero Kanban de Órdenes de Trabajo</h2>
+                    <p class="text-xs text-slate-400">Arrastra las tarjetas para cambiar el estado de reparación en tiempo real.</p>
+                </div>
+                <!-- BOTÓN CREAR ORDEN -->
+                <button onclick="document.getElementById('modal-ot').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Nueva Orden (OT)
+                </button>
+            </div>
+
+            <!-- COLUMNAS KANBAN -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                
+                <!-- COLUMNA 1: RECEPCIÓN -->
+                <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-amber-400"></span> Recepción
+                        </span>
+                    </div>
+                    <div id="col-recepcion" data-estado="recepcion" class="kanban-col space-y-3 min-h-[450px]">
+                        {% for o in ordenes if o[1] == 'recepcion' %}
+                        <div data-id="{{ o[0] }}" class="kanban-card bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-grab hover:border-slate-700 transition-all">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded">{{ o[4] }}</span>
+                                <span class="text-xs text-emerald-400 font-bold">${{ "{:,.0f}".format(o[3]) }}</span>
+                            </div>
+                            <h4 class="text-xs font-semibold text-slate-300 mb-1">{{ o[5] }} {{ o[6] }}</h4>
+                            <p class="text-[11px] text-slate-400 line-clamp-2 mb-3">{{ o[2] }}</p>
+                            <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between">
+                                <span>👤 {{ o[7] }}</span>
+                                <span>📞 {{ o[8] }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- COLUMNA 2: DIAGNÓSTICO -->
+                <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-400"></span> En Diagnóstico
+                        </span>
+                    </div>
+                    <div id="col-diagnostico" data-estado="diagnostico" class="kanban-col space-y-3 min-h-[450px]">
+                        {% for o in ordenes if o[1] == 'diagnostico' %}
+                        <div data-id="{{ o[0] }}" class="kanban-card bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-grab hover:border-slate-700 transition-all">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded">{{ o[4] }}</span>
+                                <span class="text-xs text-emerald-400 font-bold">${{ "{:,.0f}".format(o[3]) }}</span>
+                            </div>
+                            <h4 class="text-xs font-semibold text-slate-300 mb-1">{{ o[5] }} {{ o[6] }}</h4>
+                            <p class="text-[11px] text-slate-400 line-clamp-2 mb-3">{{ o[2] }}</p>
+                            <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between">
+                                <span>👤 {{ o[7] }}</span>
+                                <span>📞 {{ o[8] }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- COLUMNA 3: REPARACIÓN -->
+                <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-400"></span> En Reparación
+                        </span>
+                    </div>
+                    <div id="col-reparacion" data-estado="reparacion" class="kanban-col space-y-3 min-h-[450px]">
+                        {% for o in ordenes if o[1] == 'reparacion' %}
+                        <div data-id="{{ o[0] }}" class="kanban-card bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-grab hover:border-slate-700 transition-all">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded">{{ o[4] }}</span>
+                                <span class="text-xs text-emerald-400 font-bold">${{ "{:,.0f}".format(o[3]) }}</span>
+                            </div>
+                            <h4 class="text-xs font-semibold text-slate-300 mb-1">{{ o[5] }} {{ o[6] }}</h4>
+                            <p class="text-[11px] text-slate-400 line-clamp-2 mb-3">{{ o[2] }}</p>
+                            <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between">
+                                <span>👤 {{ o[7] }}</span>
+                                <span>📞 {{ o[8] }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- COLUMNA 4: LISTO PARA ENTREGA -->
+                <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Listo para Entrega
+                        </span>
+                    </div>
+                    <div id="col-entrega" data-estado="entrega" class="kanban-col space-y-3 min-h-[450px]">
+                        {% for o in ordenes if o[1] == 'entrega' %}
+                        <div data-id="{{ o[0] }}" class="kanban-card bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-grab hover:border-slate-700 transition-all">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded">{{ o[4] }}</span>
+                                <span class="text-xs text-emerald-400 font-bold">${{ "{:,.0f}".format(o[3]) }}</span>
+                            </div>
+                            <h4 class="text-xs font-semibold text-slate-300 mb-1">{{ o[5] }} {{ o[6] }}</h4>
+                            <p class="text-[11px] text-slate-400 line-clamp-2 mb-3">{{ o[2] }}</p>
+                            <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between">
+                                <span>👤 {{ o[7] }}</span>
+                                <span>📞 {{ o[8] }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 3. INVENTARIO -->
         <section id="sec-inv" class="space-y-6 hidden">
             <h2 class="text-2xl font-bold text-white">Inventario y Repuestos</h2>
-
             <div class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl">
                 <form action="/guardar_repuesto" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
@@ -133,134 +198,88 @@
                         <input type="text" name="codigo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Categoría</label>
-                        <select name="categoria" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                            <option value="Frenos">Frenos</option>
-                            <option value="Motor">Motor</option>
-                            <option value="Suspensión">Suspensión</option>
-                            <option value="Filtros y Aceites">Filtros y Aceites</option>
-                            <option value="General">General</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre del Repuesto</label>
                         <input type="text" name="nombre" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Stock Inicial</label>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Stock</label>
                         <input type="number" name="stock" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Precio Costo ($)</label>
-                        <input type="number" name="costo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Precio Venta ($)</label>
                         <input type="number" name="venta" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Mano de Obra ($)</label>
-                        <input type="number" name="mano_obra" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
-                    </div>
                     <div class="md:col-span-4 text-right">
-                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-2 rounded-xl text-xs shadow-lg shadow-emerald-600/20 transition-all">
-                            📦 Guardar Repuesto
-                        </button>
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-2 rounded-xl text-xs">Guardar Repuesto</button>
                     </div>
                 </form>
-            </div>
-
-            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
-                <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="bg-slate-900 text-xs font-semibold text-slate-400 uppercase border-b border-slate-800">
-                        <tr>
-                            <th class="p-4">Código</th>
-                            <th class="p-4">Categoría</th>
-                            <th class="p-4">Nombre</th>
-                            <th class="p-4">Stock</th>
-                            <th class="p-4">Precio Venta</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-800/60">
-                        {% for r in repuestos %}
-                        <tr class="hover:bg-slate-800/40 transition-colors">
-                            <td class="p-4 font-mono text-xs text-slate-400">{{ r[1] }}</td>
-                            <td class="p-4"><span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs font-medium">{{ r[2] }}</span></td>
-                            <td class="p-4 font-semibold text-white">{{ r[3] }}</td>
-                            <td class="p-4">
-                                {% if r[4] < 3 %}
-                                    <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold text-xs">{{ r[4] }} un.</span>
-                                {% else %}
-                                    <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-xs">{{ r[4] }} un.</span>
-                                {% endif %}
-                            </td>
-                            <td class="p-4 font-bold text-emerald-400">${{ "{:,.0f}".format(r[6]) }}</td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="5" class="p-8 text-center text-slate-500">No hay repuestos registrados aún.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- 3. AUTOAGENDAMIENTO -->
-        <section id="sec-agendamiento" class="space-y-6 hidden">
-            <div class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl">
-                <h2 class="text-xl font-bold text-white mb-2">Enlace Público de Autoagendamiento 24/7</h2>
-                <p class="text-xs text-slate-400 mb-4">Comparte este enlace para que tus clientes agenden sus citas sin llamadas.</p>
-                <div class="flex gap-2">
-                    <input type="text" readonly id="link-citas" value="https://taller-mecanico-saas.onrender.com/agendar/{{ taller.nombre|lower|replace(' ', '-') }}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-emerald-400 font-mono">
-                    <button onclick="copiarLink()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
-                        <i data-lucide="copy" class="w-4 h-4"></i> Copiar
-                    </button>
-                </div>
             </div>
         </section>
 
     </main>
 
+    <!-- MODAL PARA CREAR ORDEN (OT) -->
+    <div id="modal-ot" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md p-6 rounded-2xl shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-base font-bold text-white">Nueva Orden de Trabajo</h3>
+                <button onclick="document.getElementById('modal-ot').classList.add('hidden')" class="text-slate-400 hover:text-white">✕</button>
+            </div>
+            <form action="/crear_ot" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Patente del Vehículo</label>
+                    <input type="text" name="patente" placeholder="Ej: AA123BB" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Motivo de Ingreso / Síntomas</label>
+                    <textarea name="sintomas" rows="3" placeholder="Ruido en frenos delanteros y cambio de aceite..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" required></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Costo Estimado ($)</label>
+                    <input type="number" name="costo" placeholder="45000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="document.getElementById('modal-ot').classList.add('hidden')" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2 rounded-xl text-xs">Cancelar</button>
+                    <button type="submit" class="w-1/2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 rounded-xl text-xs">Crear Orden</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT DRAG & DROP KANBAN -->
     <script>
         lucide.createIcons();
 
         function cambiarPestana(id) {
             document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
             document.getElementById('sec-' + id).classList.remove('hidden');
-            document.querySelectorAll('.nav-btn').forEach(b => {
-                b.classList.remove('text-white', 'bg-slate-800/80');
-                b.classList.add('text-slate-400');
+        }
+
+        // Inicializar Drag & Drop en las 4 columnas
+        document.querySelectorAll('.kanban-col').forEach(columna => {
+            new Sortable(columna, {
+                group: 'kanban',
+                animation: 150,
+                ghostClass: 'kanban-ghost',
+                onEnd: function (evt) {
+                    const ordenId = evt.item.getAttribute('data-id');
+                    const nuevoEstado = evt.to.getAttribute('data-estado');
+
+                    // Enviar cambio de estado vía AJAX al servidor
+                    fetch('/cambiar_estado_ot', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orden_id: ordenId, nuevo_estado: nuevoEstado })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status !== 'ok') {
+                            alert('No se pudo guardar el cambio de estado');
+                        }
+                    });
+                }
             });
-            const btn = document.getElementById('btn-' + id);
-            btn.classList.remove('text-slate-400');
-            btn.classList.add('text-white', 'bg-slate-800/80');
-        }
-
-        function copiarLink() {
-            var copyText = document.getElementById("link-citas");
-            copyText.select();
-            document.execCommand("copy");
-            alert("¡Link de agendamiento copiado!");
-        }
-
-        // ApexCharts
-        var optionsRendimiento = {
-            chart: { type: 'bar', height: 230, toolbar: { show: false }, background: 'transparent' },
-            theme: { mode: 'dark' },
-            colors: ['#3b82f6'],
-            series: [{ name: 'Fichas Cerradas', data: [12, 18, 14, 22, 25, 30] }],
-            xaxis: { categories: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'] },
-            grid: { borderColor: '#1e293b' }
-        };
-        new ApexCharts(document.querySelector("#chart-rendimiento"), optionsRendimiento).render();
-
-        var optionsMarcas = {
-            chart: { type: 'donut', height: 230, background: 'transparent' },
-            theme: { mode: 'dark' },
-            colors: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'],
-            series: [44, 25, 18, 13],
-            labels: ['Toyota', 'Nissan', 'Hyundai', 'Chevrolet']
-        };
-        new ApexCharts(document.querySelector("#chart-marcas"), optionsMarcas).render();
+        });
     </script>
 </body>
 </html>

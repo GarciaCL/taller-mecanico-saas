@@ -92,14 +92,29 @@ def inicializar_db_saas():
         )
     """)
 
-    # MIGRACIÓN DIRECTA: Forzar creación de la columna categoria si no existe
+    # 6. TABLA ÓRDENES DE TRABAJO (KANBAN)
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS ordenes_trabajo (
+            id {serial_pk},
+            taller_id INT NOT NULL,
+            vehiculo_id INT NOT NULL,
+            estado VARCHAR(50) DEFAULT 'recepcion',
+            sintomas_cliente TEXT,
+            costo_estimado FLOAT DEFAULT 0,
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (taller_id) REFERENCES talleres(id),
+            FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id)
+        )
+    """)
+
+    # Migraciones preventivas
     try:
         cursor.execute("ALTER TABLE inventario ADD COLUMN categoria VARCHAR(80) DEFAULT 'General';")
         conexion.commit()
     except Exception:
         conexion.rollback()
 
-    # CREAR TALLER DE PRUEBA SI NO EXISTE
+    # CREAR TALLER Y USUARIO INICIAL SI NO EXISTE
     cursor.execute("SELECT COUNT(*) FROM talleres")
     if cursor.fetchone()[0] == 0:
         if DATABASE_URL:

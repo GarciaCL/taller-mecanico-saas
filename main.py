@@ -1,17 +1,13 @@
-from flask import Flask, render_template, request, redirect, session
-import webbrowser
-import threading
+from flask import Flask, render_template, request, redirect, session, jsonify
+import os
 from base_datos.crear_db import inicializar_db_saas
 from modulos.gestion_db import (
     validar_login,
-    obtener_clientes_y_vehiculos,
     obtener_inventario,
-    obtener_historial_por_patente,
-    agregar_cliente_y_vehiculo,
     agregar_repuesto,
-    crear_ficha_trabajo,
-    buscar_vehiculo_por_patente,
-    crear_copia_seguridad_zip
+    crear_orden_trabajo,
+    obtener_ordenes_kanban,
+    actualizar_estado_orden
 )
 
 app = Flask(__name__)
@@ -25,32 +21,14 @@ def inicio():
         return redirect("/login")
     
     taller_id = session["taller_id"]
-    clientes = obtener_clientes_y_vehiculos(taller_id)
     repuestos = obtener_inventario(taller_id)
-    
-    # Búsqueda de historial por patente
-    patente_busqueda = request.args.get("patente_busqueda", "").strip()
-    historial = []
-    if patente_busqueda:
-        historial = obtener_historial_por_patente(taller_id, patente_busqueda)
+    ordenes = obtener_ordenes_kanban(taller_id)
     
     taller_info = {
         "nombre": session.get("nombre_taller"),
         "color": session.get("color_primario", "#1e293b"),
-        "mod_inventario": session.get("mod_inventario"),
-        "mod_citas": session.get("mod_citas"),
-        "mod_correos": session.get("mod_correos")
     }
-    return render_template(
-        "index.html", 
-        taller=taller_info, 
-        clientes=clientes, 
-        repuestos=repuestos,
-        historial=historial,
-        patente_buscada=patente_busqueda
-    )
-
-# (El resto de rutas /login, /logout, /guardar_cliente, /guardar_repuesto, /guardar_ficha permanecen iguales)
+    return render_template("index.html", taller=taller_info, repuestos=repuestos, ordenes=ordenes)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -64,10 +42,6 @@ def login():
             session["taller_id"] = datos[1]
             session["usuario"] = datos[2]
             session["nombre_taller"] = datos[4]
-            session["color_primario"] = datos[6]
-            session["mod_inventario"] = datos[7]
-            session["mod_citas"] = datos[8]
-            session["mod_correos"] = datos[9]
             return redirect("/")
         else:
             return render_template("login.html", error="Usuario o contraseña incorrectos")
@@ -79,23 +53,29 @@ def logout():
     session.clear()
     return redirect("/login")
 
-@app.route("/guardar_cliente", methods=["POST"])
-def guardar_cliente_web():
+@app.route("/crear_ot", methods=["POST"])
+def crear_ot_web():
     if "taller_id" not in session:
         return redirect("/login")
-    agregar_cliente_y_vehiculo(
-        taller_id=session["taller_id"],
-        nombre=request.form["nombre"],
-        rut=request.form["rut"],
-        telefono=request.form.get("telefono", ""),
-        correo=request.form.get("correo", ""),
-        patente=request.form["patente"],
-        marca=request.form.get("marca", ""),
-        modelo=request.form.get("modelo", ""),
-        anio=int(request.form["anio"]) if request.form.get("anio") else 0,
-        km=int(request.form["km"]) if request.form.get("km") else 0
-    )
+    
+    patente = request.form["patente"]
+    sintomas = request.form["sintomas"]
+    costo = float(request.form["costo"]) if request.form.get("costo") else 0.0
+    
+    crear_orden_trabajo(session["taller_id"], patente, sintomas, costo)
     return redirect("/")
+
+@app.route("/cambiar_estado_ot", methods=["POST"])
+def cambiar_estado_ot_web():
+    if "taller_id" not in session:
+        return jsonify({"status": "error", "message": "No autorizado"}), 401
+    
+    data = request.json
+    orden_id = data.get("orden_id")
+    nuevo_estado = data.get("nuevo_estado")
+    
+    actualizar_estado_orden(orden_id, session["taller_id"], nuevo_estado)
+    return jsonify({"status": "ok"})
 
 @app.route("/guardar_repuesto", methods=["POST"])
 def guardar_repuesto_web():
@@ -110,27 +90,8 @@ def guardar_repuesto_web():
         costo=float(request.form["costo"]) if request.form.get("costo") else 0.0,
         venta=float(request.form["venta"]) if request.form.get("venta") else 0.0,
         mano_obra=float(request.form["mano_obra"]) if request.form.get("mano_obra") else 0.0,
-        compatabilidades=request.form.get("compatibles", "")
+        compatabilidades=""
     )
-    return redirect("/")
-
-@app.route("/guardar_ficha", methods=["POST"])
-def guardar_ficha_web():
-    if "taller_id" not in session:
-        return redirect("/login")
-    patente = request.form["patente"].strip()
-    datos = buscar_vehiculo_por_patente(patente)
-    if datos:
-        crear_ficha_trabajo(
-            vehiculo_id=datos[0],
-            observaciones=request.form["observaciones"],
-            costo_total=float(request.form["costo"]) if request.form.get("costo") else 0.0
-        )
-    return redirect("/")
-
-@app.route("/respaldar", methods=["POST"])
-def respaldar_web():
-    crear_copia_seguridad_zip()
     return redirect("/")
 
 if __name__ == "__main__":
