@@ -35,9 +35,9 @@ def validar_login(usuario, password):
     conexion.close()
     return resultado
 
-# --- FUNCIONES DE ÓRDENES DE TRABAJO (KANBAN) ---
+# --- RECEPCIÓN GUIADA Y ÓRDENES KANBAN ---
 
-def crear_orden_trabajo(taller_id, patente, sintomas, costo_estimado):
+def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, km_ingreso, combustible, detalles, fotos):
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -48,13 +48,23 @@ def crear_orden_trabajo(taller_id, patente, sintomas, costo_estimado):
     
     if not vehiculo:
         conexion.close()
-        return False  # El vehículo no existe aún en el sistema
+        return False
 
     vehiculo_id = vehiculo[0]
+
+    # Actualizar kilometraje del vehículo si es mayor al registrado
+    cursor.execute(f"UPDATE vehiculos SET kilometraje = {p} WHERE id = {p}", (km_ingreso, vehiculo_id))
+
     cursor.execute(f"""
-        INSERT INTO ordenes_trabajo (taller_id, vehiculo_id, estado, sintomas_cliente, costo_estimado)
-        VALUES ({p}, {p}, 'recepcion', {p}, {p})
-    """, (taller_id, vehiculo_id, sintomas, costo_estimado))
+        INSERT INTO ordenes_trabajo 
+        (taller_id, vehiculo_id, estado, sintomas_cliente, costo_estimado, km_ingreso, nivel_combustible, detalles_carrocería,
+         foto_frontal, foto_trasera, foto_costado_izq, foto_costado_der, foto_tablero)
+        VALUES ({p}, {p}, 'recepcion', {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
+    """, (
+        taller_id, vehiculo_id, sintomas, costo_estimado, km_ingreso, combustible, detalles,
+        fotos.get('frontal', ''), fotos.get('trasera', ''), fotos.get('costado_izq', ''),
+        fotos.get('costado_der', ''), fotos.get('tablero', '')
+    ))
 
     conexion.commit()
     conexion.close()
@@ -68,7 +78,9 @@ def obtener_ordenes_kanban(taller_id):
     cursor.execute(f"""
         SELECT ot.id, ot.estado, ot.sintomas_cliente, COALESCE(ot.costo_estimado, 0),
                v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''),
-               c.nombre, COALESCE(c.telefono, '')
+               c.nombre, COALESCE(c.telefono, ''),
+               COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'),
+               COALESCE(ot.foto_frontal, ''), COALESCE(ot.foto_tablero, '')
         FROM ordenes_trabajo ot
         JOIN vehiculos v ON ot.vehiculo_id = v.id
         JOIN clientes c ON v.cliente_id = c.id
@@ -94,7 +106,7 @@ def actualizar_estado_orden(orden_id, taller_id, nuevo_estado):
     conexion.commit()
     conexion.close()
 
-# --- OTROS LISTADOS E INVENTARIO ---
+# --- INVENTARIO ---
 
 def obtener_inventario(taller_id):
     conexion = obtener_conexion()
@@ -120,15 +132,3 @@ def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, 
     """, (taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades))
     conexion.commit()
     conexion.close()
-
-def crear_copia_seguridad_zip():
-    carpeta_respaldos = "respaldos"
-    if not os.path.exists(carpeta_respaldos):
-        os.makedirs(carpeta_respaldos)
-    fecha_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    nombre_zip = os.path.join(carpeta_respaldos, f"respaldo_taller_{fecha_str}.zip")
-    db_local = "base_datos/taller.db"
-    if os.path.exists(db_local):
-        with zipfile.ZipFile(nombre_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            zipf.write(db_local, arcname="taller.db")
-    return nombre_zip

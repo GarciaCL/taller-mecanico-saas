@@ -1,17 +1,24 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
 import os
+from werkzeug.utils import secure_filename
 from base_datos.crear_db import inicializar_db_saas
 from modulos.gestion_db import (
     validar_login,
     obtener_inventario,
     agregar_repuesto,
-    crear_orden_trabajo,
+    crear_orden_recepcion_guiada,
     obtener_ordenes_kanban,
     actualizar_estado_orden
 )
 
 app = Flask(__name__)
 app.secret_key = "CLAVE-SUPER-SECRETA-SAAS-TALLER"
+
+UPLOAD_FOLDER = "static/uploads"
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 inicializar_db_saas()
 
@@ -53,6 +60,14 @@ def logout():
     session.clear()
     return redirect("/login")
 
+def guardar_foto(file, prefijo):
+    if file and file.filename != '':
+        filename = secure_filename(f"{prefijo}_{file.filename}")
+        path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(path)
+        return f"/static/uploads/{filename}"
+    return ""
+
 @app.route("/crear_ot", methods=["POST"])
 def crear_ot_web():
     if "taller_id" not in session:
@@ -61,8 +76,20 @@ def crear_ot_web():
     patente = request.form["patente"]
     sintomas = request.form["sintomas"]
     costo = float(request.form["costo"]) if request.form.get("costo") else 0.0
+    km = int(request.form["km"]) if request.form.get("km") else 0
+    combustible = request.form.get("combustible", "1/2")
+    detalles = request.form.get("detalles", "")
+
+    # Procesar imágenes subidas
+    fotos = {
+        'frontal': guardar_foto(request.files.get('foto_frontal'), f"{patente}_frontal"),
+        'trasera': guardar_foto(request.files.get('foto_trasera'), f"{patente}_trasera"),
+        'costado_izq': guardar_foto(request.files.get('foto_izq'), f"{patente}_izq"),
+        'costado_der': guardar_foto(request.files.get('foto_der'), f"{patente}_der"),
+        'tablero': guardar_foto(request.files.get('foto_tablero'), f"{patente}_tablero")
+    }
     
-    crear_orden_trabajo(session["taller_id"], patente, sintomas, costo)
+    crear_orden_recepcion_guiada(session["taller_id"], patente, sintomas, costo, km, combustible, detalles, fotos)
     return redirect("/")
 
 @app.route("/cambiar_estado_ot", methods=["POST"])

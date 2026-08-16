@@ -97,7 +97,7 @@ def inicializar_db_saas():
     """)
     conexion.commit()
 
-    # 6. TABLA ÓRDENES DE TRABAJO (KANBAN)
+    # 6. TABLA ÓRDENES DE TRABAJO (CON RECEPCIÓN GUIADA)
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS ordenes_trabajo (
             id {serial_pk},
@@ -106,6 +106,14 @@ def inicializar_db_saas():
             estado VARCHAR(50) DEFAULT 'recepcion',
             sintomas_cliente TEXT,
             costo_estimado FLOAT DEFAULT 0,
+            km_ingreso INT DEFAULT 0,
+            nivel_combustible VARCHAR(20) DEFAULT '1/2',
+            detalles_carrocería TEXT,
+            foto_frontal TEXT,
+            foto_trasera TEXT,
+            foto_costado_izq TEXT,
+            foto_costado_der TEXT,
+            foto_tablero TEXT,
             fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (taller_id) REFERENCES talleres(id),
             FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id)
@@ -113,37 +121,19 @@ def inicializar_db_saas():
     """)
     conexion.commit()
 
-    # MIGRACIÓN PREVENTIVA DE COLUMNA CATEGORIA
+    # Migraciones preventivas
     try:
-        cursor.execute("ALTER TABLE inventario ADD COLUMN categoria VARCHAR(80) DEFAULT 'General';")
+        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN km_ingreso INT DEFAULT 0;")
+        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN nivel_combustible VARCHAR(20) DEFAULT '1/2';")
+        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN detalles_carrocería TEXT;")
+        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN foto_frontal TEXT;")
+        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN foto_trasera TEXT;")
+        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN foto_costado_izq TEXT;")
+        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN foto_costado_der TEXT;")
+        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN foto_tablero TEXT;")
         conexion.commit()
     except Exception:
         conexion.rollback()
-
-    # CREAR TALLER DE PRUEBA SI LA TABLA ESTÁ VACÍA
-    cursor.execute("SELECT COUNT(*) FROM talleres")
-    if cursor.fetchone()[0] == 0:
-        if DATABASE_URL:
-            cursor.execute("""
-                INSERT INTO talleres (nombre_taller, rut_empresa, color_primario, modulo_inventario, modulo_citas_web, modulo_correos)
-                VALUES ('Taller Mecánico Central', '76.123.456-7', '#1e293b', TRUE, TRUE, TRUE) RETURNING id;
-            """)
-            taller_id = cursor.fetchone()[0]
-            cursor.execute("""
-                INSERT INTO usuarios (taller_id, usuario, password, rol)
-                VALUES (%s, 'admin', 'admin123', 'administrador')
-            """, (taller_id,))
-        else:
-            cursor.execute("""
-                INSERT INTO talleres (nombre_taller, rut_empresa, color_primario, modulo_inventario, modulo_citas_web, modulo_correos)
-                VALUES ('Taller Mecánico Central', '76.123.456-7', '#1e293b', 1, 1, 1)
-            """)
-            taller_id = cursor.lastrowid
-            cursor.execute("""
-                INSERT INTO usuarios (taller_id, usuario, password, rol)
-                VALUES (?, 'admin', 'admin123', 'administrador')
-            """, (taller_id,))
-        conexion.commit()
 
     conexion.close()
 
