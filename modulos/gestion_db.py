@@ -2,6 +2,7 @@ import os
 import zipfile
 from datetime import datetime
 
+# Detectar la URL de la base de datos (PostgreSQL en Render o SQLite local)
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
@@ -10,6 +11,7 @@ if DATABASE_URL:
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 def obtener_conexion():
+    """Devuelve una conexión a PostgreSQL si existe DATABASE_URL, de lo contrario a SQLite."""
     if DATABASE_URL:
         return psycopg2.connect(DATABASE_URL)
     else:
@@ -17,12 +19,17 @@ def obtener_conexion():
         return sqlite3.connect("base_datos/taller.db")
 
 def obtener_placeholder():
+    """Devuelve %s para PostgreSQL y ? para SQLite."""
     return "%s" if DATABASE_URL else "?"
 
+# --- AUTENTICACIÓN ---
+
 def validar_login(usuario, password):
+    """Valida las credenciales de un usuario y retorna sus datos y los de su taller."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
+    
     query = f"""
         SELECT u.id, u.taller_id, u.usuario, u.rol, t.nombre_taller, t.logo_url, t.color_primario, 
                t.modulo_inventario, t.modulo_citas_web, t.modulo_correos
@@ -35,43 +42,51 @@ def validar_login(usuario, password):
     conexion.close()
     return resultado
 
-# --- CONSULTAS PARA LISTADOS ---
+# --- CONSULTAS Y LISTADOS ---
 
 def obtener_clientes_y_vehiculos(taller_id):
-    """Obtiene el listado de clientes junto con sus vehículos asociados."""
+    """Obtiene todos los clientes y sus vehículos para el taller especificado."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
+    
     cursor.execute(f"""
-        SELECT c.id, c.nombre, c.rut, c.telefono, c.correo,
-               v.patente_vin, v.marca, v.modelo, v.anio, v.kilometraje
+        SELECT c.id, c.nombre, c.rut, COALESCE(c.telefono, ''), COALESCE(c.correo, ''),
+               COALESCE(v.patente_vin, 'Sin Vehículo'), COALESCE(v.marca, ''), 
+               COALESCE(v.modelo, ''), COALESCE(v.anio, 0), COALESCE(v.kilometraje, 0)
         FROM clientes c
         LEFT JOIN vehiculos v ON c.id = v.cliente_id
         WHERE c.taller_id = {p}
         ORDER BY c.id DESC
     """, (taller_id,))
+    
     filas = cursor.fetchall()
     conexion.close()
     return filas
 
 def obtener_inventario(taller_id):
-    """Obtiene el listado completo de repuestos."""
+    """Obtiene todos los repuestos registrados con sus categorías y compatibilidad."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
+    
     cursor.execute(f"""
-        SELECT id, codigo, categoria, nombre, stock, precio_costo, precio_venta, mano_obra, modelos_compatibles
+        SELECT id, codigo, COALESCE(categoria, 'General'), nombre, COALESCE(stock, 0), 
+               COALESCE(precio_costo, 0), COALESCE(precio_venta, 0), COALESCE(mano_obra, 0), 
+               COALESCE(modelos_compatibles, 'Universal')
         FROM inventario
         WHERE taller_id = {p}
         ORDER BY id DESC
     """, (taller_id,))
+    
     filas = cursor.fetchall()
     conexion.close()
     return filas
 
-# --- REGISTROS ---
+# --- REGISTRAR DATOS ---
 
 def agregar_cliente_y_vehiculo(taller_id, nombre, rut, telefono, correo, patente, marca, modelo, anio, km):
+    """Registra un cliente y su vehículo asociado."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -98,6 +113,7 @@ def agregar_cliente_y_vehiculo(taller_id, nombre, rut, telefono, correo, patente
     conexion.close()
 
 def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades):
+    """Agrega un nuevo repuesto al inventario del taller."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -111,6 +127,7 @@ def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, 
     conexion.close()
 
 def buscar_vehiculo_por_patente(patente):
+    """Busca un vehículo y su cliente dueño por la patente."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -127,6 +144,7 @@ def buscar_vehiculo_por_patente(patente):
     return resultado
 
 def crear_ficha_trabajo(vehiculo_id, observaciones, costo_total):
+    """Crea una nueva ficha de trabajo asociada a un vehículo."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -140,6 +158,7 @@ def crear_ficha_trabajo(vehiculo_id, observaciones, costo_total):
     conexion.close()
 
 def crear_copia_seguridad_zip():
+    """Genera un archivo .zip de respaldo."""
     carpeta_respaldos = "respaldos"
     if not os.path.exists(carpeta_respaldos):
         os.makedirs(carpeta_respaldos)
