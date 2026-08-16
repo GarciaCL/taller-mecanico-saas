@@ -236,11 +236,14 @@
                 </div>
 
                 <div class="pt-2 flex gap-2">
-                    <button type="submit" class="w-1/2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg shadow-blue-600/20">
-                        💾 Guardar Cambios
+                    <button type="submit" class="w-1/3 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg shadow-blue-600/20">
+                        💾 Guardar
                     </button>
-                    <a id="btn-whatsapp-modal" href="#" target="_blank" class="w-1/2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg shadow-emerald-600/20">
-                        📱 Enviar WhatsApp
+                    <a id="btn-pdf-modal" href="#" target="_blank" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1">
+                        📄 Descargar PDF
+                    </a>
+                    <a id="btn-whatsapp-modal" href="#" target="_blank" class="w-1/3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg shadow-emerald-600/20">
+                        📱 WhatsApp
                     </a>
                 </div>
             </form>
@@ -354,7 +357,7 @@
         }
 
         // CONFIRMACIÓN CON SWEETALERT2
-        function confirmarArchivado() {
+        function confirmarArchivar() {
             Swal.fire({
                 title: '¿Entregar y Archivar?',
                 text: "El vehículo será removido del Kanban diario y quedará registrado en el historial de la patente.",
@@ -412,6 +415,7 @@
             document.getElementById('edit-costo').value = costo;
 
             document.getElementById('btn-historial-patente').setAttribute('href', '/historial/' + patente);
+            document.getElementById('btn-pdf-modal').setAttribute('href', '/descargar_pdf/' + token);
 
             const urlSeguimiento = "https://taller-mecanico-saas.onrender.com/seguimiento/" + token;
 

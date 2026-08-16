@@ -1,5 +1,6 @@
 import os
-from flask import Flask, render_template, request, redirect, session, jsonify
+import io
+from flask import Flask, render_template, request, redirect, session, jsonify, send_file
 from base_datos.crear_db import inicializar_db_saas
 from modulos.gestion_db import (
     validar_login, crear_orden_recepcion_guiada, obtener_ordenes_kanban,
@@ -7,6 +8,7 @@ from modulos.gestion_db import (
     obtener_inventario, agregar_repuesto, actualizar_orden_trabajo,
     finalizar_orden_trabajo, obtener_historial_vehiculo
 )
+from modulos.generador_pdf import generar_pdf_ficha_recepcion
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta_saas_taller"
@@ -139,6 +141,21 @@ def historial_vehiculo_web(patente):
     
     historial = obtener_historial_vehiculo(session["taller_id"], patente)
     return render_template("historial.html", historial=historial, patente=patente.upper())
+
+@app.route("/descargar_pdf/<token>")
+def descargar_pdf_web(token):
+    orden = obtener_detalle_orden_por_token(token)
+    if not orden:
+        return "Orden no encontrada", 404
+    
+    pdf_data = generar_pdf_ficha_recepcion(orden, request.host_url.rstrip('/'))
+    
+    return send_file(
+        io.BytesIO(pdf_data),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f"Ficha_Recepcion_{orden[12]}.pdf"
+    )
 
 @app.route("/guardar_repuesto", methods=["POST"])
 def guardar_repuesto_web():
