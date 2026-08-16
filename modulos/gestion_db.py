@@ -93,7 +93,6 @@ def obtener_ordenes_kanban(taller_id):
     filas = cursor.fetchall()
     conexion.close()
 
-    # Formatear la fecha a ISO string para que JavaScript la procese fácilmente
     resultado = []
     for f in filas:
         f_list = list(f)
@@ -144,6 +143,26 @@ def obtener_detalle_orden_por_token(token_o_id):
     conexion.close()
     return resultado
 
+def actualizar_orden_trabajo(taller_id, orden_id, km, combustible, tiempo_horas, sintomas, costo):
+    """Permite editar los datos de una orden existente en el taller."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"""
+        UPDATE ordenes_trabajo
+        SET km_ingreso = {p},
+            nivel_combustible = {p},
+            tiempo_estimado_horas = {p},
+            sintomas_cliente = {p},
+            costo_estimado = {p}
+        WHERE id = {p} AND taller_id = {p}
+    """, (km, combustible, tiempo_horas, sintomas, costo, orden_id, taller_id))
+
+    conexion.commit()
+    conexion.close()
+    return True
+
 # --- INVENTARIO ---
 
 def obtener_inventario(taller_id):
@@ -170,23 +189,3 @@ def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, 
     """, (taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades))
     conexion.commit()
     conexion.close()
-    
-    def actualizar_orden_trabajo(taller_id, orden_id, km, combustible, tiempo_horas, sintomas, costo):
-    """Permite editar los datos de una orden existente en el taller."""
-    conexion = obtener_conexion()
-    cursor = conexion.cursor()
-    p = obtener_placeholder()
-
-    cursor.execute(f"""
-        UPDATE ordenes_trabajo
-        SET km_ingreso = {p},
-            nivel_combustible = {p},
-            tiempo_estimado_horas = {p},
-            sintomas_cliente = {p},
-            costo_estimado = {p}
-        WHERE id = {p} AND taller_id = {p}
-    """, (km, combustible, tiempo_horas, sintomas, costo, orden_id, taller_id))
-
-    conexion.commit()
-    conexion.close()
-    return True
