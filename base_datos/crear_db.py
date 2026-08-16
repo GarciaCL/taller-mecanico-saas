@@ -1,12 +1,9 @@
 import os
-import urllib.parse
 
-# Si existe la variable DATABASE_URL (en Render), usa PostgreSQL; de lo contrario, SQLite local.
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
     import psycopg2
-    # Fix para compatibilidad con versiones de PostgreSQL en Render (postgres:// -> postgresql://)
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
@@ -21,11 +18,10 @@ def inicializar_db_saas():
     conexion = obtener_conexion()
     cursor = conexion.cursor()
 
-    # Formato de variables de auto-incremento según motor
     serial_pk = "SERIAL PRIMARY KEY" if DATABASE_URL else "INTEGER PRIMARY KEY AUTOINCREMENT"
     bool_type = "BOOLEAN DEFAULT TRUE" if DATABASE_URL else "INTEGER DEFAULT 1"
 
-    # 1. TABLA DE TALLERES
+    # 1. TABLA TALLERES
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS talleres (
             id {serial_pk},
@@ -40,7 +36,7 @@ def inicializar_db_saas():
         )
     """)
 
-    # 2. TABLA DE USUARIOS
+    # 2. TABLA USUARIOS
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS usuarios (
             id {serial_pk},
@@ -52,7 +48,7 @@ def inicializar_db_saas():
         )
     """)
 
-    # 3. TABLA DE CLIENTES
+    # 3. TABLA CLIENTES
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS clientes (
             id {serial_pk},
@@ -65,7 +61,7 @@ def inicializar_db_saas():
         )
     """)
 
-    # 4. TABLA DE VEHÍCULOS
+    # 4. TABLA VEHÍCULOS
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS vehiculos (
             id {serial_pk},
@@ -79,7 +75,7 @@ def inicializar_db_saas():
         )
     """)
 
-   # 5. TABLA DE INVENTARIO (con Categoría)
+    # 5. TABLA INVENTARIO
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS inventario (
             id {serial_pk},
@@ -96,31 +92,22 @@ def inicializar_db_saas():
         )
     """)
 
-    # 6. TABLA DE FICHAS DE TRABAJO
-    cursor.execute(f"""
-        CREATE TABLE IF NOT EXISTS fichas_trabajo (
-            id {serial_pk},
-            vehiculo_id INT NOT NULL,
-            observaciones_mecanico TEXT,
-            costo_total FLOAT,
-            fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id)
-        )
-    """)
+    # MIGRACIÓN DIRECTA: Forzar creación de la columna categoria si no existe
+    try:
+        cursor.execute("ALTER TABLE inventario ADD COLUMN categoria VARCHAR(80) DEFAULT 'General';")
+        conexion.commit()
+    except Exception:
+        conexion.rollback()
 
-    # Crear Taller y Usuario Administrador de prueba si la tabla está vacía
+    # CREAR TALLER DE PRUEBA SI NO EXISTE
     cursor.execute("SELECT COUNT(*) FROM talleres")
-    count = cursor.fetchone()[0]
-    
-    if count == 0:
+    if cursor.fetchone()[0] == 0:
         if DATABASE_URL:
             cursor.execute("""
                 INSERT INTO talleres (nombre_taller, rut_empresa, color_primario, modulo_inventario, modulo_citas_web, modulo_correos)
-                VALUES ('Taller Mecánico Central', '76.123.456-7', '#1e293b', TRUE, TRUE, TRUE)
-                RETURNING id;
+                VALUES ('Taller Mecánico Central', '76.123.456-7', '#1e293b', TRUE, TRUE, TRUE) RETURNING id;
             """)
             taller_id = cursor.fetchone()[0]
-            
             cursor.execute("""
                 INSERT INTO usuarios (taller_id, usuario, password, rol)
                 VALUES (%s, 'admin', 'admin123', 'administrador')
@@ -131,13 +118,10 @@ def inicializar_db_saas():
                 VALUES ('Taller Mecánico Central', '76.123.456-7', '#1e293b', 1, 1, 1)
             """)
             taller_id = cursor.lastrowid
-            
             cursor.execute("""
                 INSERT INTO usuarios (taller_id, usuario, password, rol)
                 VALUES (?, 'admin', 'admin123', 'administrador')
             """, (taller_id,))
-
-        print("✅ Base de datos PostgreSQL/SQLite inicializada con usuario 'admin' / 'admin123'.")
 
     conexion.commit()
     conexion.close()
