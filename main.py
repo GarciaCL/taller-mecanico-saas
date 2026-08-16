@@ -6,17 +6,18 @@ from modulos.gestion_db import (
     validar_login, crear_orden_recepcion_guiada, obtener_ordenes_kanban,
     actualizar_estado_orden, obtener_detalle_orden_por_token,
     obtener_inventario, agregar_repuesto, actualizar_orden_trabajo,
-    finalizar_orden_trabajo, obtener_historial_vehiculo
+    finalizar_orden_trabajo, obtener_historial_vehiculo,
+    agregar_repuesto_a_orden, descontar_stock_orden
 )
 from modulos.generador_pdf import generar_pdf_ficha_recepcion
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta_saas_taller"
 
-# Inicializar Base de Datos al arrancar el servidor
+# Inicializar la estructura de la base de datos al arrancar el servidor
 inicializar_db_saas()
 
-# Auxiliar para guardar imágenes en static/uploads
+# Auxiliar para guardar imágenes subidas en static/uploads
 def guardar_foto(file, nombre_base):
     if not file or file.filename == '':
         return ''
@@ -115,7 +116,11 @@ def finalizar_ot_web():
         return redirect("/login")
     
     orden_id = int(request.form["orden_id"])
+    
+    # Descontar automático de stock en inventario y archivar orden
+    descontar_stock_orden(orden_id, session["taller_id"])
     finalizar_orden_trabajo(orden_id, session["taller_id"])
+    
     return redirect("/")
 
 @app.route("/cambiar_estado_ot", methods=["POST"])
@@ -124,7 +129,15 @@ def cambiar_estado_ot_web():
         return jsonify({"success": False}), 401
     
     data = request.get_json()
-    actualizar_estado_orden(data["orden_id"], session["taller_id"], data["nuevo_estado"])
+    orden_id = data["orden_id"]
+    nuevo_estado = data["nuevo_estado"]
+
+    actualizar_estado_orden(orden_id, session["taller_id"], nuevo_estado)
+
+    # Si la tarjeta se mueve a 'Listo para Entrega', descontar automáticamente el stock
+    if nuevo_estado == 'entrega':
+        descontar_stock_orden(orden_id, session["taller_id"])
+
     return jsonify({"success": True})
 
 @app.route("/seguimiento/<token>")
