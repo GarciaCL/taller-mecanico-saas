@@ -42,7 +42,6 @@ def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, k
     cursor = conexion.cursor()
     p = obtener_placeholder()
 
-    # Buscar vehiculo_id por patente
     cursor.execute(f"SELECT id FROM vehiculos WHERE UPPER(patente_vin) = UPPER({p})", (patente.strip(),))
     vehiculo = cursor.fetchone()
     
@@ -51,8 +50,6 @@ def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, k
         return False
 
     vehiculo_id = vehiculo[0]
-
-    # Actualizar kilometraje del vehículo si es mayor al registrado
     cursor.execute(f"UPDATE vehiculos SET kilometraje = {p} WHERE id = {p}", (km_ingreso, vehiculo_id))
 
     cursor.execute(f"""
@@ -80,7 +77,8 @@ def obtener_ordenes_kanban(taller_id):
                v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''),
                c.nombre, COALESCE(c.telefono, ''),
                COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'),
-               COALESCE(ot.foto_frontal, ''), COALESCE(ot.foto_tablero, '')
+               COALESCE(ot.foto_frontal, ''), COALESCE(ot.foto_tablero, ''),
+               COALESCE(ot.detalles_carrocería, '')
         FROM ordenes_trabajo ot
         JOIN vehiculos v ON ot.vehiculo_id = v.id
         JOIN clientes c ON v.cliente_id = c.id
@@ -105,6 +103,31 @@ def actualizar_estado_orden(orden_id, taller_id, nuevo_estado):
 
     conexion.commit()
     conexion.close()
+
+def obtener_detalle_orden_publico(orden_id):
+    """Obtiene el detalle completo de una orden para la vista pública del cliente."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"""
+        SELECT ot.id, ot.estado, COALESCE(ot.sintomas_cliente, ''), COALESCE(ot.costo_estimado, 0),
+               COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'), COALESCE(ot.detalles_carrocería, ''),
+               COALESCE(ot.foto_frontal, ''), COALESCE(ot.foto_trasera, ''), COALESCE(ot.foto_costado_izq, ''),
+               COALESCE(ot.foto_costado_der, ''), COALESCE(ot.foto_tablero, ''), ot.fecha_creacion,
+               v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''), COALESCE(v.anio, 0),
+               c.nombre, COALESCE(c.telefono, ''),
+               t.nombre_taller, COALESCE(t.logo_url, '/static/logo_defecto.png'), COALESCE(t.color_primario, '#3b82f6')
+        FROM ordenes_trabajo ot
+        JOIN vehiculos v ON ot.vehiculo_id = v.id
+        JOIN clientes c ON v.cliente_id = c.id
+        JOIN talleres t ON ot.taller_id = t.id
+        WHERE ot.id = {p}
+    """, (orden_id,))
+
+    resultado = cursor.fetchone()
+    conexion.close()
+    return resultado
 
 # --- INVENTARIO ---
 
@@ -132,28 +155,3 @@ def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, 
     """, (taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades))
     conexion.commit()
     conexion.close()
-
-    def obtener_detalle_orden_publico(orden_id):
-    """Obtiene el detalle completo de una orden para la vista pública del cliente."""
-    conexion = obtener_conexion()
-    cursor = conexion.cursor()
-    p = obtener_placeholder()
-
-    cursor.execute(f"""
-        SELECT ot.id, ot.estado, COALESCE(ot.sintomas_cliente, ''), COALESCE(ot.costo_estimado, 0),
-               COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'), COALESCE(ot.detalles_carrocería, ''),
-               COALESCE(ot.foto_frontal, ''), COALESCE(ot.foto_trasera, ''), COALESCE(ot.foto_costado_izq, ''),
-               COALESCE(ot.foto_costado_der, ''), COALESCE(ot.foto_tablero, ''), ot.fecha_creacion,
-               v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''), COALESCE(v.anio, 0),
-               c.nombre, COALESCE(c.telefono, ''),
-               t.nombre_taller, COALESCE(t.logo_url, '/static/logo_defecto.png'), COALESCE(t.color_primario, '#3b82f6')
-        FROM ordenes_trabajo ot
-        JOIN vehiculos v ON ot.vehiculo_id = v.id
-        JOIN clientes c ON v.cliente_id = c.id
-        JOIN talleres t ON ot.taller_id = t.id
-        WHERE ot.id = {p}
-    """, (orden_id,))
-
-    resultado = cursor.fetchone()
-    conexion.close()
-    return resultado

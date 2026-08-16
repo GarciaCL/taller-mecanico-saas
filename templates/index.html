@@ -9,7 +9,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <!-- SortableJS para Drag & Drop interactivo -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -74,9 +73,8 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h2 class="text-2xl font-bold text-white tracking-tight">Tablero Kanban de Órdenes de Trabajo</h2>
-                    <p class="text-xs text-slate-400">Arrastra las tarjetas para cambiar el estado de reparación en tiempo real.</p>
+                    <p class="text-xs text-slate-400">Haz clic en cualquier tarjeta para ver detalles o compartir por WhatsApp.</p>
                 </div>
-                <!-- BOTÓN CREAR ORDEN -->
                 <button onclick="document.getElementById('modal-ot').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all">
                     <i data-lucide="plus" class="w-4 h-4"></i> Nueva Orden (OT)
                 </button>
@@ -85,165 +83,44 @@
             <!-- COLUMNAS KANBAN -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 
-                <!-- COLUMNA 1: RECEPCIÓN -->
-                <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-amber-400"></span> Recepción
-                        </span>
-                    </div>
-                    <div id="col-recepcion" data-estado="recepcion" class="kanban-col space-y-3 min-h-[450px]">
-                        {% for o in ordenes if o[1] == 'recepcion' %}
-                        <div data-id="{{ o[0] }}" class="kanban-card bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-grab hover:border-slate-700 transition-all">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded">{{ o[4] }}</span>
-                                <span class="text-xs text-emerald-400 font-bold">${{ "{:,.0f}".format(o[3]) }}</span>
-                            </div>
-                            <h4 class="text-xs font-semibold text-slate-300 mb-1.5">{{ o[5] }} {{ o[6] }}</h4>
-                            <div class="flex items-center gap-2 mb-3">
-                                <span class="text-[10px] font-semibold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                    🏎️ {{ o[9] if o[9] else '0' }} KM
-                                </span>
-                                <span class="text-[10px] font-semibold bg-slate-800 text-amber-400 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                    ⛽ {{ o[10] if o[10] else 'N/I' }}
-                                </span>
-                            </div>
-                            <p class="text-[11px] text-slate-400 line-clamp-2 mb-3">{{ o[2] }}</p>
-                            <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between">
-                                <span>👤 {{ o[7] }}</span>
-                                <span>📞 {{ o[8] }}</span>
-                            </div>
-                            <!-- En el pie de la tarjeta del Kanban -->
-<div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between items-center">
-    <span>👤 {{ o[7] }}</span>
-    <a href="https://wa.me/{{ o[8]|replace('+', '')|replace(' ', '') }}?text=Hola%20{{ o[7] }},%20puedes%20seguir%20el%20avance%20de%20tu%20vehiculo%20aqui:%20https://taller-mecanico-saas.onrender.com/seguimiento/{{ o[0] }}" target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
-        📲 WhatsApp
-    </a>
-</div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
+                {% set columnas = [('recepcion', 'Recepción', 'amber-400'), ('diagnostico', 'En Diagnóstico', 'blue-400'), ('reparacion', 'En Reparación', 'indigo-400'), ('entrega', 'Listo para Entrega', 'emerald-400')] %}
 
-                <!-- COLUMNA 2: DIAGNÓSTICO -->
+                {% for col_id, col_nombre, col_color in columnas %}
                 <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col">
                     <div class="flex justify-between items-center mb-4">
                         <span class="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-blue-400"></span> En Diagnóstico
+                            <span class="w-2 h-2 rounded-full bg-{{ col_color }}"></span> {{ col_nombre }}
                         </span>
                     </div>
-                    <div id="col-diagnostico" data-estado="diagnostico" class="kanban-col space-y-3 min-h-[450px]">
-                        {% for o in ordenes if o[1] == 'diagnostico' %}
-                        <div data-id="{{ o[0] }}" class="kanban-card bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-grab hover:border-slate-700 transition-all">
+                    <div id="col-{{ col_id }}" data-estado="{{ col_id }}" class="kanban-col space-y-3 min-h-[450px]">
+                        {% for o in ordenes if o[1] == col_id %}
+                        <div data-id="{{ o[0] }}" 
+                             onclick="abrirDetalleOrden('{{ o[0] }}', '{{ o[4] }}', '{{ o[5] }} {{ o[6] }}', '{{ o[7] }}', '{{ o[8] }}', '{{ o[9] }}', '{{ o[10] }}', '{{ o[2] }}', '{{ o[3] }}')"
+                             class="kanban-card bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-pointer hover:border-blue-500/50 transition-all">
+                            
                             <div class="flex justify-between items-start mb-2">
                                 <span class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded">{{ o[4] }}</span>
                                 <span class="text-xs text-emerald-400 font-bold">${{ "{:,.0f}".format(o[3]) }}</span>
                             </div>
-                            <h4 class="text-xs font-semibold text-slate-300 mb-1.5">{{ o[5] }} {{ o[6] }}</h4>
-                            <div class="flex items-center gap-2 mb-3">
-                                <span class="text-[10px] font-semibold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                    🏎️ {{ o[9] if o[9] else '0' }} KM
-                                </span>
-                                <span class="text-[10px] font-semibold bg-slate-800 text-amber-400 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                    ⛽ {{ o[10] if o[10] else 'N/I' }}
-                                </span>
-                            </div>
-                            <p class="text-[11px] text-slate-400 line-clamp-2 mb-3">{{ o[2] }}</p>
-                            <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between">
-                                <span>👤 {{ o[7] }}</span>
-                                <span>📞 {{ o[8] }}</span>
-                            </div>
-                            <!-- En el pie de la tarjeta del Kanban -->
-<div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between items-center">
-    <span>👤 {{ o[7] }}</span>
-    <a href="https://wa.me/{{ o[8]|replace('+', '')|replace(' ', '') }}?text=Hola%20{{ o[7] }},%20puedes%20seguir%20el%20avance%20de%20tu%20vehiculo%20aqui:%20https://taller-mecanico-saas.onrender.com/seguimiento/{{ o[0] }}" target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
-        📲 WhatsApp
-    </a>
-</div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
 
-                <!-- COLUMNA 3: REPARACIÓN -->
-                <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-indigo-400"></span> En Reparación
-                        </span>
-                    </div>
-                    <div id="col-reparacion" data-estado="reparacion" class="kanban-col space-y-3 min-h-[450px]">
-                        {% for o in ordenes if o[1] == 'reparacion' %}
-                        <div data-id="{{ o[0] }}" class="kanban-card bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-grab hover:border-slate-700 transition-all">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded">{{ o[4] }}</span>
-                                <span class="text-xs text-emerald-400 font-bold">${{ "{:,.0f}".format(o[3]) }}</span>
-                            </div>
-                            <h4 class="text-xs font-semibold text-slate-300 mb-1.5">{{ o[5] }} {{ o[6] }}</h4>
-                            <div class="flex items-center gap-2 mb-3">
-                                <span class="text-[10px] font-semibold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                    🏎️ {{ o[9] if o[9] else '0' }} KM
-                                </span>
-                                <span class="text-[10px] font-semibold bg-slate-800 text-amber-400 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                    ⛽ {{ o[10] if o[10] else 'N/I' }}
-                                </span>
-                            </div>
-                            <p class="text-[11px] text-slate-400 line-clamp-2 mb-3">{{ o[2] }}</p>
-                            <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between">
-                                <span>👤 {{ o[7] }}</span>
-                                <span>📞 {{ o[8] }}</span>
-                            </div>
-                            <!-- En el pie de la tarjeta del Kanban -->
-<div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between items-center">
-    <span>👤 {{ o[7] }}</span>
-    <a href="https://wa.me/{{ o[8]|replace('+', '')|replace(' ', '') }}?text=Hola%20{{ o[7] }},%20puedes%20seguir%20el%20avance%20de%20tu%20vehiculo%20aqui:%20https://taller-mecanico-saas.onrender.com/seguimiento/{{ o[0] }}" target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
-        📲 WhatsApp
-    </a>
-</div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
+                            <h4 class="text-xs font-semibold text-slate-300 mb-2">{{ o[5] }} {{ o[6] }}</h4>
 
-                <!-- COLUMNA 4: LISTO PARA ENTREGA -->
-                <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Listo para Entrega
-                        </span>
-                    </div>
-                    <div id="col-entrega" data-estado="entrega" class="kanban-col space-y-3 min-h-[450px]">
-                        {% for o in ordenes if o[1] == 'entrega' %}
-                        <div data-id="{{ o[0] }}" class="kanban-card bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-grab hover:border-slate-700 transition-all">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded">{{ o[4] }}</span>
-                                <span class="text-xs text-emerald-400 font-bold">${{ "{:,.0f}".format(o[3]) }}</span>
-                            </div>
-                            <h4 class="text-xs font-semibold text-slate-300 mb-1.5">{{ o[5] }} {{ o[6] }}</h4>
                             <div class="flex items-center gap-2 mb-3">
-                                <span class="text-[10px] font-semibold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                    🏎️ {{ o[9] if o[9] else '0' }} KM
-                                </span>
-                                <span class="text-[10px] font-semibold bg-slate-800 text-amber-400 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                    ⛽ {{ o[10] if o[10] else 'N/I' }}
-                                </span>
+                                <span class="text-[10px] font-semibold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">🏎️ {{ o[9] if o[9] else '0' }} KM</span>
+                                <span class="text-[10px] font-semibold bg-slate-800 text-amber-400 px-2 py-0.5 rounded-md">⛽ {{ o[10] if o[10] else 'N/I' }}</span>
                             </div>
+
                             <p class="text-[11px] text-slate-400 line-clamp-2 mb-3">{{ o[2] }}</p>
-                            <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between">
+
+                            <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between items-center">
                                 <span>👤 {{ o[7] }}</span>
-                                <span>📞 {{ o[8] }}</span>
+                                <span class="text-blue-400 font-semibold">Ver detalle →</span>
                             </div>
-                            <!-- En el pie de la tarjeta del Kanban -->
-<div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between items-center">
-    <span>👤 {{ o[7] }}</span>
-    <a href="https://wa.me/{{ o[8]|replace('+', '')|replace(' ', '') }}?text=Hola%20{{ o[7] }},%20puedes%20seguir%20el%20avance%20de%20tu%20vehiculo%20aqui:%20https://taller-mecanico-saas.onrender.com/seguimiento/{{ o[0] }}" target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
-        📲 WhatsApp
-    </a>
-</div>
                         </div>
                         {% endfor %}
                     </div>
                 </div>
+                {% endfor %}
 
             </div>
         </section>
@@ -278,7 +155,55 @@
 
     </main>
 
-    <!-- MODAL RECEPCIÓN GUIADA CON FOTOS Y CHECKLIST -->
+    <!-- MODAL DETALLE DE ORDEN AL HACER CLIC -->
+    <div id="modal-detalle" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg p-6 rounded-2xl shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div>
+                    <span id="m-patente" class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded"></span>
+                    <h3 id="m-vehiculo" class="text-base font-bold text-white mt-1"></h3>
+                </div>
+                <button onclick="document.getElementById('modal-detalle').classList.add('hidden')" class="text-slate-400 hover:text-white">✕</button>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-300">
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <span class="text-slate-500 block text-[10px]">Cliente</span>
+                        <strong id="m-cliente" class="text-white"></strong>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <span class="text-slate-500 block text-[10px]">Teléfono</span>
+                        <strong id="m-telefono" class="text-white"></strong>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <span class="text-slate-500 block text-[10px]">Kilometraje</span>
+                        <strong id="m-km" class="text-slate-200"></strong>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <span class="text-slate-500 block text-[10px]">Combustible</span>
+                        <strong id="m-combustible" class="text-amber-400"></strong>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <span class="text-slate-500 block text-[10px]">Síntomas Solicitados</span>
+                    <p id="m-sintomas" class="text-slate-300 mt-1"></p>
+                </div>
+            </div>
+
+            <div class="pt-2 flex gap-2">
+                <a id="btn-whatsapp-modal" href="#" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
+                    📱 Enviar Enlace por WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CREAR ORDEN (RECEPCIÓN GUIADA) -->
     <div id="modal-ot" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl p-6 rounded-2xl shadow-2xl my-8">
             <div class="flex justify-between items-center mb-4">
@@ -290,7 +215,6 @@
             </div>
 
             <form action="/crear_ot" method="POST" enctype="multipart/form-data" class="space-y-4">
-                <!-- 1. DATOS BÁSICOS -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Patente / VIN</label>
@@ -312,7 +236,6 @@
                     </div>
                 </div>
 
-                <!-- 2. MOTIVO Y COSTO -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div class="md:col-span-2">
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Síntomas / Trabajos Solicitados</label>
@@ -324,37 +247,30 @@
                     </div>
                 </div>
 
-                <!-- 3. FOTOS GUIADAS -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-2">📷 Inspección Fotográfica Guiada (5 Ángulos)</label>
                     <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
                         <div class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center">
                             <span class="block text-[10px] text-slate-400 mb-1">Frontal</span>
-                            <input type="file" name="foto_frontal" accept="image/*" capture="environment" class="text-[10px] text-slate-500 w-full">
+                            <input type="file" name="foto_frontal" accept="image/*" class="text-[10px] text-slate-500 w-full">
                         </div>
                         <div class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center">
                             <span class="block text-[10px] text-slate-400 mb-1">Trasera</span>
-                            <input type="file" name="foto_trasera" accept="image/*" capture="environment" class="text-[10px] text-slate-500 w-full">
+                            <input type="file" name="foto_trasera" accept="image/*" class="text-[10px] text-slate-500 w-full">
                         </div>
                         <div class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center">
                             <span class="block text-[10px] text-slate-400 mb-1">Costado Izq.</span>
-                            <input type="file" name="foto_izq" accept="image/*" capture="environment" class="text-[10px] text-slate-500 w-full">
+                            <input type="file" name="foto_izq" accept="image/*" class="text-[10px] text-slate-500 w-full">
                         </div>
                         <div class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center">
                             <span class="block text-[10px] text-slate-400 mb-1">Costado Der.</span>
-                            <input type="file" name="foto_der" accept="image/*" capture="environment" class="text-[10px] text-slate-500 w-full">
+                            <input type="file" name="foto_der" accept="image/*" class="text-[10px] text-slate-500 w-full">
                         </div>
                         <div class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center">
                             <span class="block text-[10px] text-slate-400 mb-1">Tablero (KM)</span>
-                            <input type="file" name="foto_tablero" accept="image/*" capture="environment" class="text-[10px] text-slate-500 w-full">
+                            <input type="file" name="foto_tablero" accept="image/*" class="text-[10px] text-slate-500 w-full">
                         </div>
                     </div>
-                </div>
-
-                <!-- 4. DETALLES DE RAYONES O ABOLLADURAS -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Detalles de Carrocería / Rayones Previos</label>
-                    <input type="text" name="detalles" placeholder="Rayón leve en parachoques delantero derecho..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
                 </div>
 
                 <div class="flex gap-2 pt-3">
@@ -367,7 +283,6 @@
         </div>
     </div>
 
-    <!-- SCRIPT DRAG & DROP KANBAN -->
     <script>
         lucide.createIcons();
 
@@ -376,7 +291,21 @@
             document.getElementById('sec-' + id).classList.remove('hidden');
         }
 
-        // Inicializar Drag & Drop en las 4 columnas
+        function abrirDetalleOrden(id, patente, vehiculo, cliente, telefono, km, combustible, sintomas, costo) {
+            document.getElementById('m-patente').innerText = patente;
+            document.getElementById('m-vehiculo').innerText = vehiculo;
+            document.getElementById('m-cliente').innerText = cliente;
+            document.getElementById('m-telefono').innerText = telefono;
+            document.getElementById('m-km').innerText = km + ' KM';
+            document.getElementById('m-combustible').innerText = combustible;
+            document.getElementById('m-sintomas').innerText = sintomas;
+
+            var linkWa = "https://wa.me/" + telefono.replace(/\+/g, '').replace(/\s/g, '') + "?text=Hola%20" + encodeURIComponent(cliente) + ",%20puedes%20seguir%20el%20avance%20de%20tu%20vehiculo%20aqui:%20https://taller-mecanico-saas.onrender.com/seguimiento/" + id;
+            document.getElementById('btn-whatsapp-modal').setAttribute('href', linkWa);
+
+            document.getElementById('modal-detalle').classList.remove('hidden');
+        }
+
         document.querySelectorAll('.kanban-col').forEach(columna => {
             new Sortable(columna, {
                 group: 'kanban',
@@ -386,17 +315,10 @@
                     const ordenId = evt.item.getAttribute('data-id');
                     const nuevoEstado = evt.to.getAttribute('data-estado');
 
-                    // Enviar cambio de estado vía AJAX al servidor
                     fetch('/cambiar_estado_ot', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ orden_id: ordenId, nuevo_estado: nuevoEstado })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status !== 'ok') {
-                            alert('No se pudo guardar el cambio de estado');
-                        }
                     });
                 }
             });
