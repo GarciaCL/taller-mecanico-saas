@@ -1,291 +1,285 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full bg-slate-900">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ taller.nombre }} - Panel de Gestión</title>
+    <title>{{ taller.nombre }} - Control del Taller</title>
     <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="{{ taller.color }}">
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- ApexCharts para métricas avanzadas -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f4f6f9; }
-        .sidebar { background-color: {{ taller.color }}; min-height: 100vh; color: #fff; }
-        .sidebar .nav-link { color: #94a3b8; font-weight: 500; border-radius: 8px; margin-bottom: 5px; }
-        .sidebar .nav-link.active, .sidebar .nav-link:hover { background-color: #3b82f6; color: #fff; }
-        .card-custom { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .btn-primary-custom { background-color: #3b82f6; border: none; border-radius: 8px; font-weight: 600; }
-        .badge-categoria { background-color: #e2e8f0; color: #1e293b; font-weight: 600; }
-        .badge-compat { background-color: #dbeafe; color: #1e40af; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
 </head>
-<body>
+<body class="h-full text-slate-100 flex overflow-hidden">
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- BARRA LATERAL MODERNA -->
-            <div class="col-md-2 sidebar p-3">
-                <h4 class="fw-bold mb-4 text-center text-primary">🔧 {{ taller.nombre }}</h4>
-                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
-                    <button class="nav-link active text-start" id="tab-clientes" data-bs-toggle="pill" data-bs-target="#sec-clientes" type="button">🚗 Clientes y Vehículos</button>
-                    <button class="nav-link text-start" id="tab-inventario" data-bs-toggle="pill" data-bs-target="#sec-inventario" type="button">📦 Inventario de Repuestos</button>
-                    <button class="nav-link text-start" id="tab-fichas" data-bs-toggle="pill" data-bs-target="#sec-fichas" type="button">📝 Fichas de Trabajo</button>
-                    <button class="nav-link text-start" id="tab-nube" data-bs-toggle="pill" data-bs-target="#sec-nube" type="button">☁️ Respaldo y Nube</button>
+    <!-- BARRA LATERAL ULTRA MODERNA -->
+    <aside class="w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between p-4">
+        <div>
+            <!-- BRANDING DEL TALLER -->
+            <div class="flex items-center gap-3 px-2 py-3 mb-6">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-lg shadow-lg shadow-blue-500/30">
+                    🔧
                 </div>
-                <hr class="text-secondary mt-4">
-                <a href="/logout" class="btn btn-outline-danger w-100 btn-sm mt-2">🚪 Cerrar Sesión</a>
-            </div>
-
-            <!-- CONTENIDO PRINCIPAL -->
-            <div class="col-md-10 p-4">
-
-                <div class="tab-content" id="v-pills-tabContent">
-                    
-                    <!-- 1. CLIENTES Y VEHÍCULOS -->
-                    <div class="tab-pane fade show active" id="sec-clientes">
-                        <div class="card card-custom p-4 mb-4">
-                            <h5 class="fw-bold mb-3 text-dark">➕ Registrar Nuevo Cliente y Vehículo</h5>
-                            <form action="/guardar_cliente" method="POST">
-                                <div class="row g-3">
-                                    <div class="col-md-3"><label class="form-label">Nombre Cliente</label><input type="text" name="nombre" class="form-control" required></div>
-                                    <div class="col-md-3"><label class="form-label">RUT / ID</label><input type="text" name="rut" class="form-control" required></div>
-                                    <div class="col-md-3"><label class="form-label">Teléfono</label><input type="text" name="telefono" class="form-control"></div>
-                                    <div class="col-md-3"><label class="form-label">Correo</label><input type="email" name="correo" class="form-control"></div>
-                                    <div class="col-md-3"><label class="form-label">Patente / VIN</label><input type="text" name="patente" class="form-control" required></div>
-                                    <div class="col-md-3"><label class="form-label">Marca</label><input type="text" name="marca" class="form-control"></div>
-                                    <div class="col-md-3"><label class="form-label">Modelo</label><input type="text" name="modelo" class="form-control"></div>
-                                    <div class="col-md-3"><label class="form-label">Año</label><input type="number" name="anio" class="form-control"></div>
-                                    <div class="col-12 text-end"><button type="submit" class="btn btn-primary-custom text-white px-4">💾 Guardar Cliente y Vehículo</button></div>
-                                </div>
-                            </form>
-                        </div>
-
-                        <!-- LISTADO DE CLIENTES -->
-                        <div class="card card-custom p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="fw-bold m-0">👥 Listado de Clientes y Vehículos Registrados</h5>
-                                <input type="text" id="buscarCliente" class="form-control w-25" placeholder="🔍 Buscar por Nombre, RUT o Patente..." onkeyup="filtrarClientes()">
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle" id="tablaClientes">
-                                    <thead class="table-dark">
-                                        <tr>
-                                            <th>Cliente</th>
-                                            <th>RUT</th>
-                                            <th>Contacto</th>
-                                            <th>Vehículo</th>
-                                            <th>Patente/VIN</th>
-                                            <th>Año</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for c in clientes %}
-                                        <tr>
-                                            <td class="fw-bold">{{ c[1] }}</td>
-                                            <td>{{ c[2] }}</td>
-                                            <td>{{ c[3] }} <br><small class="text-muted">{{ c[4] }}</small></td>
-                                            <td><span class="badge bg-secondary">{{ c[6] }} {{ c[7] }}</span></td>
-                                            <td class="fw-bold text-primary">{{ c[5] }}</td>
-                                            <td>{{ c[8] }}</td>
-                                        </tr>
-                                        {% else %}
-                                        <tr><td colspan="6" class="text-center text-muted">No hay clientes registrados aún.</td></tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 2. INVENTARIO DE REPUESTOS CON CATEGORÍAS Y COMPATIBILIDAD -->
-                    <div class="tab-pane fade" id="sec-inventario">
-                        <div class="card card-custom p-4 mb-4">
-                            <h5 class="fw-bold mb-3">📦 Agregar Nuevo Repuesto</h5>
-                            <form action="/guardar_repuesto" method="POST">
-                                <div class="row g-3">
-                                    <div class="col-md-2"><label class="form-label">Código</label><input type="text" name="codigo" class="form-control" required></div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Categoría</label>
-                                        <select name="categoria" class="form-select">
-                                            <option value="Frenos">Frenos</option>
-                                            <option value="Motor">Motor</option>
-                                            <option value="Suspensión">Suspensión / Dirección</option>
-                                            <option value="Eléctrico">Eléctrico / Baterías</option>
-                                            <option value="Filtros y Aceites">Filtros y Aceites</option>
-                                            <option value="Transmisión">Transmisión</option>
-                                            <option value="Carrocería">Carrocería</option>
-                                            <option value="General">General</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-5"><label class="form-label">Nombre del Repuesto</label><input type="text" name="nombre" class="form-control" required></div>
-                                    <div class="col-md-2"><label class="form-label">Stock</label><input type="number" name="stock" class="form-control"></div>
-                                    <div class="col-md-3"><label class="form-label">Precio Costo ($)</label><input type="number" name="costo" class="form-control"></div>
-                                    <div class="col-md-3"><label class="form-label">Precio Venta ($)</label><input type="number" name="venta" class="form-control"></div>
-                                    <div class="col-md-3"><label class="form-label">Mano de Obra ($)</label><input type="number" name="mano_obra" class="form-control"></div>
-                                    <div class="col-md-3"><label class="form-label">Modelos Compatibles (ej: Toyota Yaris, Nissan Versa)</label><input type="text" name="compatibles" class="form-control"></div>
-                                    <div class="col-12 text-end"><button type="submit" class="btn btn-success px-4">📦 Guardar Repuesto</button></div>
-                                </div>
-                            </form>
-                        </div>
-
-                        <!-- CATÁLOGO Y BÚSQUEDA DE REPUESTOS -->
-                        <div class="card card-custom p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="fw-bold m-0">🔍 Catálogo de Repuestos y Compatibilidades</h5>
-                                <input type="text" id="buscarRepuesto" class="form-control w-50" placeholder="🔎 Filtrar por Categoría, Marca, Modelo, Código o Nombre..." onkeyup="filtrarRepuestos()">
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle" id="tablaRepuestos">
-                                    <thead class="table-dark">
-                                        <tr>
-                                            <th>Código</th>
-                                            <th>Categoría</th>
-                                            <th>Repuesto</th>
-                                            <th>Stock</th>
-                                            <th>Precio Venta</th>
-                                            <th>Mano Obra</th>
-                                            <th>Compatibilidad (Marcas/Modelos)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for r in repuestos %}
-                                        <tr>
-                                            <td class="fw-bold text-secondary">{{ r[1] }}</td>
-                                            <td><span class="badge badge-categoria">{{ r[2] }}</span></td>
-                                            <td class="fw-bold">{{ r[3] }}</td>
-                                            <td>
-                                                {% if r[4] < 3 %}
-                                                    <span class="badge bg-danger">{{ r[4] }} un.</span>
-                                                {% else %}
-                                                    <span class="badge bg-success">{{ r[4] }} un.</span>
-                                                {% endif %}
-                                            </td>
-                                            <td class="fw-bold text-success">${{ "{:,.0f}".format(r[6]) }}</td>
-                                            <td>${{ "{:,.0f}".format(r[7]) }}</td>
-                                            <td><span class="badge badge-compat">{{ r[8] if r[8] else 'Universal' }}</span></td>
-                                        </tr>
-                                        {% else %}
-                                        <tr><td colspan="7" class="text-center text-muted">No hay repuestos registrados en el inventario.</td></tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 3. FICHAS Y HISTORIAL DE MANTENCIONES -->
-                    <div class="tab-pane fade" id="sec-fichas">
-                        <div class="row g-4">
-                            
-                            <!-- REGISTRO DE NUEVA FICHA -->
-                            <div class="col-md-5">
-                                <div class="card card-custom p-4">
-                                    <h5 class="fw-bold mb-3">📝 Nueva Ficha de Trabajo</h5>
-                                    <form action="/guardar_ficha" method="POST">
-                                        <div class="mb-3">
-                                            <label class="form-label">Patente / VIN</label>
-                                            <input type="text" name="patente" class="form-control" placeholder="Ej: AA123BB" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Observaciones y Repuestos Utilizados</label>
-                                            <textarea name="observaciones" class="form-control" rows="5" placeholder="Cambio de aceite 5W30, filtro de aire y pastillas delanteras..." required></textarea>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Costo Total ($)</label>
-                                            <input type="number" name="costo" class="form-control" placeholder="45000">
-                                        </div>
-                                        <button type="submit" class="btn btn-dark w-100 py-2">💾 Guardar Ficha de Trabajo</button>
-                                    </form>
-                                </div>
-                            </div>
-
-                            <!-- CONSULTA DE HISTORIAL POR PATENTE -->
-                            <div class="col-md-7">
-                                <div class="card card-custom p-4 mb-4">
-                                    <h5 class="fw-bold mb-3">🔍 Historial de Mantenciones por Vehículo</h5>
-                                    <form action="/" method="GET" class="row g-2">
-                                        <div class="col-8">
-                                            <input type="text" name="patente_busqueda" class="form-control" placeholder="Ingrese Patente (ej: AA123BB)" value="{{ patente_buscada }}">
-                                        </div>
-                                        <div class="col-4">
-                                            <button type="submit" class="btn btn-primary-custom text-white w-100">Buscar Historial</button>
-                                        </div>
-                                    </form>
-                                </div>
-
-                                <!-- RESULTADOS DEL HISTORIAL -->
-                                {% if patente_buscada %}
-                                    {% if historial %}
-                                        <!-- Resumen del Vehículo -->
-                                        <div class="card border-primary mb-3 bg-light">
-                                            <div class="card-body">
-                                                <h6 class="fw-bold text-primary mb-1">🚗 {{ historial[0][5] }} {{ historial[0][6] }} ({{ historial[0][7] }})</h6>
-                                                <p class="mb-0 text-muted small">
-                                                    <strong>Patente:</strong> {{ historial[0][4] }} | 
-                                                    <strong>Cliente:</strong> {{ historial[0][9] }} ({{ historial[0][10] }}) | 
-                                                    <strong>Tel:</strong> {{ historial[0][11] }}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <!-- Lista cronológica de trabajos -->
-                                        <div class="timeline">
-                                            {% for item in historial %}
-                                            <div class="card card-custom mb-3 border-start border-4 border-primary">
-                                                <div class="card-body">
-                                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                                        <span class="badge bg-dark">📅 {{ item[1] }}</span>
-                                                        <span class="fw-bold text-success fs-5">${{ "{:,.0f}".format(item[3]) }}</span>
-                                                    </div>
-                                                    <p class="card-text text-secondary mb-0">{{ item[2] }}</p>
-                                                </div>
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    {% else %}
-                                        <div class="alert alert-warning text-center">
-                                            No se encontraron fichas de trabajo para la patente <strong>{{ patente_buscada }}</strong>.
-                                        </div>
-                                    {% endif %}
-                                {% endif %}
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="tab-pane fade" id="sec-nube">
-                        <div class="card card-custom p-4">
-                            <h5 class="fw-bold mb-3">☁️ Respaldo de Seguridad</h5>
-                            <form action="/respaldar" method="POST"><button type="submit" class="btn btn-warning fw-bold">☁️ Respaldar Datos (.zip)</button></form>
-                        </div>
-                    </div>
-
+                <div>
+                    <h1 class="font-bold text-sm text-white leading-tight truncate w-36">{{ taller.nombre }}</h1>
+                    <span class="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Sistema En Vivo
+                    </span>
                 </div>
             </div>
+
+            <!-- NAVEGACIÓN PRINCIPAL -->
+            <nav class="space-y-1">
+                <button onclick="cambiarPestana('dash')" id="btn-dash" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-900 transition-all active-nav">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard General
+                </button>
+                <button onclick="cambiarPestana('ot')" id="btn-ot" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-900 transition-all">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> Órdenes de Trabajo
+                </button>
+                <button onclick="cambiarPestana('inv')" id="btn-inv" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-900 transition-all">
+                    <i data-lucide="boxes" class="w-4 h-4"></i> Inventario & Stock
+                </button>
+                <button onclick="cambiarPestana('cli')" id="btn-cli" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-900 transition-all">
+                    <i data-lucide="users" class="w-4 h-4"></i> Clientes & Autos
+                </button>
+                <button onclick="cambiarPestana('agendamiento')" id="btn-agendamiento" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-900 transition-all">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Link Citas Online
+                </button>
+            </nav>
         </div>
-    </div>
 
-    <!-- Buscadores en tiempo real -->
+        <!-- USUARIO & SALIR -->
+        <div class="border-t border-slate-800/80 pt-4 px-2">
+            <a href="/logout" class="flex items-center gap-3 text-xs font-semibold text-rose-400 hover:text-rose-300 transition-colors">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Cerrar Sesión
+            </a>
+        </div>
+    </aside>
+
+    <!-- PANEL PRINCIPAL DE TRABAJO -->
+    <main class="flex-1 overflow-y-auto bg-slate-900 p-8">
+
+        <!-- 1. DASHBOARD INTELIGENTE DE MÉTRICAS -->
+        <section id="sec-dash" class="space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">Panel de Control Inteligente</h2>
+                    <p class="text-xs text-slate-400">Análisis operativo y métricas del taller en tiempo real.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-lg shadow-blue-600/20 flex items-center gap-2 transition-all">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Nueva Orden
+                    </button>
+                </div>
+            </div>
+
+            <!-- TARJETAS DE KPIS -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-slate-950/60 border border-slate-800/80 p-5 rounded-2xl">
+                    <div class="flex justify-between items-center text-slate-400 mb-2">
+                        <span class="text-xs font-medium">Órdenes Activas</span>
+                        <i data-lucide="wrench" class="w-4 h-4 text-blue-400"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-white">8 Vehículos</div>
+                    <span class="text-[11px] text-emerald-400 font-medium">En proceso de reparación</span>
+                </div>
+
+                <div class="bg-slate-950/60 border border-slate-800/80 p-5 rounded-2xl">
+                    <div class="flex justify-between items-center text-slate-400 mb-2">
+                        <span class="text-xs font-medium">Facturación Estimada</span>
+                        <i data-lucide="dollar-sign" class="w-4 h-4 text-emerald-400"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-white">$1.850.000</div>
+                    <span class="text-[11px] text-emerald-400 font-medium">+12% vs mes anterior</span>
+                </div>
+
+                <div class="bg-slate-950/60 border border-slate-800/80 p-5 rounded-2xl">
+                    <div class="flex justify-between items-center text-slate-400 mb-2">
+                        <span class="text-xs font-medium">Alertas Bajo Stock</span>
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-amber-400">3 Repuestos</div>
+                    <span class="text-[11px] text-slate-400 font-medium">Requieren reponer stock</span>
+                </div>
+
+                <div class="bg-slate-950/60 border border-slate-800/80 p-5 rounded-2xl">
+                    <div class="flex justify-between items-center text-slate-400 mb-2">
+                        <span class="text-xs font-medium">Citas Agendadas Web</span>
+                        <i data-lucide="calendar-check" class="w-4 h-4 text-indigo-400"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-white">5 Reservas</div>
+                    <span class="text-[11px] text-indigo-400 font-medium">Próximos 7 días</span>
+                </div>
+            </div>
+
+            <!-- GRÁFICOS DE RENDIMIENTO Y VENTAS POR MARCA -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Gráfico de Rendimiento por Períodos -->
+                <div class="lg:col-span-2 bg-slate-950/60 border border-slate-800/80 p-6 rounded-2xl">
+                    <h3 class="text-sm font-bold text-white mb-4">Trabajos Realizados y Comparativa de Ingresos</h3>
+                    <div id="chart-rendimiento" class="w-full h-64"></div>
+                </div>
+
+                <!-- Distribución por MarcasAtendidas -->
+                <div class="bg-slate-950/60 border border-slate-800/80 p-6 rounded-2xl">
+                    <h3 class="text-sm font-bold text-white mb-4">Vehículos Atendidos por Marca</h3>
+                    <div id="chart-marcas" class="w-full h-64"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. INVENTARIO MODERNO (Categorías y Alertas) -->
+        <section id="sec-inv" class="space-y-6 hidden">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">Inventario y Repuestos</h2>
+                    <p class="text-xs text-slate-400">Control de stock con descuento automático al entregar el vehículo.</p>
+                </div>
+            </div>
+
+            <!-- Formulario de ingreso de repuestos -->
+            <div class="bg-slate-950/60 border border-slate-800/80 p-6 rounded-2xl">
+                <form action="/guardar_repuesto" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Código</label>
+                        <input type="text" name="codigo" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Categoría</label>
+                        <select name="categoria" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                            <option value="Frenos">Frenos</option>
+                            <option value="Motor">Motor</option>
+                            <option value="Suspensión">Suspensión</option>
+                            <option value="Filtros y Aceites">Filtros y Aceites</option>
+                            <option value="General">General</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre del Repuesto</label>
+                        <input type="text" name="nombre" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Stock Inicial</label>
+                        <input type="number" name="stock" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Precio Costo ($)</label>
+                        <input type="number" name="costo" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Precio Venta ($)</label>
+                        <input type="number" name="venta" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Mano de Obra Asociada ($)</label>
+                        <input type="number" name="mano_obra" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="md:col-span-4 text-right">
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-2 rounded-xl text-xs shadow-lg shadow-emerald-600/20 transition-all">
+                            📦 Guardar Repuesto
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabla de productos -->
+            <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl overflow-hidden">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-900 text-xs font-semibold text-slate-400 uppercase border-b border-slate-800">
+                        <tr>
+                            <th class="p-4">Código</th>
+                            <th class="p-4">Categoría</th>
+                            <th class="p-4">Nombre</th>
+                            <th class="p-4">Stock</th>
+                            <th class="p-4">Precio Venta</th>
+                            <th class="p-4">Compatibilidad</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/60">
+                        {% for r in repuestos %}
+                        <tr class="hover:bg-slate-900/50 transition-colors">
+                            <td class="p-4 font-mono text-xs text-slate-400">{{ r[1] }}</td>
+                            <td class="p-4"><span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs font-medium">{{ r[2] }}</span></td>
+                            <td class="p-4 font-semibold text-white">{{ r[3] }}</td>
+                            <td class="p-4">
+                                {% if r[4] < 3 %}
+                                    <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold text-xs">{{ r[4] }} un.</span>
+                                {% else %}
+                                    <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-xs">{{ r[4] }} un.</span>
+                                {% endif %}
+                            </td>
+                            <td class="p-4 font-bold text-emerald-400">${{ "{:,.0f}".format(r[6]) }}</td>
+                            <td class="p-4 text-xs text-slate-400">{{ r[8] }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="p-8 text-center text-slate-500">No hay repuestos registrados aún.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 3. SECCIÓN DE AUTOAGENDAMIENTO -->
+        <section id="sec-agendamiento" class="space-y-6 hidden">
+            <div class="bg-slate-950/60 border border-slate-800/80 p-6 rounded-2xl">
+                <h2 class="text-xl font-bold text-white mb-2">Enlace Público de Autoagendamiento 24/7</h2>
+                <p class="text-xs text-slate-400 mb-4">Comparte este enlace en tu Instagram o WhatsApp para que tus clientes reserven citas solos.</p>
+                
+                <div class="flex gap-2">
+                    <input type="text" readonly id="link-citas" value="https://taller-mecanico-saas.onrender.com/agendar/{{ taller.nombre|lower|replace(' ', '-') }}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-emerald-400 font-mono">
+                    <button onclick="copiarLink()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center gap-2">
+                        <i data-lucide="copy" class="w-4 h-4"></i> Copiar Link
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
     <script>
-        function filtrarClientes() {
-            let input = document.getElementById("buscarCliente").value.toLowerCase();
-            let rows = document.querySelectorAll("#tablaClientes tbody tr");
-            rows.forEach(row => {
-                let text = row.innerText.toLowerCase();
-                row.style.display = text.includes(input) ? "" : "none";
-            });
+        lucide.createIcons();
+
+        function cambiarPestana(id) {
+            document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('sec-' + id).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('text-white', 'bg-slate-900'));
+            document.getElementById('btn-' + id).classList.add('text-white', 'bg-slate-900');
         }
 
-        function filtrarRepuestos() {
-            let input = document.getElementById("buscarRepuesto").value.toLowerCase();
-            let rows = document.querySelectorAll("#tablaRepuestos tbody tr");
-            rows.forEach(row => {
-                let text = row.innerText.toLowerCase();
-                row.style.display = text.includes(input) ? "" : "none";
-            });
+        function copiarLink() {
+            var copyText = document.getElementById("link-citas");
+            copyText.select();
+            document.execCommand("copy");
+            alert("¡Link de agendamiento copiado al portapapeles!");
         }
+
+        // GRÁFICOS APEXCHARTS
+        var optionsRendimiento = {
+            chart: { type: 'bar', height: 230, toolbar: { show: false }, background: 'transparent' },
+            theme: { mode: 'dark' },
+            colors: ['#3b82f6', '#10b981'],
+            series: [{ name: 'Fichas Cerradas', data: [12, 18, 14, 22, 25, 30] }],
+            xaxis: { categories: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'] },
+            grid: { borderColor: '#1e293b' }
+        };
+        new ApexCharts(document.querySelector("#chart-rendimiento"), optionsRendimiento).render();
+
+        var optionsMarcas = {
+            chart: { type: 'donut', height: 230, background: 'transparent' },
+            theme: { mode: 'dark' },
+            colors: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'],
+            series: [44, 25, 18, 13],
+            labels: ['Toyota', 'Nissan', 'Hyundai', 'Chevrolet']
+        };
+        new ApexCharts(document.querySelector("#chart-marcas"), optionsMarcas).render();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
