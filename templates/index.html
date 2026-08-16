@@ -73,7 +73,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h2 class="text-2xl font-bold text-white tracking-tight">Tablero Kanban de Órdenes de Trabajo</h2>
-                    <p class="text-xs text-slate-400">Haz clic en cualquier tarjeta para ver detalles o compartir por WhatsApp.</p>
+                    <p class="text-xs text-slate-400">Haz clic en cualquier tarjeta para ver o editar sus datos.</p>
                 </div>
                 <button onclick="document.getElementById('modal-ot').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all">
                     <i data-lucide="plus" class="w-4 h-4"></i> Nueva Orden (OT)
@@ -94,9 +94,12 @@
                     </div>
                     <div id="col-{{ col_id }}" data-estado="{{ col_id }}" class="kanban-col space-y-3 min-h-[450px]">
                         {% for o in ordenes if o[1] == col_id %}
-                        <div data-id="{{ o[0] }}" 
-                             onclick="abrirDetalleOrden('{{ o[0] }}', '{{ o[4] }}', '{{ o[5] }} {{ o[6] }}', '{{ o[7] }}', '{{ o[8] }}', '{{ o[9] }}', '{{ o[10] }}', '{{ o[2] }}', '{{ o[3] }}')"
-                             class="kanban-card bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-pointer hover:border-blue-500/50 transition-all">
+                        <div data-id="{{ o[0] }}"
+                             data-fecha="{{ o[12] }}"
+                             data-horas="{{ o[13] }}"
+                             data-estado="{{ o[1] }}"
+                             onclick="abrirDetalleOrden('{{ o[0] }}', '{{ o[4] }}', '{{ o[5] }} {{ o[6] }}', '{{ o[7] }}', '{{ o[8] }}', '{{ o[9] }}', '{{ o[10] }}', '{{ o[2] }}', '{{ o[3] }}', '{{ o[11] }}', '{{ o[12] }}', '{{ o[13] }}')"
+                             class="kanban-card card-orden bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-pointer hover:border-blue-500/50 transition-all relative overflow-hidden">
                             
                             <div class="flex justify-between items-start mb-2">
                                 <span class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded">{{ o[4] }}</span>
@@ -105,16 +108,19 @@
 
                             <h4 class="text-xs font-semibold text-slate-300 mb-2">{{ o[5] }} {{ o[6] }}</h4>
 
-                            <div class="flex items-center gap-2 mb-3">
+                            <div class="flex items-center gap-2 mb-2">
                                 <span class="text-[10px] font-semibold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">🏎️ {{ o[9] if o[9] else '0' }} KM</span>
                                 <span class="text-[10px] font-semibold bg-slate-800 text-amber-400 px-2 py-0.5 rounded-md">⛽ {{ o[10] if o[10] else 'N/I' }}</span>
                             </div>
+
+                            <!-- ETIQUETA DE TIEMPO -->
+                            <div class="tag-tiempo text-[10px] font-semibold mb-3 flex items-center gap-1"></div>
 
                             <p class="text-[11px] text-slate-400 line-clamp-2 mb-3">{{ o[2] }}</p>
 
                             <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between items-center">
                                 <span>👤 {{ o[7] }}</span>
-                                <span class="text-blue-400 font-semibold">Ver detalle →</span>
+                                <span class="text-blue-400 font-semibold">Editar / Ver →</span>
                             </div>
                         </div>
                         {% endfor %}
@@ -155,7 +161,7 @@
 
     </main>
 
-    <!-- MODAL DETALLE DE ORDEN AL HACER CLIC -->
+    <!-- MODAL EDITAR / DETALLE DE ORDEN -->
     <div id="modal-detalle" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-lg p-6 rounded-2xl shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -166,56 +172,88 @@
                 <button onclick="document.getElementById('modal-detalle').classList.add('hidden')" class="text-slate-400 hover:text-white">✕</button>
             </div>
 
-            <div class="space-y-3 text-xs text-slate-300">
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <span class="text-slate-500 block text-[10px]">Cliente</span>
-                        <strong id="m-cliente" class="text-white"></strong>
+            <!-- FORMULARIO DE EDICIÓN -->
+            <form action="/editar_ot" method="POST" class="space-y-3">
+                <input type="hidden" name="orden_id" id="edit-orden-id">
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Cliente</label>
+                        <input type="text" id="m-cliente" readonly class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-slate-400 text-xs">
                     </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <span class="text-slate-500 block text-[10px]">Teléfono</span>
-                        <strong id="m-telefono" class="text-white"></strong>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Teléfono</label>
+                        <input type="text" id="m-telefono" readonly class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-slate-400 text-xs">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <span class="text-slate-500 block text-[10px]">Kilometraje</span>
-                        <strong id="m-km" class="text-slate-200"></strong>
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Kilometraje</label>
+                        <input type="number" name="km" id="edit-km" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold text-xs focus:border-blue-500 focus:outline-none">
                     </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <span class="text-slate-500 block text-[10px]">Combustible</span>
-                        <strong id="m-combustible" class="text-amber-400"></strong>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Combustible</label>
+                        <select name="combustible" id="edit-combustible" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-amber-400 font-bold text-xs focus:border-blue-500 focus:outline-none">
+                            <option value="Reserva">⛽ Reserva</option>
+                            <option value="1/4">⛽ 1/4</option>
+                            <option value="1/2">⛽ 1/2</option>
+                            <option value="3/4">⛽ 3/4</option>
+                            <option value="Lleno">⛽ Lleno</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Tiempo Est.</label>
+                        <select name="tiempo_estimado" id="edit-tiempo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-blue-400 font-bold text-xs focus:border-blue-500 focus:outline-none">
+                            <option value="2">⏱️ 2h</option>
+                            <option value="4">⏱️ 4h</option>
+                            <option value="8">⏱️ 8h</option>
+                            <option value="24">⏱️ 24h</option>
+                            <option value="48">⏱️ 48h</option>
+                        </select>
                     </div>
                 </div>
 
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                    <span class="text-slate-500 block text-[10px]">Síntomas Solicitados</span>
-                    <p id="m-sintomas" class="text-slate-300 mt-1"></p>
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                    <div class="col-span-2">
+                        <label class="block text-[10px] text-slate-400 mb-1">Síntomas / Trabajos</label>
+                        <input type="text" name="sintomas" id="edit-sintomas" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Costo ($)</label>
+                        <input type="number" name="costo" id="edit-costo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-emerald-400 font-bold text-xs focus:border-blue-500 focus:outline-none">
+                    </div>
                 </div>
-            </div>
 
-            <div class="pt-2 flex gap-2">
-                <a id="btn-whatsapp-modal" href="#" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
-                    📱 Enviar Enlace por WhatsApp
-                </a>
-            </div>
+                <div id="m-alerta-box" class="hidden p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
+                    ⚠️ <strong>Atención:</strong> Esta orden superó el tiempo estimado de resolución. Se sugiere enviar un mensaje de tranquilidad.
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button type="submit" class="w-1/2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg shadow-blue-600/20">
+                        💾 Guardar Cambios
+                    </button>
+                    <a id="btn-whatsapp-modal" href="#" target="_blank" class="w-1/2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg shadow-emerald-600/20">
+                        📱 Enviar WhatsApp
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- MODAL CREAR ORDEN (RECEPCIÓN GUIADA) -->
+    <!-- MODAL CREAR ORDEN (RECEPCIÓN GUIADA CON TIEMPO ESTIMADO) -->
     <div id="modal-ot" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl p-6 rounded-2xl shadow-2xl my-8">
             <div class="flex justify-between items-center mb-4">
                 <div>
                     <h3 class="text-base font-bold text-white flex items-center gap-2">📸 Recepción Guiada del Vehículo</h3>
-                    <p class="text-xs text-slate-400">Registra el estado actual del auto, kilometraje y fotografías.</p>
+                    <p class="text-xs text-slate-400">Registra el estado actual del auto, kilometraje y tiempo estimado.</p>
                 </div>
                 <button onclick="document.getElementById('modal-ot').classList.add('hidden')" class="text-slate-400 hover:text-white">✕</button>
             </div>
 
             <form action="/crear_ot" method="POST" enctype="multipart/form-data" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Patente / VIN</label>
                         <input type="text" name="patente" placeholder="Ej: AA123BB" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
@@ -232,6 +270,16 @@
                             <option value="1/2" selected>⛽ 1/2 Estanque</option>
                             <option value="3/4">⛽ 3/4 Estanque</option>
                             <option value="Lleno">⛽ Estanque Lleno</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Tiempo Estimado</label>
+                        <select name="tiempo_estimado" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-blue-400 font-bold focus:outline-none focus:border-blue-500">
+                            <option value="2">⏱️ 2 Horas</option>
+                            <option value="4" selected>⏱️ 4 Horas</option>
+                            <option value="8">⏱️ 8 Horas (1 Día)</option>
+                            <option value="24">⏱️ 24 Horas (2 Días)</option>
+                            <option value="48">⏱️ 48 Horas</option>
                         </select>
                     </div>
                 </div>
@@ -285,31 +333,77 @@
 
     <script>
         lucide.createIcons();
-    
+
         function cambiarPestana(id) {
             document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
             document.getElementById('sec-' + id).classList.remove('hidden');
         }
-    
-        function abrirDetalleOrden(id, patente, vehiculo, cliente, telefono, km, combustible, sintomas, costo, token) {
+
+        // CONTROL DE TIEMPOS DE REPARACIÓN
+        function evaluarTiemposKanban() {
+            const tarjetas = document.querySelectorAll('.card-orden');
+            const ahora = new Date();
+
+            tarjetas.forEach(card => {
+                const fechaStr = card.getAttribute('data-fecha');
+                const horasEstimadas = parseInt(card.getAttribute('data-horas') || '4');
+                const estado = card.getAttribute('data-estado');
+                const tag = card.querySelector('.tag-tiempo');
+
+                if (fechaStr && estado !== 'entrega') {
+                    const fechaIngreso = new Date(fechaStr);
+                    const horasTranscurridas = Math.floor((ahora - fechaIngreso) / (1000 * 60 * 60));
+
+                    if (horasTranscurridas >= horasEstimadas) {
+                        card.classList.add('border-rose-500/80', 'bg-rose-950/20');
+                        tag.innerHTML = `<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-1">⚠️ Tiempo Excedido (+${horasTranscurridas - horasEstimadas}h)</span>`;
+                    } else {
+                        tag.innerHTML = `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 flex items-center gap-1">⏱️ ${horasTranscurridas}h / ${horasEstimadas}h est.</span>`;
+                    }
+                } else if (estado === 'entrega') {
+                    tag.innerHTML = `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 flex items-center gap-1">✅ Listo</span>`;
+                }
+            });
+        }
+
+        function abrirDetalleOrden(id, patente, vehiculo, cliente, telefono, km, combustible, sintomas, costo, token, fechaStr, horasEst) {
+            document.getElementById('edit-orden-id').value = id;
             document.getElementById('m-patente').innerText = patente;
             document.getElementById('m-vehiculo').innerText = vehiculo;
-            document.getElementById('m-cliente').innerText = cliente;
-            document.getElementById('m-telefono').innerText = telefono;
-            document.getElementById('m-km').innerText = km + ' KM';
-            document.getElementById('m-combustible').innerText = combustible;
-            document.getElementById('m-sintomas').innerText = sintomas;
-    
-            var tokenFinal = token ? token : id;
-            var linkWa = "https://wa.me/" + telefono.replace(/\+/g, '').replace(/\s/g, '') + 
-                         "?text=Hola%20" + encodeURIComponent(cliente) + 
-                         ",%20puedes%20seguir%20el%20avance%20de%20tu%20vehiculo%20aqui:%20https://taller-mecanico-saas.onrender.com/seguimiento/" + tokenFinal;
+            document.getElementById('m-cliente').value = cliente;
+            document.getElementById('m-telefono').value = telefono;
+            document.getElementById('edit-km').value = km;
+            document.getElementById('edit-combustible').value = combustible;
+            document.getElementById('edit-tiempo').value = horasEst || '4';
+            document.getElementById('edit-sintomas').value = sintomas;
+            document.getElementById('edit-costo').value = costo;
+
+            const tokenFinal = (token && token.trim() !== '') ? token : patente;
+            const urlSeguimiento = "https://taller-mecanico-saas.onrender.com/seguimiento/" + tokenFinal;
+
+            const ahora = new Date();
+            const fechaIngreso = new Date(fechaStr);
+            const horasTranscurridas = Math.floor((ahora - fechaIngreso) / (1000 * 60 * 60));
+            const esExcedido = horasTranscurridas >= parseInt(horasEst || '4');
+
+            const alertBox = document.getElementById('m-alerta-box');
+            let mensajeWa = "";
+
+            if (esExcedido) {
+                alertBox.classList.remove('hidden');
+                mensajeWa = `Hola ${cliente} 👋 Quería escribirte para comentarte el avance de tu vehículo ${vehiculo} (${patente}). Estamos afinando los últimos detalles técnicos para entregártelo perfecto. Puedes revisar el estatus aquí: ${urlSeguimiento}`;
+            } else {
+                alertBox.classList.add('hidden');
+                mensajeWa = `Hola ${cliente} 👋 Puedes consultar el avance en tiempo real de tu vehículo ${vehiculo} (${patente}) aquí: ${urlSeguimiento}`;
+            }
+
+            const telLimpio = telefono.replace(/\+/g, '').replace(/\s/g, '');
+            const linkWa = `https://wa.me/${telLimpio}?text=${encodeURIComponent(mensajeWa)}`;
             document.getElementById('btn-whatsapp-modal').setAttribute('href', linkWa);
-    
+
             document.getElementById('modal-detalle').classList.remove('hidden');
         }
-    
-        // INICIALIZACIÓN DRAG & DROP CON DISPARADOR DE WHATSAPP
+
         document.querySelectorAll('.kanban-col').forEach(columna => {
             new Sortable(columna, {
                 group: 'kanban',
@@ -318,50 +412,19 @@
                 onEnd: function (evt) {
                     const ordenId = evt.item.getAttribute('data-id');
                     const nuevoEstado = evt.to.getAttribute('data-estado');
-    
-                    // 1. Guardar el nuevo estado en la base de datos vía AJAX
+                    
+                    evt.item.setAttribute('data-estado', nuevoEstado);
+
                     fetch('/cambiar_estado_ot', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ orden_id: ordenId, nuevo_estado: nuevoEstado })
-                    });
-    
-                    // 2. Extraer datos del elemento para redactar WhatsApp automático
-                    // Extraer datos almacenados o en el onclick del card
-                    const card = evt.item;
-                    const onclickAttr = card.getAttribute('onclick') || '';
-                    
-                    // Expresión para capturar los argumentos del onclick de la tarjeta
-                    const match = onclickAttr.match(/abrirDetalleOrden\((.*?)\)/);
-                    
-                    if (match && (nuevoEstado === 'reparacion' || nuevoEstado === 'entrega')) {
-                        const args = match[1].split(',').map(a => a.trim().replace(/^['"]|['"]$/g, ''));
-                        const patente = args[1] || '';
-                        const vehiculo = args[2] || '';
-                        const cliente = args[3] || '';
-                        const telefono = (args[4] || '').replace(/\+/g, '').replace(/\s/g, '');
-                        const token = args[9] || args[0] || '';
-    
-                        if (telefono) {
-                            let mensaje = "";
-                            const urlSeguimiento = "https://taller-mecanico-saas.onrender.com/seguimiento/" + token;
-    
-                            if (nuevoEstado === 'reparacion') {
-                                mensaje = `Hola ${cliente} 👋 Te informamos que tu vehículo ${vehiculo} (${patente}) ya ingresó a box y comenzamos con los trabajos programados. Puedes revisar el avance aquí: ${urlSeguimiento}`;
-                            } else if (nuevoEstado === 'entrega') {
-                                mensaje = `Hola ${cliente} 🎉 ¡Buenas noticias! Tu vehículo ${vehiculo} (${patente}) ya se encuentra listo para ser retirado en el taller. Te esperamos.`;
-                            }
-    
-                            // Preguntar al usuario si desea enviar el WhatsApp de aviso
-                            if (confirm(`¿Deseas enviar aviso por WhatsApp a ${cliente}?`)) {
-                                const waUrl = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
-                                window.open(waUrl, '_blank');
-                            }
-                        }
-                    }
+                    }).then(() => evaluarTiemposKanban());
                 }
             });
         });
+
+        evaluarTiemposKanban();
     </script>
 </body>
 </html>

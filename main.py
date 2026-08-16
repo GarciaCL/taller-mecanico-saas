@@ -2,14 +2,22 @@ from flask import Flask, render_template, request, redirect, session, jsonify
 import os
 from werkzeug.utils import secure_filename
 from base_datos.crear_db import inicializar_db_saas
-from modulos.gestion_db import (
-    validar_login,
-    obtener_inventario,
-    agregar_repuesto,
-    crear_orden_recepcion_guiada,
-    obtener_ordenes_kanban,
-    actualizar_estado_orden
-)
+from modulos.gestion_db import actualizar_orden_trabajo # Importar la nueva función
+
+@app.route("/editar_ot", methods=["POST"])
+def editar_ot_web():
+    if "taller_id" not in session:
+        return redirect("/login")
+    
+    orden_id = int(request.form["orden_id"])
+    km = int(request.form["km"]) if request.form.get("km") else 0
+    combustible = request.form.get("combustible", "1/2")
+    tiempo_horas = int(request.form.get("tiempo_estimado", 4))
+    sintomas = request.form.get("sintomas", "")
+    costo = float(request.form["costo"]) if request.form.get("costo") else 0.0
+
+    actualizar_orden_trabajo(session["taller_id"], orden_id, km, combustible, tiempo_horas, sintomas, costo)
+    return redirect("/")
 
 app = Flask(__name__)
 app.secret_key = "CLAVE-SUPER-SECRETA-SAAS-TALLER"

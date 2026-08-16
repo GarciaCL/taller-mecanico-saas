@@ -170,3 +170,23 @@ def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, 
     """, (taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades))
     conexion.commit()
     conexion.close()
+    
+    def actualizar_orden_trabajo(taller_id, orden_id, km, combustible, tiempo_horas, sintomas, costo):
+    """Permite editar los datos de una orden existente en el taller."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"""
+        UPDATE ordenes_trabajo
+        SET km_ingreso = {p},
+            nivel_combustible = {p},
+            tiempo_estimado_horas = {p},
+            sintomas_cliente = {p},
+            costo_estimado = {p}
+        WHERE id = {p} AND taller_id = {p}
+    """, (km, combustible, tiempo_horas, sintomas, costo, orden_id, taller_id))
+
+    conexion.commit()
+    conexion.close()
+    return True
