@@ -285,28 +285,31 @@
 
     <script>
         lucide.createIcons();
-
+    
         function cambiarPestana(id) {
             document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
             document.getElementById('sec-' + id).classList.remove('hidden');
         }
-
+    
         function abrirDetalleOrden(id, patente, vehiculo, cliente, telefono, km, combustible, sintomas, costo, token) {
-    document.getElementById('m-patente').innerText = patente;
-    document.getElementById('m-vehiculo').innerText = vehiculo;
-    document.getElementById('m-cliente').innerText = cliente;
-    document.getElementById('m-telefono').innerText = telefono;
-    document.getElementById('m-km').innerText = km + ' KM';
-    document.getElementById('m-combustible').innerText = combustible;
-    document.getElementById('m-sintomas').innerText = sintomas;
-
-    var tokenFinal = token ? token : id;
-    var linkWa = "https://wa.me/" + telefono.replace(/\+/g, '').replace(/\s/g, '') + "?text=Hola%20" + encodeURIComponent(cliente) + ",%20puedes%20seguir%20el%20avance%20de%20tu%20vehiculo%20aqui:%20https://taller-mecanico-saas.onrender.com/seguimiento/" + tokenFinal;
-    document.getElementById('btn-whatsapp-modal').setAttribute('href', linkWa);
-
-    document.getElementById('modal-detalle').classList.remove('hidden');
-}
-
+            document.getElementById('m-patente').innerText = patente;
+            document.getElementById('m-vehiculo').innerText = vehiculo;
+            document.getElementById('m-cliente').innerText = cliente;
+            document.getElementById('m-telefono').innerText = telefono;
+            document.getElementById('m-km').innerText = km + ' KM';
+            document.getElementById('m-combustible').innerText = combustible;
+            document.getElementById('m-sintomas').innerText = sintomas;
+    
+            var tokenFinal = token ? token : id;
+            var linkWa = "https://wa.me/" + telefono.replace(/\+/g, '').replace(/\s/g, '') + 
+                         "?text=Hola%20" + encodeURIComponent(cliente) + 
+                         ",%20puedes%20seguir%20el%20avance%20de%20tu%20vehiculo%20aqui:%20https://taller-mecanico-saas.onrender.com/seguimiento/" + tokenFinal;
+            document.getElementById('btn-whatsapp-modal').setAttribute('href', linkWa);
+    
+            document.getElementById('modal-detalle').classList.remove('hidden');
+        }
+    
+        // INICIALIZACIÓN DRAG & DROP CON DISPARADOR DE WHATSAPP
         document.querySelectorAll('.kanban-col').forEach(columna => {
             new Sortable(columna, {
                 group: 'kanban',
@@ -315,12 +318,47 @@
                 onEnd: function (evt) {
                     const ordenId = evt.item.getAttribute('data-id');
                     const nuevoEstado = evt.to.getAttribute('data-estado');
-
+    
+                    // 1. Guardar el nuevo estado en la base de datos vía AJAX
                     fetch('/cambiar_estado_ot', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ orden_id: ordenId, nuevo_estado: nuevoEstado })
                     });
+    
+                    // 2. Extraer datos del elemento para redactar WhatsApp automático
+                    // Extraer datos almacenados o en el onclick del card
+                    const card = evt.item;
+                    const onclickAttr = card.getAttribute('onclick') || '';
+                    
+                    // Expresión para capturar los argumentos del onclick de la tarjeta
+                    const match = onclickAttr.match(/abrirDetalleOrden\((.*?)\)/);
+                    
+                    if (match && (nuevoEstado === 'reparacion' || nuevoEstado === 'entrega')) {
+                        const args = match[1].split(',').map(a => a.trim().replace(/^['"]|['"]$/g, ''));
+                        const patente = args[1] || '';
+                        const vehiculo = args[2] || '';
+                        const cliente = args[3] || '';
+                        const telefono = (args[4] || '').replace(/\+/g, '').replace(/\s/g, '');
+                        const token = args[9] || args[0] || '';
+    
+                        if (telefono) {
+                            let mensaje = "";
+                            const urlSeguimiento = "https://taller-mecanico-saas.onrender.com/seguimiento/" + token;
+    
+                            if (nuevoEstado === 'reparacion') {
+                                mensaje = `Hola ${cliente} 👋 Te informamos que tu vehículo ${vehiculo} (${patente}) ya ingresó a box y comenzamos con los trabajos programados. Puedes revisar el avance aquí: ${urlSeguimiento}`;
+                            } else if (nuevoEstado === 'entrega') {
+                                mensaje = `Hola ${cliente} 🎉 ¡Buenas noticias! Tu vehículo ${vehiculo} (${patente}) ya se encuentra listo para ser retirado en el taller. Te esperamos.`;
+                            }
+    
+                            // Preguntar al usuario si desea enviar el WhatsApp de aviso
+                            if (confirm(`¿Deseas enviar aviso por WhatsApp a ${cliente}?`)) {
+                                const waUrl = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+                                window.open(waUrl, '_blank');
+                            }
+                        }
+                    }
                 }
             });
         });
