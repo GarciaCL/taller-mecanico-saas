@@ -123,3 +123,12 @@ def guardar_repuesto_web():
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
+
+    from modulos.gestion_db import obtener_detalle_orden_publico  # Asegúrate de agregarla a la importación
+
+@app.route("/seguimiento/<int:orden_id>")
+def seguimiento_cliente(orden_id):
+    orden = obtener_detalle_orden_publico(orden_id)
+    if not orden:
+        return "Orden no encontrada", 404
+    return render_template("seguimiento.html", o=orden)
