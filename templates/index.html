@@ -168,30 +168,40 @@
                         </span>
                     </div>
                     <div id="col-entrega" data-estado="entrega" class="kanban-col space-y-3 min-h-[450px]">
-                        {% for o in ordenes if o[1] == 'entrega' %}
-                        <div data-id="{{ o[0] }}" class="kanban-card bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-grab hover:border-slate-700 transition-all">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded">{{ o[4] }}</span>
-                                <span class="text-xs text-emerald-400 font-bold">${{ "{:,.0f}".format(o[3]) }}</span>
-                            </div>
-                            <h4 class="text-xs font-semibold text-slate-300 mb-1">{{ o[5] }} {{ o[6] }}</h4>
-                            <p class="text-[11px] text-slate-400 line-clamp-2 mb-3">{{ o[2] }}</p>
-                            <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between">
-                                <span>👤 {{ o[7] }}</span>
-                                <span>📞 {{ o[8] }}</span>
-                            </div>
-                            <!-- Dentro del loop de tarjetas Kanban -->
-<div class="flex items-center gap-2 mb-2">
-    <span class="text-[10px] font-semibold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">
-        🏎️ {{ o[9] }} KM
-    </span>
-    <span class="text-[10px] font-semibold bg-slate-800 text-amber-400 px-2 py-0.5 rounded-md">
-        ⛽ {{ o[10] }}
-    </span>
+    {% for o in ordenes if o[1] == 'entrega' %}
+    <div data-id="{{ o[0] }}" class="kanban-card bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-grab hover:border-slate-700 transition-all">
+        
+        <!-- Encabezado: Patente y Precio -->
+        <div class="flex justify-between items-start mb-2">
+            <span class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded">{{ o[4] }}</span>
+            <span class="text-xs text-emerald-400 font-bold">${{ "{:,.0f}".format(o[3]) }}</span>
+        </div>
+
+        <!-- Marca y Modelo -->
+        <h4 class="text-xs font-semibold text-slate-300 mb-1.5">{{ o[5] }} {{ o[6] }}</h4>
+
+        <!-- BADGES: KM y COMBUSTIBLE (Ubicación correcta) -->
+        <div class="flex items-center gap-2 mb-3">
+            <span class="text-[10px] font-semibold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md flex items-center gap-1">
+                🏎️ {{ o[9] if o[9] else '0' }} KM
+            </span>
+            <span class="text-[10px] font-semibold bg-slate-800 text-amber-400 px-2 py-0.5 rounded-md flex items-center gap-1">
+                ⛽ {{ o[10] if o[10] else 'N/I' }}
+            </span>
+        </div>
+
+        <!-- Síntomas / Observaciones -->
+        <p class="text-[11px] text-slate-400 line-clamp-2 mb-3">{{ o[2] }}</p>
+
+        <!-- Pie de tarjeta: Cliente y Contacto -->
+        <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between">
+            <span>👤 {{ o[7] }}</span>
+            <span>📞 {{ o[8] }}</span>
+        </div>
+
+    </div>
+    {% endfor %}
 </div>
-                        </div>
-                        {% endfor %}
-                    </div>
                 </div>
 
             </div>
