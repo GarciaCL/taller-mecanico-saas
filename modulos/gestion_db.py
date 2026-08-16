@@ -205,7 +205,7 @@ def obtener_historial_vehiculo(taller_id, patente):
     conexion.close()
     return filas
 
-# --- INVENTARIO ---
+# --- INVENTARIO & CONTROL DE STOCK ---
 
 def obtener_inventario(taller_id):
     conexion = obtener_conexion()
@@ -231,3 +231,75 @@ def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, 
     """, (taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades))
     conexion.commit()
     conexion.close()
+
+def agregar_repuesto_a_orden(orden_id, inventario_id, cantidad=1):
+    """Asocia un repuesto del inventario a una orden de trabajo."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"SELECT precio_venta FROM inventario WHERE id = {p}", (inventario_id,))
+    prod = cursor.fetchone()
+    precio = prod[0] if prod else 0.0
+
+    cursor.execute(f"""
+        INSERT INTO ordenes_repuestos (orden_id, inventario_id, cantidad, precio_unidad)
+        VALUES ({p}, {p}, {p}, {p})
+    """, (orden_id, inventario_id, cantidad, precio))
+
+    conexion.commit()
+    conexion.close()
+    return True
+
+def descontar_stock_orden(orden_id, taller_id):
+    """Descuenta del inventario los repuestos utilizados en la orden que no hayan sido descontados previamente."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    try:
+        cursor.execute(f"""
+            SELECT id, inventario_id, cantidad 
+            FROM ordenes_repuestos 
+            WHERE orden_id = {p} AND (descontado IS FALSE OR descontado IS NULL OR descontado = 0)
+        """, (orden_id,))
+        items = cursor.fetchall()
+
+        for item_id, inv_id, cant in items:
+            cursor.execute(f"""
+                UPDATE inventario 
+                SET stock = GREATEST(0, stock - {p}) 
+                WHERE id = {p} AND taller_id = {p}
+            """, (cant, inv_id, taller_id))
+
+            cursor.execute(f"""
+                UPDATE ordenes_repuestos 
+                SET descontado = TRUE 
+                WHERE id = {p}
+            """, (item_id,))
+
+        conexion.commit()
+    except Exception:
+        conexion.rollback()
+    finally:
+        conexion.close()
+    return True
+
+def obtener_repuestos_orden(orden_id):
+    """Obtiene la lista de repuestos asociados a una orden de trabajo."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    try:
+        cursor.execute(f"""
+            SELECT id, inventario_id, cantidad, precio_unidad
+            FROM ordenes_repuestos
+            WHERE orden_id = {p}
+        """, (orden_id,))
+        items = cursor.fetchall()
+    except Exception:
+        items = []
+    finally:
+        conexion.close()
+    return items
