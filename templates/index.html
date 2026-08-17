@@ -138,13 +138,13 @@
                 </div>
             </div>
 
-           <!-- FORMULARIO CEREBRO DE CARGA DE REPUESTO -->
+          <!-- FORMULARIO DE CARGA DE REPUESTO CON AUTOCOMPLETADO INTELIGENTE (MARCA - MODELO - AÑO) -->
 <div class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl space-y-4">
     <h3 class="text-sm font-bold text-white flex items-center gap-2">📦 Cargar Nuevo Repuesto</h3>
     
     <form action="/guardar_repuesto" method="POST" id="form-guardar-repuesto" class="space-y-4">
         
-        <!-- FILA 1: DATOS BÁSICOS -->
+        <!-- DATOS DEL REPUESTO -->
         <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
             <div>
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Código</label>
@@ -168,24 +168,41 @@
             </div>
         </div>
 
-        <!-- FILA 2: LOS 3 CAMPOS INDEPENDIENTES (MARCA - MODELO - AÑO) PARA COMPATIBILIDAD MÚLTIPLE -->
+        <!-- TRES CAMPOS CON DATALIST DE AUTOCOMPLETADO AUTOMÁTICO (MARCA - MODELO - AÑO) -->
         <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-3">
-            <label class="block text-xs font-bold text-slate-300">🚗 Asignar Compatibilidades de Vehículos (Marca - Modelo - Año)</label>
+            <label class="block text-xs font-bold text-slate-300">🚗 Asignar Compatibilidad de Vehículos (Escribe para ver sugerencias de la BD)</label>
             
             <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-                <!-- 1. MARCA -->
+                <!-- 1. MARCA AUTOCOMPLETADA -->
                 <div>
-                    <input type="text" id="comp-marca" placeholder="Marca (Ej: Toyota)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    <input type="text" id="comp-marca" list="dl-marcas" oninput="actualizarModelosSugeridos()" placeholder="Marca (Ej: Toyota)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    <datalist id="dl-marcas">
+                        {% for m in marcas.keys() %}
+                        <option value="{{ m }}">
+                        {% endfor %}
+                    </datalist>
                 </div>
-                <!-- 2. MODELO -->
+
+                <!-- 2. MODELO AUTOCOMPLETADO EN TIEMPO REAL SEGÚN LA MARCA -->
                 <div>
-                    <input type="text" id="comp-modelo" placeholder="Modelo (Ej: Yaris)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    <input type="text" id="comp-modelo" list="dl-modelos" placeholder="Modelo (Ej: Yaris)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    <datalist id="dl-modelos"></datalist>
                 </div>
-                <!-- 3. AÑO -->
+
+                <!-- 3. RANGO / AÑO -->
                 <div>
-                    <input type="text" id="comp-anio" placeholder="Año (Ej: 2018-2024)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    <input type="text" id="comp-anio" list="dl-anios" placeholder="Año (Ej: 2018-2024)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    <datalist id="dl-anios">
+                        <option value="2000-2005">
+                        <option value="2006-2010">
+                        <option value="2011-2015">
+                        <option value="2016-2020">
+                        <option value="2021-2026">
+                        <option value="Todos los años">
+                    </datalist>
                 </div>
-                <!-- BOTÓN AÑADIR A LA LISTA -->
+
+                <!-- BOTÓN MÚLTIPLES APLICACIONES -->
                 <div>
                     <button type="button" onclick="agregarEtiquetaCompatibilidad()" class="w-full bg-slate-800 hover:bg-slate-700 text-blue-400 border border-blue-500/30 font-semibold py-2 rounded-xl text-xs flex items-center justify-center gap-1 transition-all">
                         + Añadir Aplicación
@@ -193,12 +210,11 @@
                 </div>
             </div>
 
-            <!-- CHIPS / ETIQUETAS DE COMPATIBILIDADES ACUMULADAS -->
+            <!-- CHIPS / ETIQUETAS MÚLTIPLES ACUMULADAS -->
             <div id="contenedor-chips-compat" class="flex flex-wrap gap-2 pt-1 min-h-[30px]">
                 <span class="text-[11px] text-slate-500 italic" id="msg-sin-compat">Sin aplicaciones asignadas (por defecto será Universal).</span>
             </div>
 
-            <!-- INPUT OCULTO CON TODO CONCATENADO PARA ENVIAR AL SERVIDOR -->
             <input type="hidden" name="compatibilidades_final" id="compatibilidades_final" value="Universal">
         </div>
 
@@ -898,6 +914,27 @@ function actualizarChipsCompatibilidad() {
         });
         contenedor.innerHTML = html;
         inputFinal.value = listaCompatibilidades.join(', ');
+    }
+}
+
+// DICCIONARIO DE MODELOS BASE POR MARCA ENVIADO DESDE PYTHON
+const mapaMarcasModelos = {{ marcas|tojson }};
+
+function actualizarModelosSugeridos() {
+    const marcaIngresada = document.getElementById('comp-marca').value.trim().toLowerCase();
+    const datalistModelos = document.getElementById('dl-modelos');
+    datalistModelos.innerHTML = '';
+
+    // Buscar si existe coincidencia de marca en el objeto JSON
+    for (let m in mapaMarcasModelos) {
+        if (m.toLowerCase() === marcaIngresada) {
+            mapaMarcasModelos[m].forEach(mod => {
+                const opt = document.createElement('option');
+                opt.value = mod;
+                datalistModelos.appendChild(opt);
+            });
+            break;
+        }
     }
 }
     </script>
