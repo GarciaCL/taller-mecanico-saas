@@ -207,7 +207,7 @@ def obtener_historial_vehiculo(taller_id, patente):
     conexion.close()
     return filas
 
-# --- INVENTARIO & GESTIÓN DE STOCK POR OT ---
+# --- INVENTARIO & GESTIÓN DE STOCK ---
 
 def obtener_inventario(taller_id):
     conexion = obtener_conexion()
@@ -223,16 +223,41 @@ def obtener_inventario(taller_id):
     conexion.close()
     return filas
 
-def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades):
+def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatibilidades):
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
     cursor.execute(f"""
         INSERT INTO inventario (taller_id, codigo, categoria, nombre, stock, precio_costo, precio_venta, mano_obra, modelos_compatibles)
         VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
-    """, (taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades))
+    """, (taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatibilidades))
     conexion.commit()
     conexion.close()
+
+def agregar_repuestos_masivo(taller_id, lista_repuestos):
+    """Inserta en lote una lista de repuestos enviada por carga masiva Excel/CSV."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    for item in lista_repuestos:
+        codigo = str(item.get('codigo', '')).strip()
+        nombre = str(item.get('nombre', '')).strip()
+        categoria = str(item.get('categoria', 'General')).strip() or 'General'
+        stock = int(item.get('stock', 0)) if str(item.get('stock', '')).isdigit() else 0
+        costo = float(item.get('costo', 0)) if str(item.get('costo', '')).replace('.', '', 1).isdigit() else 0.0
+        venta = float(item.get('venta', 0)) if str(item.get('venta', '')).replace('.', '', 1).isdigit() else 0.0
+        compat = str(item.get('compatibilidades', 'Universal')).strip() or 'Universal'
+
+        if codigo and nombre:
+            cursor.execute(f"""
+                INSERT INTO inventario (taller_id, codigo, categoria, nombre, stock, precio_costo, precio_venta, mano_obra, modelos_compatibles)
+                VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, 0, {p})
+            """, (taller_id, codigo, categoria, nombre, stock, costo, venta, compat))
+
+    conexion.commit()
+    conexion.close()
+    return True
 
 def agregar_repuesto_a_orden(orden_id, inventario_id, cantidad=1):
     conexion = obtener_conexion()

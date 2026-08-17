@@ -8,7 +8,7 @@ from modulos.gestion_db import (
     obtener_inventario, agregar_repuesto, actualizar_orden_trabajo,
     finalizar_orden_trabajo, obtener_historial_vehiculo,
     agregar_repuesto_a_orden, descontar_stock_orden, obtener_repuestos_orden,
-    obtener_marcas_y_modelos
+    obtener_marcas_y_modelos, agregar_repuestos_masivo  # <--- Agregada importacion
 )
 from modulos.generador_pdf import generar_pdf_ficha_recepcion
 
@@ -204,10 +204,26 @@ def guardar_repuesto_web():
     costo = float(request.form["costo"]) if request.form.get("costo") else 0.0
     venta = float(request.form["venta"]) if request.form.get("venta") else 0.0
     mano_obra = float(request.form["mano_obra"]) if request.form.get("mano_obra") else 0.0
-    compatabilidades = request.form.get("compatibilidades", "Universal")
+    
+    # Manejar compatibilidad dinámica de múltiples marcas/modelos
+    compatibilidades = request.form.get("compatibilidades_input") or request.form.get("compatibilidades", "Universal")
 
     agregar_repuesto(session["taller_id"], codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades)
     return redirect("/")
+
+@app.route("/carga_masiva_repuestos", methods=["POST"])
+def carga_masiva_repuestos_web():
+    if "taller_id" not in session:
+        return jsonify({"success": False}), 401
+    
+    data = request.get_json()
+    repuestos = data.get("repuestos", [])
+    
+    if repuestos:
+        agregar_repuestos_masivo(session["taller_id"], repuestos)
+        return jsonify({"success": True, "count": len(repuestos)})
+    
+    return jsonify({"success": False, "error": "Sin datos"}), 400
 
 if __name__ == "__main__":
     app.run(debug=True)
