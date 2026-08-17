@@ -300,28 +300,52 @@
                 </div>
             </form>
 
-            <!-- SECCIÓN: ASIGNAR REPUESTOS DE INVENTARIO A LA ORDEN -->
-            <div class="border-t border-slate-800 pt-3 space-y-2">
-                <h4 class="text-xs font-bold text-slate-300 flex items-center gap-1">📦 Repuestos Asignados a la Orden</h4>
+           <!-- SECCIÓN: BUSCADOR DINÁMICO DE REPUESTOS DE INVENTARIO -->
+<div class="border-t border-slate-800 pt-3 space-y-2">
+    <h4 class="text-xs font-bold text-slate-300 flex items-center gap-1">📦 Repuestos Asignados a la Orden</h4>
+    
+    <div class="relative">
+        <div class="flex gap-2">
+            <div class="relative flex-1">
+                <input type="text" id="buscador-repuesto-input" onkeyup="filtrarRepuestosInventario()" placeholder="🔍 Buscar por nombre o código (ej: pastilla, FIL-001)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                <input type="hidden" id="repuesto-id-seleccionado">
                 
-                <form action="/vincular_repuesto_ot" method="POST" class="flex gap-2">
-                    <input type="hidden" name="orden_id" id="vincular-orden-id">
-                    <select name="inventario_id" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none" required>
-                        <option value="">Seleccionar repuesto de stock...</option>
-                        {% for item in inventario %}
-                        <option value="{{ item[0] }}">{{ item[3] }} (Stock: {{ item[4] }}) - ${{ "{:,.0f}".format(item[6]) }}</option>
-                        {% endfor %}
-                    </select>
-                    <input type="number" name="cantidad" value="1" min="1" class="w-16 bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-center text-white" required>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1.5 rounded-xl text-xs">
-                        + Agregar
-                    </button>
-                </form>
-
-                <div id="lista-repuestos-orden" class="space-y-1 text-xs text-slate-400">
-                    <!-- Cargado vía AJAX por JS -->
+                <!-- LISTA DE COINCIDENCIAS (AUTOCOMPLETADO) -->
+                <div id="desplegable-autocompletado" class="absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-48 overflow-y-auto hidden z-50 divide-y divide-slate-800/60">
+                    {% for item in inventario %}
+                    <div class="opcion-repuesto p-2.5 hover:bg-blue-600/20 cursor-pointer flex justify-between items-center text-xs"
+                         data-id="{{ item[0] }}"
+                         data-codigo="{{ item[1] }}"
+                         data-nombre="{{ item[3] }}"
+                         data-stock="{{ item[4] }}"
+                         data-precio="{{ item[6] }}"
+                         onclick="seleccionarRepuestoAutocompletado('{{ item[0] }}', '{{ item[1] }}', '{{ item[3] }}', '{{ item[4] }}', '{{ item[6] }}')">
+                        <div>
+                            <span class="font-mono font-bold text-blue-400">[{{ item[1] }}]</span>
+                            <span class="font-semibold text-white ml-1">{{ item[3] }}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] block font-bold {{ 'text-emerald-400' if item[4] > 0 else 'text-rose-400' }}">{{ item[4] }} Unid.</span>
+                            <span class="text-slate-400 text-[10px]">${{ "{:,.0f}".format(item[6]) }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
+
+            <input type="number" id="repuesto-cantidad-input" value="1" min="1" class="w-16 bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-xs text-center text-white focus:outline-none">
+            
+            <button type="button" onclick="agregarRepuestoAOrdenAjax()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center gap-1 shadow-lg shadow-blue-600/20">
+                + Añadir
+            </button>
+        </div>
+    </div>
+
+    <!-- LISTA DE REPUESTOS YA VINCULADOS A ESTA OT -->
+    <div id="lista-repuestos-orden" class="space-y-1 text-xs text-slate-400 pt-1">
+        <!-- Cargado vía JS -->
+    </div>
+</div>
 
             <form id="form-archivar" action="/finalizar_ot" method="POST" class="border-t border-slate-800 pt-3">
                 <input type="hidden" name="orden_id" id="archivar-orden-id">
@@ -521,7 +545,7 @@
             document.getElementById('edit-orden-id').value = id;
             document.getElementById('archivar-orden-id').value = id;
             document.getElementById('vincular-orden-id').value = id;
-            
+            document.getElementById('cargarRepuestosVinculadosOT').value = id;
             document.getElementById('m-patente').innerText = patente;
             document.getElementById('m-vehiculo').innerText = vehiculo;
             document.getElementById('m-cliente').value = cliente;
@@ -601,6 +625,100 @@
         });
 
         evaluarTiemposKanban();
+
+        // BUSCADOR Y AUTOCOMPLETADO DE REPUESTOS
+function filtrarRepuestosInventario() {
+    const query = document.getElementById('buscador-repuesto-input').value.toLowerCase().strip();
+    const desplegable = document.getElementById('desplegable-autocompletado');
+    const opciones = document.querySelectorAll('.opcion-repuesto');
+
+    if (query.length < 1) {
+        desplegable.classList.add('hidden');
+        return;
+    }
+
+    let coincidencias = 0;
+    opciones.forEach(opt => {
+        const codigo = opt.getAttribute('data-codigo').toLowerCase();
+        const nombre = opt.getAttribute('data-nombre').toLowerCase();
+
+        if (codigo.includes(query) || nombre.includes(query)) {
+            opt.classList.remove('hidden');
+            coincidencias++;
+        } else {
+            opt.classList.add('hidden');
+        }
+    });
+
+    if (coincidencias > 0) {
+        desplegable.classList.remove('hidden');
+    } else {
+        desplegable.classList.add('hidden');
+    }
+}
+
+function seleccionarRepuestoAutocompletado(id, codigo, nombre, stock, precio) {
+    document.getElementById('repuesto-id-seleccionado').value = id;
+    document.getElementById('buscador-repuesto-input').value = `[${codigo}] ${nombre}`;
+    document.getElementById('desplegable-autocompletado').classList.add('hidden');
+}
+
+function agregarRepuestoAOrdenAjax() {
+    const ordenId = document.getElementById('edit-orden-id').value;
+    const inventarioId = document.getElementById('repuesto-id-seleccionado').value;
+    const cantidad = document.getElementById('repuesto-cantidad-input').value;
+
+    if (!inventarioId) {
+        Swal.fire({ title: 'Atención', text: 'Por favor busca y selecciona un repuesto de la lista.', icon: 'warning', confirmButtonColor: '#3b82f6' });
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('orden_id', ordenId);
+    formData.append('inventario_id', inventarioId);
+    formData.append('cantidad', cantidad);
+
+    fetch('/vincular_repuesto_ot', {
+        method: 'POST',
+        body: formData
+    }).then(() => {
+        // Limpiar campos del buscador
+        document.getElementById('buscador-repuesto-input').value = '';
+        document.getElementById('repuesto-id-seleccionado').value = '';
+        document.getElementById('repuesto-cantidad-input').value = '1';
+
+        // Recargar repuestos vinculados a esta tarjeta
+        cargarRepuestosVinculadosOT(ordenId);
+    });
+}
+
+function cargarRepuestosVinculadosOT(ordenId) {
+    fetch('/obtener_repuestos_ot/' + ordenId)
+        .then(res => res.json())
+        .then(items => {
+            const contenedor = document.getElementById('lista-repuestos-orden');
+            if (!items || items.length === 0) {
+                contenedor.innerHTML = '<span class="text-slate-500 text-[11px]">Sin repuestos vinculados a esta orden.</span>';
+            } else {
+                let html = '<ul class="space-y-1.5">';
+                let totalAcumulado = 0;
+
+                items.forEach(i => {
+                    const subtotal = i.precio * i.cantidad;
+                    totalAcumulado += subtotal;
+                    html += `<li class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                        <div class="flex items-center gap-2">
+                            <span class="text-blue-400 font-bold">🔧 ${i.nombre}</span>
+                            <span class="bg-slate-800 text-slate-300 font-mono text-[10px] px-1.5 py-0.5 rounded">x${i.cantidad}</span>
+                        </div>
+                        <span class="text-emerald-400 font-bold">$${subtotal.toLocaleString('es-CL')}</span>
+                    </li>`;
+                });
+                html += '</ul>';
+                contenedor.innerHTML = html;
+            }
+        });
+}
     </script>
 </body>
 </html>
