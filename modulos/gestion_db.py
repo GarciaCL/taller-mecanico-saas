@@ -223,16 +223,23 @@ def obtener_inventario(taller_id):
     conexion.close()
     return filas
 
-def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatibilidades):
+def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades):
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
+    
+    # Limpieza preventiva para evitar nulos
+    categoria_clean = categoria.strip() if categoria else 'General'
+    compat_clean = compatabilidades.strip() if compatabilidades else 'Universal'
+
     cursor.execute(f"""
         INSERT INTO inventario (taller_id, codigo, categoria, nombre, stock, precio_costo, precio_venta, mano_obra, modelos_compatibles)
         VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
-    """, (taller_id, codigo, categoria, nombre, stock, costo, venta, mano_obra, compatibilidades))
+    """, (taller_id, codigo.strip(), categoria_clean, nombre.strip(), stock, costo, venta, mano_obra, compat_clean))
+    
     conexion.commit()
     conexion.close()
+    return True
 
 def agregar_repuestos_masivo(taller_id, lista_repuestos):
     """Inserta en lote una lista de repuestos enviada por carga masiva Excel/CSV."""

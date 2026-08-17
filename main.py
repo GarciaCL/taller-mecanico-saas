@@ -197,18 +197,20 @@ def guardar_repuesto_web():
     if "taller_id" not in session:
         return redirect("/login")
     
-    codigo = request.form["codigo"]
-    categoria = request.form.get("categoria", "General")
-    nombre = request.form["nombre"]
-    stock = int(request.form["stock"]) if request.form.get("stock") else 0
+    codigo = request.form.get("codigo", "").strip()
+    categoria = request.form.get("categoria", "General").strip()
+    nombre = request.form.get("nombre", "").strip()
+    stock = int(request.form["stock"]) if request.form.get("stock") and request.form.get("stock").isdigit() else 0
     costo = float(request.form["costo"]) if request.form.get("costo") else 0.0
     venta = float(request.form["venta"]) if request.form.get("venta") else 0.0
     mano_obra = float(request.form["mano_obra"]) if request.form.get("mano_obra") else 0.0
     
-    # Manejar compatibilidad dinámica de múltiples marcas/modelos
-    compatibilidades = request.form.get("compatibilidades_input") or request.form.get("compatibilidades", "Universal")
+    # Capturar la cadena con todas las marcas-modelos-años agregadas desde el frontend
+    compatibilidades = request.form.get("compatibilidades_final", "Universal").strip()
+    if not compatibilidades:
+        compatibilidades = "Universal"
 
-    agregar_repuesto(session["taller_id"], codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades)
+    agregar_repuesto(session["taller_id"], codigo, categoria, nombre, stock, costo, venta, mano_obra, compatibilidades)
     return redirect("/")
 
 @app.route("/carga_masiva_repuestos", methods=["POST"])
