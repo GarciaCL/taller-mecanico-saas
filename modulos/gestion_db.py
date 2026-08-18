@@ -207,7 +207,7 @@ def obtener_historial_vehiculo(taller_id, patente):
     conexion.close()
     return filas
 
-# --- INVENTARIO & GESTIÓN DE STOCK ---
+# --- INVENTARIO DE BODEGA & VÍNCULO A OT CON PRECIOS DINÁMICOS ---
 
 def obtener_inventario(taller_id):
     conexion = obtener_conexion()
@@ -215,8 +215,7 @@ def obtener_inventario(taller_id):
     p = obtener_placeholder()
     cursor.execute(f"""
         SELECT id, codigo, COALESCE(categoria, 'General'), nombre, COALESCE(stock, 0), 
-               COALESCE(precio_costo, 0), COALESCE(precio_venta, 0), COALESCE(mano_obra, 0), 
-               COALESCE(modelos_compatibles, 'Universal')
+               0, 0, 0, COALESCE(modelos_compatibles, 'Universal')
         FROM inventario WHERE taller_id = {p} ORDER BY id DESC
     """, (taller_id,))
     filas = cursor.fetchall()
@@ -228,21 +227,19 @@ def agregar_repuesto(taller_id, codigo, categoria, nombre, stock, costo, venta, 
     cursor = conexion.cursor()
     p = obtener_placeholder()
     
-    # Limpieza preventiva para evitar nulos
     categoria_clean = categoria.strip() if categoria else 'General'
     compat_clean = compatabilidades.strip() if compatabilidades else 'Universal'
 
     cursor.execute(f"""
         INSERT INTO inventario (taller_id, codigo, categoria, nombre, stock, precio_costo, precio_venta, mano_obra, modelos_compatibles)
-        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, {p}, {p})
-    """, (taller_id, codigo.strip(), categoria_clean, nombre.strip(), stock, costo, venta, mano_obra, compat_clean))
+        VALUES ({p}, {p}, {p}, {p}, {p}, 0, 0, 0, {p})
+    """, (taller_id, codigo.strip(), categoria_clean, nombre.strip(), stock, compat_clean))
     
     conexion.commit()
     conexion.close()
     return True
 
 def agregar_repuestos_masivo(taller_id, lista_repuestos):
-    """Inserta en lote una lista de repuestos enviada por carga masiva Excel/CSV."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -252,33 +249,54 @@ def agregar_repuestos_masivo(taller_id, lista_repuestos):
         nombre = str(item.get('nombre', '')).strip()
         categoria = str(item.get('categoria', 'General')).strip() or 'General'
         stock = int(item.get('stock', 0)) if str(item.get('stock', '')).isdigit() else 0
-        costo = float(item.get('costo', 0)) if str(item.get('costo', '')).replace('.', '', 1).isdigit() else 0.0
-        venta = float(item.get('venta', 0)) if str(item.get('venta', '')).replace('.', '', 1).isdigit() else 0.0
-        compat = str(item.get('compatibilidades', 'Universal')).strip() or 'Universal'
+        compat = str(item.get('compatabilidades', 'Universal')).strip() or 'Universal'
 
         if codigo and nombre:
             cursor.execute(f"""
                 INSERT INTO inventario (taller_id, codigo, categoria, nombre, stock, precio_costo, precio_venta, mano_obra, modelos_compatibles)
-                VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, 0, {p})
-            """, (taller_id, codigo, categoria, nombre, stock, costo, venta, compat))
+                VALUES ({p}, {p}, {p}, {p}, {p}, 0, 0, 0, {p})
+            """, (taller_id, codigo, categoria, nombre, stock, compat))
 
     conexion.commit()
     conexion.close()
     return True
 
-def agregar_repuesto_a_orden(orden_id, inventario_id, cantidad=1):
+def eliminar_repuesto(taller_id, repuesto_id):
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
 
-    cursor.execute(f"SELECT precio_venta FROM inventario WHERE id = {p}", (inventario_id,))
-    prod = cursor.fetchone()
-    precio = prod[0] if prod else 0.0
+    cursor.execute(f"DELETE FROM inventario WHERE id = {p} AND taller_id = {p}", (repuesto_id, taller_id))
+    conexion.commit()
+    conexion.close()
+    return True
+
+def eliminar_repuestos_masivo(taller_id, lista_ids):
+    if not lista_ids:
+        return False
+    
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    placeholders = ", ".join([p] * len(lista_ids))
+    params = [taller_id] + [int(x) for x in lista_ids]
+
+    cursor.execute(f"DELETE FROM inventario WHERE taller_id = {p} AND id IN ({placeholders})", params)
+    conexion.commit()
+    conexion.close()
+    return True
+
+def agregar_repuesto_a_orden(orden_id, inventario_id, cantidad=1, precio_unidad=0.0):
+    """Vincula un repuesto asignando su precio específico al momento del trabajo."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
 
     cursor.execute(f"""
         INSERT INTO ordenes_repuestos (orden_id, inventario_id, cantidad, precio_unidad)
         VALUES ({p}, {p}, {p}, {p})
-    """, (orden_id, inventario_id, cantidad, precio))
+    """, (orden_id, inventario_id, cantidad, precio_unidad))
 
     conexion.commit()
     conexion.close()
@@ -339,11 +357,9 @@ def descontar_stock_orden(orden_id, taller_id):
 # --- MARCAS Y MODELOS DINÁMICOS ---
 
 def obtener_marcas_y_modelos():
-    """Obtiene todas las marcas y modelos disponibles del catálogo base y de los vehículos ingresados."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     
-    # Unificar catalogo_vehiculos y vehiculos
     cursor.execute("""
         SELECT DISTINCT marca, modelo FROM catalogo_vehiculos
         UNION

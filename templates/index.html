@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <!-- SWEETALERT2 & SHEETJS PARA EXCEL -->
+    <!-- SWEETALERT2 & SHEETJS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -126,7 +126,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h2 class="text-2xl font-bold text-white tracking-tight">Inventario & Repuestos</h2>
-                    <p class="text-xs text-slate-400">Control de stock y compatibilidades con marcas/modelos.</p>
+                    <p class="text-xs text-slate-400">Control de stock, compatibilidades y disponibilidad en taller.</p>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="descargarPlantillaExcel()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-3 py-2 rounded-xl text-xs flex items-center gap-1">
@@ -138,119 +138,126 @@
                 </div>
             </div>
 
-          <!-- FORMULARIO DE CARGA DE REPUESTO CON AUTOCOMPLETADO INTELIGENTE (MARCA - MODELO - AÑO) -->
-<div class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl space-y-4">
-    <h3 class="text-sm font-bold text-white flex items-center gap-2">📦 Cargar Nuevo Repuesto</h3>
-    
-    <form action="/guardar_repuesto" method="POST" id="form-guardar-repuesto" class="space-y-4">
-        
-        <!-- DATOS DEL REPUESTO -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-            <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Código</label>
-                <input type="text" name="codigo" placeholder="Ej: FIL-001" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" required>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre Repuesto</label>
-                <input type="text" name="nombre" placeholder="Filtro de Aceite" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" required>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Categoría</label>
-                <input type="text" name="categoria" placeholder="Filtros" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Stock Inicial</label>
-                <input type="number" name="stock" placeholder="10" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" required>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Precio Venta ($)</label>
-                <input type="number" name="venta" placeholder="8500" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-            </div>
-        </div>
+            <!-- FORMULARIO CEREBRO DE CARGA INDIVIDUAL LIBRE DE PRECIO VENTA -->
+            <div class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl space-y-4">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">📦 Cargar Nuevo Repuesto en Bodega</h3>
+                
+                <form action="/guardar_repuesto" method="POST" id="form-guardar-repuesto" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Código</label>
+                            <input type="text" name="codigo" placeholder="Ej: FIL-001" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre Repuesto</label>
+                            <input type="text" name="nombre" placeholder="Filtro de Aceite" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Categoría</label>
+                            <input type="text" name="categoria" placeholder="Filtros" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Stock Inicial</label>
+                            <input type="number" name="stock" placeholder="10" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" required>
+                        </div>
+                    </div>
 
-        <!-- TRES CAMPOS CON DATALIST DE AUTOCOMPLETADO AUTOMÁTICO (MARCA - MODELO - AÑO) -->
-        <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-3">
-            <label class="block text-xs font-bold text-slate-300">🚗 Asignar Compatibilidad de Vehículos (Escribe para ver sugerencias de la BD)</label>
-            
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-                <!-- 1. MARCA AUTOCOMPLETADA -->
-                <div>
-                    <input type="text" id="comp-marca" list="dl-marcas" oninput="actualizarModelosSugeridos()" placeholder="Marca (Ej: Toyota)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                    <datalist id="dl-marcas">
-                        {% for m in marcas.keys() %}
-                        <option value="{{ m }}">
-                        {% endfor %}
-                    </datalist>
+                    <!-- TRES CAMPOS CON DATALIST DE AUTOCOMPLETADO (MARCA - MODELO - AÑO) -->
+                    <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-3">
+                        <label class="block text-xs font-bold text-slate-300">🚗 Asignar Compatibilidad de Vehículos (Escribe para ver sugerencias)</label>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                            <div>
+                                <input type="text" id="comp-marca" list="dl-marcas" oninput="actualizarModelosSugeridos()" placeholder="Marca (Ej: Toyota)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                <datalist id="dl-marcas">
+                                    {% for m in marcas.keys() %}
+                                    <option value="{{ m }}">
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+
+                            <div>
+                                <input type="text" id="comp-modelo" list="dl-modelos" placeholder="Modelo (Ej: Yaris)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                <datalist id="dl-modelos"></datalist>
+                            </div>
+
+                            <div>
+                                <input type="text" id="comp-anio" list="dl-anios" placeholder="Año (Ej: 2018-2024)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                                <datalist id="dl-anios">
+                                    <option value="2000-2005">
+                                    <option value="2006-2010">
+                                    <option value="2011-2015">
+                                    <option value="2016-2020">
+                                    <option value="2021-2026">
+                                    <option value="Todos los años">
+                                </datalist>
+                            </div>
+
+                            <div>
+                                <button type="button" onclick="agregarEtiquetaCompatibilidad()" class="w-full bg-slate-800 hover:bg-slate-700 text-blue-400 border border-blue-500/30 font-semibold py-2 rounded-xl text-xs flex items-center justify-center gap-1 transition-all">
+                                    + Añadir Aplicación
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="contenedor-chips-compat" class="flex flex-wrap gap-2 pt-1 min-h-[30px]">
+                            <span class="text-[11px] text-slate-500 italic" id="msg-sin-compat">Sin aplicaciones asignadas (por defecto será Universal).</span>
+                        </div>
+
+                        <input type="hidden" name="compatabilidades_final" id="compatabilidades_final" value="Universal">
+                    </div>
+
+                    <div class="text-right pt-2">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-2.5 rounded-xl text-xs shadow-lg shadow-blue-600/20 transition-all">
+                            💾 Guardar Repuesto en Inventario
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- CONTROLES DE BÚSQUEDA Y ACCIONES MASIVAS -->
+            <div class="flex flex-col md:flex-row justify-between items-center gap-3 bg-slate-900/40 p-4 rounded-2xl border border-slate-800">
+                <div class="w-full md:w-80 relative">
+                    <input type="text" id="filtro-inventario-input" onkeyup="filtrarTablaInventario()" placeholder="🔍 Filtrar repuestos por nombre, código..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
                 </div>
-
-                <!-- 2. MODELO AUTOCOMPLETADO EN TIEMPO REAL SEGÚN LA MARCA -->
-                <div>
-                    <input type="text" id="comp-modelo" list="dl-modelos" placeholder="Modelo (Ej: Yaris)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                    <datalist id="dl-modelos"></datalist>
-                </div>
-
-                <!-- 3. RANGO / AÑO -->
-                <div>
-                    <input type="text" id="comp-anio" list="dl-anios" placeholder="Año (Ej: 2018-2024)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                    <datalist id="dl-anios">
-                        <option value="2000-2005">
-                        <option value="2006-2010">
-                        <option value="2011-2015">
-                        <option value="2016-2020">
-                        <option value="2021-2026">
-                        <option value="Todos los años">
-                    </datalist>
-                </div>
-
-                <!-- BOTÓN MÚLTIPLES APLICACIONES -->
-                <div>
-                    <button type="button" onclick="agregarEtiquetaCompatibilidad()" class="w-full bg-slate-800 hover:bg-slate-700 text-blue-400 border border-blue-500/30 font-semibold py-2 rounded-xl text-xs flex items-center justify-center gap-1 transition-all">
-                        + Añadir Aplicación
+                <div class="flex items-center gap-3">
+                    <button id="btn-eliminar-seleccionados" onclick="eliminarSeleccionadosMasivo()" class="hidden bg-rose-600/20 border border-rose-500/40 hover:bg-rose-600 text-rose-300 hover:text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center gap-2 transition-all">
+                        🗑️ Eliminar Seleccionados (<span id="cant-seleccionados">0</span>)
                     </button>
                 </div>
             </div>
-
-            <!-- CHIPS / ETIQUETAS MÚLTIPLES ACUMULADAS -->
-            <div id="contenedor-chips-compat" class="flex flex-wrap gap-2 pt-1 min-h-[30px]">
-                <span class="text-[11px] text-slate-500 italic" id="msg-sin-compat">Sin aplicaciones asignadas (por defecto será Universal).</span>
-            </div>
-
-            <input type="hidden" name="compatibilidades_final" id="compatibilidades_final" value="Universal">
-        </div>
-
-        <div class="text-right pt-2">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-2.5 rounded-xl text-xs shadow-lg shadow-blue-600/20 transition-all">
-                💾 Guardar Repuesto en Inventario
-            </button>
-        </div>
-    </form>
-</div>
 
             <!-- TABLA DE REPUESTOS Y STOCK -->
             <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
                 <table class="w-full text-left text-xs text-slate-300">
                     <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold uppercase">
                         <tr>
+                            <th class="p-4 w-10">
+                                <input type="checkbox" id="check-todos-repuestos" onclick="toggleSeleccionarTodos(this)" class="rounded bg-slate-950 border-slate-800 text-blue-600 focus:ring-0">
+                            </th>
                             <th class="p-4">Código</th>
                             <th class="p-4">Nombre Repuesto</th>
                             <th class="p-4">Categoría</th>
                             <th class="p-4">Marcas / Modelos Compatibles</th>
                             <th class="p-4">Stock</th>
-                            <th class="p-4">Precio Venta</th>
+                            <th class="p-4 text-right">Acción</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-800/60">
+                    <tbody id="tbody-inventario" class="divide-y divide-slate-800/60">
                         {% if not inventario %}
                         <tr>
-                            <td colspan="6" class="p-8 text-center text-slate-500">No hay repuestos registrados en el inventario.</td>
+                            <td colspan="7" class="p-8 text-center text-slate-500">No hay repuestos registrados en el inventario.</td>
                         </tr>
                         {% else %}
                         {% for item in inventario %}
-                        <tr class="hover:bg-slate-900/50">
-                            <td class="p-4 font-mono font-bold text-blue-400">{{ item[1] }}</td>
-                            <td class="p-4 font-bold text-white">{{ item[3] }}</td>
-                            <td class="p-4 text-slate-400">{{ item[2] }}</td>
+                        <tr class="fila-repuesto hover:bg-slate-900/50">
                             <td class="p-4">
+                                <input type="checkbox" class="check-repuesto rounded bg-slate-950 border-slate-800 text-blue-600 focus:ring-0" value="{{ item[0] }}" onclick="evaluarSeleccionados()">
+                            </td>
+                            <td class="p-4 font-mono font-bold text-blue-400 cell-codigo">{{ item[1] }}</td>
+                            <td class="p-4 font-bold text-white cell-nombre">{{ item[3] }}</td>
+                            <td class="p-4 text-slate-400 cell-categoria">{{ item[2] }}</td>
+                            <td class="p-4 cell-compat">
                                 <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[10px] font-semibold">
                                     🚗 {{ item[8] if item[8] else 'Universal' }}
                                 </span>
@@ -260,12 +267,25 @@
                                     {{ item[4] }} Unid.
                                 </span>
                             </td>
-                            <td class="p-4 font-bold text-emerald-400">${{ "{:,.0f}".format(item[6]) }}</td>
+                            <td class="p-4 text-right">
+                                <button onclick="eliminarRepuestoIndividual('{{ item[0] }}', '{{ item[3] }}')" class="text-rose-400 hover:text-rose-300 font-semibold text-xs flex items-center justify-end gap-1 ml-auto">
+                                    🗑️ Borrar
+                                </button>
+                            </td>
                         </tr>
                         {% endfor %}
                         {% endif %}
                     </tbody>
                 </table>
+
+                <!-- PAGINADOR DEL CLIENTE -->
+                <div class="bg-slate-900 border-t border-slate-800 p-4 flex justify-between items-center text-xs text-slate-400">
+                    <span id="info-paginacion">Mostrando 0-0 de 0 repuestos</span>
+                    <div class="flex gap-2">
+                        <button id="btn-pag-prev" onclick="cambiarPagina(-1)" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-white disabled:opacity-40">← Anterior</button>
+                        <button id="btn-pag-sig" onclick="cambiarPagina(1)" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-white disabled:opacity-40">Siguiente →</button>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -350,7 +370,7 @@
                         <input type="text" name="sintomas" id="edit-sintomas" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:border-blue-500 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-[10px] text-slate-400 mb-1">Costo ($)</label>
+                        <label class="block text-[10px] text-slate-400 mb-1">Total OT ($)</label>
                         <input type="number" name="costo" id="edit-costo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-emerald-400 font-bold text-xs focus:border-blue-500 focus:outline-none">
                     </div>
                 </div>
@@ -372,44 +392,47 @@
                 </div>
             </form>
 
-            <!-- SECCIÓN: BUSCADOR DINÁMICO DE REPUESTOS -->
+            <!-- SECCIÓN: BUSCADOR DINÁMICO DE REPUESTOS Y ASIGNACIÓN DE PRECIO EN LA OT -->
             <div class="border-t border-slate-800 pt-3 space-y-2">
-                <h4 class="text-xs font-bold text-slate-300 flex items-center gap-1">📦 Repuestos Asignados a la Orden</h4>
+                <h4 class="text-xs font-bold text-slate-300 flex items-center gap-1">📦 Asignar Repuestos / Trabajos a la Orden</h4>
                 
-                <div class="relative">
-                    <div class="flex gap-2">
-                        <div class="relative flex-1">
-                            <input type="text" id="buscador-repuesto-input" onkeyup="filtrarRepuestosInventario()" placeholder="🔍 Buscar por nombre o código (ej: pastilla, FIL-001)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-                            <input type="hidden" id="repuesto-id-seleccionado">
-                            
-                            <div id="desplegable-autocompletado" class="absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-48 overflow-y-auto hidden z-50 divide-y divide-slate-800/60">
-                                {% for item in inventario %}
-                                <div class="opcion-repuesto p-2.5 hover:bg-blue-600/20 cursor-pointer flex justify-between items-center text-xs"
-                                     data-id="{{ item[0] }}"
-                                     data-codigo="{{ item[1] }}"
-                                     data-nombre="{{ item[3] }}"
-                                     data-stock="{{ item[4] }}"
-                                     data-precio="{{ item[6] }}"
-                                     onclick="seleccionarRepuestoAutocompletado('{{ item[0] }}', '{{ item[1] }}', '{{ item[3] }}', '{{ item[4] }}', '{{ item[6] }}')">
-                                    <div>
-                                        <span class="font-mono font-bold text-blue-400">[{{ item[1] }}]</span>
-                                        <span class="font-semibold text-white ml-1">{{ item[3] }}</span>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="text-[10px] block font-bold {{ 'text-emerald-400' if item[4] > 0 else 'text-rose-400' }}">{{ item[4] }} Unid.</span>
-                                        <span class="text-slate-400 text-[10px]">${{ "{:,.0f}".format(item[6]) }}</span>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <input type="number" id="repuesto-cantidad-input" value="1" min="1" class="w-16 bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-xs text-center text-white focus:outline-none">
+                <div class="relative space-y-2">
+                    <div class="relative">
+                        <input type="text" id="buscador-repuesto-input" onkeyup="filtrarRepuestosInventario()" placeholder="🔍 Buscar por nombre o código (ej: pastilla, FIL-001)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                        <input type="hidden" id="repuesto-id-seleccionado">
                         
-                        <button type="button" onclick="agregarRepuestoAOrdenAjax()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center gap-1 shadow-lg shadow-blue-600/20">
-                            + Añadir
-                        </button>
+                        <div id="desplegable-autocompletado" class="absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-48 overflow-y-auto hidden z-50 divide-y divide-slate-800/60">
+                            {% for item in inventario %}
+                            <div class="opcion-repuesto p-2.5 hover:bg-blue-600/20 cursor-pointer flex justify-between items-center text-xs"
+                                 data-id="{{ item[0] }}"
+                                 data-codigo="{{ item[1] }}"
+                                 data-nombre="{{ item[3] }}"
+                                 data-stock="{{ item[4] }}"
+                                 onclick="seleccionarRepuestoAutocompletado('{{ item[0] }}', '{{ item[1] }}', '{{ item[3] }}', '{{ item[4] }}')">
+                                <div>
+                                    <span class="font-mono font-bold text-blue-400">[{{ item[1] }}]</span>
+                                    <span class="font-semibold text-white ml-1">{{ item[3] }}</span>
+                                </div>
+                                <span class="text-[10px] font-bold {{ 'text-emerald-400' if item[4] > 0 else 'text-rose-400' }}">{{ item[4] }} Unid.</span>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
+
+                    <div class="flex gap-2">
+                        <div class="w-1/2">
+                            <label class="block text-[10px] text-slate-400 mb-1">Cantidad</label>
+                            <input type="number" id="repuesto-cantidad-input" value="1" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-center text-white focus:outline-none">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-[10px] text-slate-400 mb-1">Precio Repuesto / Trabajo ($)</label>
+                            <input type="number" id="repuesto-precio-input" placeholder="Opcional (Ej: 15000)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-emerald-400 font-bold focus:outline-none">
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="agregarRepuestoAOrdenAjax()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg shadow-blue-600/20">
+                        + Vincular Repuesto a la OT
+                    </button>
                 </div>
 
                 <div id="lista-repuestos-orden" class="space-y-1 text-xs text-slate-400 pt-1"></div>
@@ -557,9 +580,7 @@
                 <p class="text-xs text-slate-400">Selecciona tu archivo de inventario en formato .XLSX, .XLS o .CSV para importar los repuestos en lote.</p>
                 <input type="file" id="archivo-excel-input" accept=".xlsx, .xls, .csv" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-300">
                 
-                <div id="vista-previa-excel" class="hidden max-h-40 overflow-y-auto bg-slate-950 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-300">
-                    <!-- Vista previa JS -->
-                </div>
+                <div id="vista-previa-excel" class="hidden max-h-40 overflow-y-auto bg-slate-950 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-300"></div>
             </div>
 
             <div class="flex gap-2 pt-2">
@@ -573,6 +594,8 @@
 
     <script>
         lucide.createIcons();
+
+        const mapaMarcasModelos = {{ marcas|tojson }};
 
         function cambiarPestana(id) {
             document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
@@ -589,13 +612,70 @@
             }
         }
 
-        function evaluarNuevaCompat() {
-            const select = document.getElementById('select-compat-repuesto');
-            const inputNueva = document.getElementById('input-compat-nueva');
-            if (select.value === 'OTRA') {
-                inputNueva.classList.remove('hidden');
+        function actualizarModelosSugeridos() {
+            const marcaIngresada = document.getElementById('comp-marca').value.trim().toLowerCase();
+            const datalistModelos = document.getElementById('dl-modelos');
+            datalistModelos.innerHTML = '';
+
+            for (let m in mapaMarcasModelos) {
+                if (m.toLowerCase() === marcaIngresada) {
+                    mapaMarcasModelos[m].forEach(mod => {
+                        const opt = document.createElement('option');
+                        opt.value = mod;
+                        datalistModelos.appendChild(opt);
+                    });
+                    break;
+                }
+            }
+        }
+
+        let listaCompatibilidades = [];
+
+        function agregarEtiquetaCompatibilidad() {
+            const marca = document.getElementById('comp-marca').value.trim();
+            const modelo = document.getElementById('comp-modelo').value.trim();
+            const anio = document.getElementById('comp-anio').value.trim();
+
+            if (!marca && !modelo) {
+                Swal.fire({ title: 'Atención', text: 'Ingresa al menos la Marca o el Modelo.', icon: 'warning', confirmButtonColor: '#3b82f6' });
+                return;
+            }
+
+            let itemStr = `${marca} ${modelo}`.trim();
+            if (anio) itemStr += ` (${anio})`;
+
+            if (!listaCompatibilidades.includes(itemStr)) {
+                listaCompatibilidades.push(itemStr);
+                actualizarChipsCompatibilidad();
+            }
+
+            document.getElementById('comp-marca').value = '';
+            document.getElementById('comp-modelo').value = '';
+            document.getElementById('comp-anio').value = '';
+        }
+
+        function removerCompatibilidad(index) {
+            listaCompatibilidades.splice(index, 1);
+            actualizarChipsCompatibilidad();
+        }
+
+        function actualizarChipsCompatibilidad() {
+            const contenedor = document.getElementById('contenedor-chips-compat');
+            const inputFinal = document.getElementById('compatibilidades_final');
+
+            if (listaCompatibilidades.length === 0) {
+                contenedor.innerHTML = '<span class="text-[11px] text-slate-500 italic">Sin aplicaciones asignadas (por defecto será Universal).</span>';
+                inputFinal.value = 'Universal';
             } else {
-                inputNueva.classList.add('hidden');
+                let html = '';
+                listaCompatibilidades.forEach((item, idx) => {
+                    html += `<span class="bg-blue-950 border border-blue-500/40 text-blue-300 text-xs px-2.5 py-1 rounded-xl flex items-center gap-1.5">
+                        🚗 ${item}
+                        <button type="button" onclick="removerCompatibilidad(${idx})" class="text-rose-400 hover:text-rose-300 font-bold text-xs ml-1">✕</button>
+                    </span>`;
+                });
+                contenedor.innerHTML = html;
+                inputFinal.value = listaCompatibilidades.join(', ');
             }
         }
 
@@ -690,7 +770,7 @@
             document.getElementById('modal-detalle').classList.remove('hidden');
         }
 
-        // AUTOCOMPLETADO DE REPUESTOS EN EL MODAL DE OT
+        // AUTOCOMPLETADO Y VÍNCULO DE REPUESTOS EN LA OT
         function filtrarRepuestosInventario() {
             const query = document.getElementById('buscador-repuesto-input').value.toLowerCase().trim();
             const desplegable = document.getElementById('desplegable-autocompletado');
@@ -721,7 +801,7 @@
             }
         }
 
-        function seleccionarRepuestoAutocompletado(id, codigo, nombre, stock, precio) {
+        function seleccionarRepuestoAutocompletado(id, codigo, nombre, stock) {
             document.getElementById('repuesto-id-seleccionado').value = id;
             document.getElementById('buscador-repuesto-input').value = `[${codigo}] ${nombre}`;
             document.getElementById('desplegable-autocompletado').classList.add('hidden');
@@ -731,6 +811,7 @@
             const ordenId = document.getElementById('edit-orden-id').value;
             const inventarioId = document.getElementById('repuesto-id-seleccionado').value;
             const cantidad = document.getElementById('repuesto-cantidad-input').value;
+            const precioUnidad = document.getElementById('repuesto-precio-input').value || 0;
 
             if (!inventarioId) {
                 Swal.fire({ title: 'Atención', text: 'Por favor busca y selecciona un repuesto de la lista.', icon: 'warning', confirmButtonColor: '#3b82f6' });
@@ -741,6 +822,7 @@
             formData.append('orden_id', ordenId);
             formData.append('inventario_id', inventarioId);
             formData.append('cantidad', cantidad);
+            formData.append('precio_unidad', precioUnidad);
 
             fetch('/vincular_repuesto_ot', {
                 method: 'POST',
@@ -749,6 +831,7 @@
                 document.getElementById('buscador-repuesto-input').value = '';
                 document.getElementById('repuesto-id-seleccionado').value = '';
                 document.getElementById('repuesto-cantidad-input').value = '1';
+                document.getElementById('repuesto-precio-input').value = '';
 
                 cargarRepuestosVinculadosOT(ordenId);
             });
@@ -779,11 +862,122 @@
                 });
         }
 
-        // DESCARGAR PLANTILLA EXCEL
+        // SELECCIÓN MÚLTIPLE Y ELIMINACIÓN DE REPUESTOS
+        function toggleSeleccionarTodos(chkPrincipal) {
+            const checkboxes = document.querySelectorAll('.check-repuesto');
+            checkboxes.forEach(chk => chk.checked = chkPrincipal.checked);
+            evaluarSeleccionados();
+        }
+
+        function evaluarSeleccionados() {
+            const seleccionados = document.querySelectorAll('.check-repuesto:checked');
+            const btnEliminar = document.getElementById('btn-eliminar-seleccionados');
+            const cantSpan = document.getElementById('cant-seleccionados');
+
+            cantSpan.innerText = seleccionados.length;
+            if (seleccionados.length > 0) {
+                btnEliminar.classList.remove('hidden');
+            } else {
+                btnEliminar.classList.add('hidden');
+            }
+        }
+
+        function eliminarRepuestoIndividual(id, nombre) {
+            Swal.fire({
+                title: '¿Eliminar Repuesto?',
+                text: `¿Estás seguro de eliminar permanentemente '${nombre}'?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#334155',
+                confirmButtonText: 'Sí, Eliminar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/eliminar_repuesto/' + id, { method: 'POST' })
+                        .then(res => res.json())
+                        .then(() => location.reload());
+                }
+            });
+        }
+
+        function eliminarSeleccionadosMasivo() {
+            const seleccionados = Array.from(document.querySelectorAll('.check-repuesto:checked')).map(c => c.value);
+            if (seleccionados.length === 0) return;
+
+            Swal.fire({
+                title: `¿Eliminar ${seleccionados.length} repuestos?`,
+                text: "Esta acción no se puede deshacer.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#334155',
+                confirmButtonText: 'Sí, Eliminar Todo'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/eliminar_repuestos_masivo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: seleccionados })
+                    })
+                    .then(res => res.json())
+                    .then(() => location.reload());
+                }
+            });
+        }
+
+        // PAGINADOR Y FILTRADO
+        let paginaActual = 1;
+        const filasPorPagina = 10;
+
+        function filtrarTablaInventario() {
+            const query = document.getElementById('filtro-inventario-input').value.toLowerCase().trim();
+            const filas = document.querySelectorAll('.fila-repuesto');
+
+            filas.forEach(f => {
+                const txt = f.innerText.toLowerCase();
+                if (txt.includes(query)) {
+                    f.setAttribute('data-visible', 'true');
+                } else {
+                    f.setAttribute('data-visible', 'false');
+                    f.style.display = 'none';
+                }
+            });
+
+            paginaActual = 1;
+            renderizarPaginacion();
+        }
+
+        function renderizarPaginacion() {
+            const filasVisibles = Array.from(document.querySelectorAll('.fila-repuesto')).filter(f => f.getAttribute('data-visible') !== 'false');
+            const total = filasVisibles.length;
+            const totalPaginas = Math.ceil(total / filasPorPagina) || 1;
+
+            const inicio = (paginaActual - 1) * filasPorPagina;
+            const fin = inicio + filasPorPagina;
+
+            filasVisibles.forEach((f, idx) => {
+                if (idx >= inicio && idx < fin) {
+                    f.style.display = '';
+                } else {
+                    f.style.display = 'none';
+                }
+            });
+
+            document.getElementById('info-paginacion').innerText = `Mostrando ${total > 0 ? inicio + 1 : 0}-${Math.min(fin, total)} de ${total} repuestos`;
+            document.getElementById('btn-pag-prev').disabled = (paginaActual === 1);
+            document.getElementById('btn-pag-sig').disabled = (paginaActual >= totalPaginas);
+        }
+
+        function cambiarPagina(delta) {
+            paginaActual += delta;
+            renderizarPaginacion();
+        }
+
+        // PLANTILLA EXCEL
         function descargarPlantillaExcel() {
             const data = [
-                { codigo: "FIL-001", nombre: "Filtro de Aceite Nissan", categoria: "Filtros", stock: 15, costo: 4000, venta: 8500, compatibilidades: "Nissan Qashqai, Nissan X-Trail" },
-                { codigo: "PAST-002", nombre: "Pastillas de Freno Delanteras", categoria: "Frenos", stock: 8, costo: 12000, venta: 25000, compatibilidades: "Toyota Yaris, Toyota Corolla" }
+                { codigo: "FIL-001", nombre: "Filtro de Aceite Nissan", categoria: "Filtros", stock: 15, compatibilidades: "Nissan Qashqai, Nissan X-Trail" },
+                { codigo: "PAST-002", nombre: "Pastillas de Freno Delanteras", categoria: "Frenos", stock: 8, compatibilidades: "Toyota Yaris, Toyota Corolla" }
             ];
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
@@ -791,7 +985,6 @@
             XLSX.writeFile(wb, "Plantilla_Carga_Inventario.xlsx");
         }
 
-        // PROCESAR CARGA MASIVA DE EXCEL EN CLIENTE
         let repuestosMasivosLeidos = [];
 
         document.getElementById('archivo-excel-input').addEventListener('change', function(e) {
@@ -861,82 +1054,9 @@
             });
         });
 
+        document.querySelectorAll('.fila-repuesto').forEach(f => f.setAttribute('data-visible', 'true'));
+        renderizarPaginacion();
         evaluarTiemposKanban();
-
-        let listaCompatibilidades = [];
-
-function agregarEtiquetaCompatibilidad() {
-    const marca = document.getElementById('comp-marca').value.trim();
-    const modelo = document.getElementById('comp-modelo').value.trim();
-    const anio = document.getElementById('comp-anio').value.trim();
-
-    if (!marca && !modelo) {
-        Swal.fire({ title: 'Atención', text: 'Ingresa al menos la Marca o el Modelo.', icon: 'warning', confirmButtonColor: '#3b82f6' });
-        return;
-    }
-
-    // Formatear texto del chip
-    let itemStr = `${marca} ${modelo}`.trim();
-    if (anio) {
-        itemStr += ` (${anio})`;
-    }
-
-    if (!listaCompatibilidades.includes(itemStr)) {
-        listaCompatibilidades.push(itemStr);
-        actualizarChipsCompatibilidad();
-    }
-
-    // Limpiar campos individuales
-    document.getElementById('comp-marca').value = '';
-    document.getElementById('comp-modelo').value = '';
-    document.getElementById('comp-anio').value = '';
-}
-
-function removerCompatibilidad(index) {
-    listaCompatibilidades.splice(index, 1);
-    actualizarChipsCompatibilidad();
-}
-
-function actualizarChipsCompatibilidad() {
-    const contenedor = document.getElementById('contenedor-chips-compat');
-    const inputFinal = document.getElementById('compatibilidades_final');
-
-    if (listaCompatibilidades.length === 0) {
-        contenedor.innerHTML = '<span class="text-[11px] text-slate-500 italic">Sin aplicaciones asignadas (por defecto será Universal).</span>';
-        inputFinal.value = 'Universal';
-    } else {
-        let html = '';
-        listaCompatibilidades.forEach((item, idx) => {
-            html += `<span class="bg-blue-950 border border-blue-500/40 text-blue-300 text-xs px-2.5 py-1 rounded-xl flex items-center gap-1.5">
-                🚗 ${item}
-                <button type="button" onclick="removerCompatibilidad(${idx})" class="text-rose-400 hover:text-rose-300 font-bold text-xs ml-1">✕</button>
-            </span>`;
-        });
-        contenedor.innerHTML = html;
-        inputFinal.value = listaCompatibilidades.join(', ');
-    }
-}
-
-// DICCIONARIO DE MODELOS BASE POR MARCA ENVIADO DESDE PYTHON
-const mapaMarcasModelos = {{ marcas|tojson }};
-
-function actualizarModelosSugeridos() {
-    const marcaIngresada = document.getElementById('comp-marca').value.trim().toLowerCase();
-    const datalistModelos = document.getElementById('dl-modelos');
-    datalistModelos.innerHTML = '';
-
-    // Buscar si existe coincidencia de marca en el objeto JSON
-    for (let m in mapaMarcasModelos) {
-        if (m.toLowerCase() === marcaIngresada) {
-            mapaMarcasModelos[m].forEach(mod => {
-                const opt = document.createElement('option');
-                opt.value = mod;
-                datalistModelos.appendChild(opt);
-            });
-            break;
-        }
-    }
-}
     </script>
 </body>
 </html>

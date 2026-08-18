@@ -8,7 +8,8 @@ from modulos.gestion_db import (
     obtener_inventario, agregar_repuesto, actualizar_orden_trabajo,
     finalizar_orden_trabajo, obtener_historial_vehiculo,
     agregar_repuesto_a_orden, descontar_stock_orden, obtener_repuestos_orden,
-    obtener_marcas_y_modelos, agregar_repuestos_masivo  # <--- Agregada importacion
+    obtener_marcas_y_modelos, agregar_repuestos_masivo,
+    eliminar_repuesto, eliminar_repuestos_masivo
 )
 from modulos.generador_pdf import generar_pdf_ficha_recepcion
 
@@ -110,8 +111,9 @@ def vincular_repuesto_ot_web():
     orden_id = int(request.form["orden_id"])
     inventario_id = int(request.form["inventario_id"])
     cantidad = int(request.form.get("cantidad", 1))
+    precio_unidad = float(request.form.get("precio_unidad", 0.0)) if request.form.get("precio_unidad") else 0.0
 
-    agregar_repuesto_a_orden(orden_id, inventario_id, cantidad)
+    agregar_repuesto_a_orden(orden_id, inventario_id, cantidad, precio_unidad)
     return redirect("/")
 
 @app.route("/obtener_repuestos_ot/<int:orden_id>")
@@ -201,16 +203,15 @@ def guardar_repuesto_web():
     categoria = request.form.get("categoria", "General").strip()
     nombre = request.form.get("nombre", "").strip()
     stock = int(request.form["stock"]) if request.form.get("stock") and request.form.get("stock").isdigit() else 0
-    costo = float(request.form["costo"]) if request.form.get("costo") else 0.0
-    venta = float(request.form["venta"]) if request.form.get("venta") else 0.0
-    mano_obra = float(request.form["mano_obra"]) if request.form.get("mano_obra") else 0.0
+    costo = 0.0
+    venta = 0.0
+    mano_obra = 0.0
     
-    # Capturar la cadena con todas las marcas-modelos-años agregadas desde el frontend
-    compatibilidades = request.form.get("compatibilidades_final", "Universal").strip()
-    if not compatibilidades:
-        compatibilidades = "Universal"
+    compatabilidades = request.form.get("compatabilidades_final", "Universal").strip()
+    if not compatabilidades:
+        compatabilidades = "Universal"
 
-    agregar_repuesto(session["taller_id"], codigo, categoria, nombre, stock, costo, venta, mano_obra, compatibilidades)
+    agregar_repuesto(session["taller_id"], codigo, categoria, nombre, stock, costo, venta, mano_obra, compatabilidades)
     return redirect("/")
 
 @app.route("/carga_masiva_repuestos", methods=["POST"])
@@ -226,6 +227,28 @@ def carga_masiva_repuestos_web():
         return jsonify({"success": True, "count": len(repuestos)})
     
     return jsonify({"success": False, "error": "Sin datos"}), 400
+
+@app.route("/eliminar_repuesto/<int:repuesto_id>", methods=["POST"])
+def eliminar_repuesto_web(repuesto_id):
+    if "taller_id" not in session:
+        return jsonify({"success": False}), 401
+    
+    eliminar_repuesto(session["taller_id"], repuesto_id)
+    return jsonify({"success": True})
+
+@app.route("/eliminar_repuestos_masivo", methods=["POST"])
+def eliminar_repuestos_masivo_web():
+    if "taller_id" not in session:
+        return jsonify({"success": False}), 401
+    
+    data = request.get_json()
+    ids = data.get("ids", [])
+    
+    if ids:
+        eliminar_repuestos_masivo(session["taller_id"], ids)
+        return jsonify({"success": True, "count": len(ids)})
+    
+    return jsonify({"success": False}), 400
 
 if __name__ == "__main__":
     app.run(debug=True)
