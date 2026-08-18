@@ -379,3 +379,30 @@ def obtener_marcas_y_modelos():
                 marcas_dict[m_title].append(mod_title)
 
     return marcas_dict
+
+def eliminar_repuesto_orden(item_orden_id):
+    """Elimina una asociación de repuesto de una orden de trabajo."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"DELETE FROM ordenes_repuestos WHERE id = {p}", (item_orden_id,))
+    conexion.commit()
+    conexion.close()
+    return True
+
+def actualizar_repuesto_orden(item_orden_id, cantidad, precio_unidad):
+    """Actualiza la cantidad o el precio de un repuesto asociado a una OT."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"""
+        UPDATE ordenes_repuestos
+        SET cantidad = {p}, precio_unidad = {p}
+        WHERE id = {p}
+    """, (cantidad, precio_unidad, item_orden_id))
+
+    conexion.commit()
+    conexion.close()
+    return True

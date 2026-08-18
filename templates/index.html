@@ -838,29 +838,81 @@
         }
 
         function cargarRepuestosVinculadosOT(ordenId) {
-            fetch('/obtener_repuestos_ot/' + ordenId)
-                .then(res => res.json())
-                .then(items => {
-                    const contenedor = document.getElementById('lista-repuestos-orden');
-                    if (!items || items.length === 0) {
-                        contenedor.innerHTML = '<span class="text-slate-500 text-[11px]">Sin repuestos vinculados a esta orden.</span>';
-                    } else {
-                        let html = '<ul class="space-y-1.5">';
-                        items.forEach(i => {
-                            const subtotal = i.precio * i.cantidad;
-                            html += `<li class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-blue-400 font-bold">🔧 ${i.nombre}</span>
-                                    <span class="bg-slate-800 text-slate-300 font-mono text-[10px] px-1.5 py-0.5 rounded">x${i.cantidad}</span>
-                                </div>
-                                <span class="text-emerald-400 font-bold">$${subtotal.toLocaleString('es-CL')}</span>
-                            </li>`;
-                        });
-                        html += '</ul>';
-                        contenedor.innerHTML = html;
-                    }
+    fetch('/obtener_repuestos_ot/' + ordenId)
+        .then(res => res.json())
+        .then(items => {
+            const contenedor = document.getElementById('lista-repuestos-orden');
+            if (!items || items.length === 0) {
+                contenedor.innerHTML = '<span class="text-slate-500 text-[11px]">Sin repuestos vinculados a esta orden.</span>';
+            } else {
+                let html = '<ul class="space-y-1.5">';
+                items.forEach(i => {
+                    const subtotal = i.precio * i.cantidad;
+                    html += `<li class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                        <div class="flex items-center gap-2">
+                            <span class="text-blue-400 font-bold">🔧 ${i.nombre}</span>
+                            <span class="bg-slate-800 text-slate-300 font-mono text-[10px] px-1.5 py-0.5 rounded">x${i.cantidad}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-emerald-400 font-bold">$${subtotal.toLocaleString('es-CL')}</span>
+                            <button onclick="editarRepuestoOtModal('${i.id}', '${i.nombre}', '${i.cantidad}', '${i.precio}', '${ordenId}')" class="text-slate-400 hover:text-blue-400 font-semibold text-xs" title="Editar Cantidad/Precio">✏️</button>
+                            <button onclick="eliminarRepuestoOtAjax('${i.id}', '${ordenId}')" class="text-rose-400 hover:text-rose-300 font-semibold text-xs" title="Eliminar de la OT">🗑️</button>
+                        </div>
+                    </li>`;
                 });
+                html += '</ul>';
+                contenedor.innerHTML = html;
+            }
+        });
+}
+
+function eliminarRepuestoOtAjax(itemId, ordenId) {
+    fetch('/eliminar_repuesto_ot/' + itemId, { method: 'POST' })
+        .then(res => res.json())
+        .then(() => cargarRepuestosVinculadosOT(ordenId));
+}
+
+function editarRepuestoOtModal(itemId, nombre, cantActual, precioActual, ordenId) {
+    Swal.fire({
+        title: `Editar ${nombre}`,
+        html: `
+            <div class="space-y-3 text-left">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Cantidad</label>
+                    <input type="number" id="swal-cant" value="${cantActual}" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Precio Unidad ($)</label>
+                    <input type="number" id="swal-precio" value="${precioActual}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-emerald-400 font-bold">
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar Cambios',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#3b82f6',
+        preConfirm: () => {
+            return {
+                cantidad: document.getElementById('swal-cant').value,
+                precio: document.getElementById('swal-precio').value
+            }
         }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('/actualizar_repuesto_ot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    item_id: itemId,
+                    cantidad: result.value.cantidad,
+                    precio: result.value.precio
+                })
+            })
+            .then(res => res.json())
+            .then(() => cargarRepuestosVinculadosOT(ordenId));
+        }
+    });
+}
 
         // SELECCIÓN MÚLTIPLE Y ELIMINACIÓN DE REPUESTOS
         function toggleSeleccionarTodos(chkPrincipal) {

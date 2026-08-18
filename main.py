@@ -9,7 +9,8 @@ from modulos.gestion_db import (
     finalizar_orden_trabajo, obtener_historial_vehiculo,
     agregar_repuesto_a_orden, descontar_stock_orden, obtener_repuestos_orden,
     obtener_marcas_y_modelos, agregar_repuestos_masivo,
-    eliminar_repuesto, eliminar_repuestos_masivo
+    eliminar_repuesto, eliminar_repuestos_masivo,
+    eliminar_repuesto_orden, actualizar_repuesto_orden  # <--- Nuevas importaciones
 )
 from modulos.generador_pdf import generar_pdf_ficha_recepcion
 
@@ -250,5 +251,27 @@ def eliminar_repuestos_masivo_web():
     
     return jsonify({"success": False}), 400
 
+@app.route("/eliminar_repuesto_ot/<int:item_id>", methods=["POST"])
+def eliminar_repuesto_ot_web(item_id):
+    if "taller_id" not in session:
+        return jsonify({"success": False}), 401
+    
+    eliminar_repuesto_orden(item_id)
+    return jsonify({"success": True})
+
+@app.route("/actualizar_repuesto_ot", methods=["POST"])
+def actualizar_repuesto_ot_web():
+    if "taller_id" not in session:
+        return jsonify({"success": False}), 401
+    
+    data = request.get_json()
+    item_id = int(data["item_id"])
+    cantidad = int(data.get("cantidad", 1))
+    precio = float(data.get("precio", 0.0))
+
+    actualizar_repuesto_orden(item_id, cantidad, precio)
+    return jsonify({"success": True})
+
 if __name__ == "__main__":
     app.run(debug=True)
+
