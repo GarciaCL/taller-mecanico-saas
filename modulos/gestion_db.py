@@ -78,7 +78,7 @@ def calcular_alerta_revision_tecnica(patente):
         return {"estado": "normal", "mensaje": ""}
     except Exception:
         return {"estado": "normal", "mensaje": ""}
-    
+
 # --- RECEPCIÓN Y ÓRDENES KANBAN ---
 
 def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, km_ingreso, combustible, detalles, fotos, tiempo_horas=4, nombre_cliente="Cliente General", telefono_cliente="", marca="Marca", modelo="Modelo"):
