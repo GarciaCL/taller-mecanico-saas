@@ -35,6 +35,51 @@ def validar_login(usuario, password):
     conexion.close()
     return resultado
 
+# --- CÁLCULO DE REVISIÓN TÉCNICA POR ÚLTIMO DÍGITO ---
+
+CALENDARIO_RT_CHILE = {
+    '1': 6,   # Junio
+    '2': 7,   # Julio
+    '3': 8,   # Agosto
+    '4': 9,   # Septiembre
+    '5': 10,  # Octubre
+    '6': 11,  # Noviembre
+    '7': 1,   # Enero
+    '8': 3,   # Marzo
+    '9': 4,   # Abril
+    '0': 5    # Mayo
+}
+
+def calcular_alerta_revision_tecnica(patente):
+    if not patente or len(str(patente).strip()) == 0:
+        return {"estado": "normal", "mensaje": ""}
+    
+    patente_limpia = str(patente).strip().upper()
+    ultimo_digito = patente_limpia[-1]
+
+    if not ultimo_digito.isdigit():
+        digitos = [c for c in patente_limpia if c.isdigit()]
+        if digitos:
+            ultimo_digito = digitos[-1]
+        else:
+            return {"estado": "normal", "mensaje": ""}
+
+    mes_vencimiento = CALENDARIO_RT_CHILE.get(ultimo_digito, 12)
+    mes_actual = datetime.now().month
+
+    if mes_vencimiento == mes_actual:
+        return {
+            "estado": "urgente",
+            "mensaje": f"🔴 RT Vence este mes (Dígito {ultimo_digito})"
+        }
+    elif mes_vencimiento == (mes_actual + 1) or (mes_actual == 12 and mes_vencimiento == 1):
+        return {
+            "estado": "proximo",
+            "mensaje": f"⚠️ RT Vence el próximo mes (Dígito {ultimo_digito})"
+        }
+    
+    return {"estado": "normal", "mensaje": ""}
+
 # --- RECEPCIÓN Y ÓRDENES KANBAN ---
 
 def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, km_ingreso, combustible, detalles, fotos, tiempo_horas=4, nombre_cliente="Cliente General", telefono_cliente="", marca="Marca", modelo="Modelo"):
@@ -207,7 +252,7 @@ def obtener_historial_vehiculo(taller_id, patente):
     conexion.close()
     return filas
 
-# --- INVENTARIO DE BODEGA & VÍNCULO A OT CON PRECIOS DINÁMICOS ---
+# --- INVENTARIO DE BODEGA & OT ---
 
 def obtener_inventario(taller_id):
     conexion = obtener_conexion()
@@ -288,7 +333,6 @@ def eliminar_repuestos_masivo(taller_id, lista_ids):
     return True
 
 def agregar_repuesto_a_orden(orden_id, inventario_id, cantidad=1, precio_unidad=0.0):
-    """Vincula un repuesto asignando su precio específico al momento del trabajo."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -297,6 +341,31 @@ def agregar_repuesto_a_orden(orden_id, inventario_id, cantidad=1, precio_unidad=
         INSERT INTO ordenes_repuestos (orden_id, inventario_id, cantidad, precio_unidad)
         VALUES ({p}, {p}, {p}, {p})
     """, (orden_id, inventario_id, cantidad, precio_unidad))
+
+    conexion.commit()
+    conexion.close()
+    return True
+
+def eliminar_repuesto_orden(item_orden_id):
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"DELETE FROM ordenes_repuestos WHERE id = {p}", (item_orden_id,))
+    conexion.commit()
+    conexion.close()
+    return True
+
+def actualizar_repuesto_orden(item_orden_id, cantidad, precio_unidad):
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"""
+        UPDATE ordenes_repuestos
+        SET cantidad = {p}, precio_unidad = {p}
+        WHERE id = {p}
+    """, (cantidad, precio_unidad, item_orden_id))
 
     conexion.commit()
     conexion.close()
@@ -379,30 +448,3 @@ def obtener_marcas_y_modelos():
                 marcas_dict[m_title].append(mod_title)
 
     return marcas_dict
-
-def eliminar_repuesto_orden(item_orden_id):
-    """Elimina una asociación de repuesto de una orden de trabajo."""
-    conexion = obtener_conexion()
-    cursor = conexion.cursor()
-    p = obtener_placeholder()
-
-    cursor.execute(f"DELETE FROM ordenes_repuestos WHERE id = {p}", (item_orden_id,))
-    conexion.commit()
-    conexion.close()
-    return True
-
-def actualizar_repuesto_orden(item_orden_id, cantidad, precio_unidad):
-    """Actualiza la cantidad o el precio de un repuesto asociado a una OT."""
-    conexion = obtener_conexion()
-    cursor = conexion.cursor()
-    p = obtener_placeholder()
-
-    cursor.execute(f"""
-        UPDATE ordenes_repuestos
-        SET cantidad = {p}, precio_unidad = {p}
-        WHERE id = {p}
-    """, (cantidad, precio_unidad, item_orden_id))
-
-    conexion.commit()
-    conexion.close()
-    return True

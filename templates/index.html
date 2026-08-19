@@ -9,7 +9,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <!-- SWEETALERT2 & SHEETJS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -98,6 +97,18 @@
                                 <span class="text-xs text-emerald-400 font-bold">${{ "{:,.0f}".format(o[3]) }}</span>
                             </div>
 
+                            <!-- ALERTA AUTOMÁTICA DE REVISIÓN TÉCNICA -->
+                            {% set alerta_rt = calcular_alerta_revision_tecnica(o[4]) %}
+                            {% if alerta_rt.estado == 'urgente' %}
+                            <div class="mb-2 px-2 py-1 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[10px] font-bold">
+                                {{ alerta_rt.mensaje }}
+                            </div>
+                            {% elif alerta_rt.estado == 'proximo' %}
+                            <div class="mb-2 px-2 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-bold">
+                                {{ alerta_rt.mensaje }}
+                            </div>
+                            {% endif %}
+
                             <h4 class="text-xs font-semibold text-slate-300 mb-2">{{ o[5] }} {{ o[6] }}</h4>
 
                             <div class="flex items-center gap-2 mb-2">
@@ -138,7 +149,7 @@
                 </div>
             </div>
 
-            <!-- FORMULARIO CEREBRO DE CARGA INDIVIDUAL LIBRE DE PRECIO VENTA -->
+            <!-- FORMULARIO DE BODEGA -->
             <div class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl space-y-4">
                 <h3 class="text-sm font-bold text-white flex items-center gap-2">📦 Cargar Nuevo Repuesto en Bodega</h3>
                 
@@ -162,9 +173,9 @@
                         </div>
                     </div>
 
-                    <!-- TRES CAMPOS CON DATALIST DE AUTOCOMPLETADO (MARCA - MODELO - AÑO) -->
+                    <!-- TRES CAMPOS CON DATALIST (MARCA - MODELO - AÑO) -->
                     <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-3">
-                        <label class="block text-xs font-bold text-slate-300">🚗 Asignar Compatibilidad de Vehículos (Escribe para ver sugerencias)</label>
+                        <label class="block text-xs font-bold text-slate-300">🚗 Asignar Compatibilidad de Vehículos</label>
                         
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
                             <div>
@@ -215,7 +226,7 @@
                 </form>
             </div>
 
-            <!-- CONTROLES DE BÚSQUEDA Y ACCIONES MASIVAS -->
+            <!-- CONTROLES BÚSQUEDA Y ACCIONES MASIVAS -->
             <div class="flex flex-col md:flex-row justify-between items-center gap-3 bg-slate-900/40 p-4 rounded-2xl border border-slate-800">
                 <div class="w-full md:w-80 relative">
                     <input type="text" id="filtro-inventario-input" onkeyup="filtrarTablaInventario()" placeholder="🔍 Filtrar repuestos por nombre, código..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
@@ -227,7 +238,7 @@
                 </div>
             </div>
 
-            <!-- TABLA DE REPUESTOS Y STOCK -->
+            <!-- TABLA DE REPUESTOS -->
             <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
                 <table class="w-full text-left text-xs text-slate-300">
                     <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold uppercase">
@@ -278,7 +289,6 @@
                     </tbody>
                 </table>
 
-                <!-- PAGINADOR DEL CLIENTE -->
                 <div class="bg-slate-900 border-t border-slate-800 p-4 flex justify-between items-center text-xs text-slate-400">
                     <span id="info-paginacion">Mostrando 0-0 de 0 repuestos</span>
                     <div class="flex gap-2">
@@ -392,7 +402,7 @@
                 </div>
             </form>
 
-            <!-- SECCIÓN: BUSCADOR DINÁMICO DE REPUESTOS Y ASIGNACIÓN DE PRECIO EN LA OT -->
+            <!-- BUSCADOR Y ASIGNACIÓN DE PRECIOS -->
             <div class="border-t border-slate-800 pt-3 space-y-2">
                 <h4 class="text-xs font-bold text-slate-300 flex items-center gap-1">📦 Asignar Repuestos / Trabajos a la Orden</h4>
                 
@@ -447,7 +457,7 @@
         </div>
     </div>
 
-    <!-- MODAL CREAR ORDEN DE TRABAJO -->
+    <!-- MODAL CREAR OT -->
     <div id="modal-ot" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl p-6 rounded-2xl shadow-2xl my-8">
             <div class="flex justify-between items-center mb-4">
@@ -838,83 +848,83 @@
         }
 
         function cargarRepuestosVinculadosOT(ordenId) {
-    fetch('/obtener_repuestos_ot/' + ordenId)
-        .then(res => res.json())
-        .then(items => {
-            const contenedor = document.getElementById('lista-repuestos-orden');
-            if (!items || items.length === 0) {
-                contenedor.innerHTML = '<span class="text-slate-500 text-[11px]">Sin repuestos vinculados a esta orden.</span>';
-            } else {
-                let html = '<ul class="space-y-1.5">';
-                items.forEach(i => {
-                    const subtotal = i.precio * i.cantidad;
-                    html += `<li class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
-                        <div class="flex items-center gap-2">
-                            <span class="text-blue-400 font-bold">🔧 ${i.nombre}</span>
-                            <span class="bg-slate-800 text-slate-300 font-mono text-[10px] px-1.5 py-0.5 rounded">x${i.cantidad}</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-emerald-400 font-bold">$${subtotal.toLocaleString('es-CL')}</span>
-                            <button onclick="editarRepuestoOtModal('${i.id}', '${i.nombre}', '${i.cantidad}', '${i.precio}', '${ordenId}')" class="text-slate-400 hover:text-blue-400 font-semibold text-xs" title="Editar Cantidad/Precio">✏️</button>
-                            <button onclick="eliminarRepuestoOtAjax('${i.id}', '${ordenId}')" class="text-rose-400 hover:text-rose-300 font-semibold text-xs" title="Eliminar de la OT">🗑️</button>
-                        </div>
-                    </li>`;
+            fetch('/obtener_repuestos_ot/' + ordenId)
+                .then(res => res.json())
+                .then(items => {
+                    const contenedor = document.getElementById('lista-repuestos-orden');
+                    if (!items || items.length === 0) {
+                        contenedor.innerHTML = '<span class="text-slate-500 text-[11px]">Sin repuestos vinculados a esta orden.</span>';
+                    } else {
+                        let html = '<ul class="space-y-1.5">';
+                        items.forEach(i => {
+                            const subtotal = i.precio * i.cantidad;
+                            html += `<li class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-blue-400 font-bold">🔧 ${i.nombre}</span>
+                                    <span class="bg-slate-800 text-slate-300 font-mono text-[10px] px-1.5 py-0.5 rounded">x${i.cantidad}</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-emerald-400 font-bold">$${subtotal.toLocaleString('es-CL')}</span>
+                                    <button onclick="editarRepuestoOtModal('${i.id}', '${i.nombre}', '${i.cantidad}', '${i.precio}', '${ordenId}')" class="text-slate-400 hover:text-blue-400 font-semibold text-xs" title="Editar Cantidad/Precio">✏️</button>
+                                    <button onclick="eliminarRepuestoOtAjax('${i.id}', '${ordenId}')" class="text-rose-400 hover:text-rose-300 font-semibold text-xs" title="Eliminar de la OT">🗑️</button>
+                                </div>
+                            </li>`;
+                        });
+                        html += '</ul>';
+                        contenedor.innerHTML = html;
+                    }
                 });
-                html += '</ul>';
-                contenedor.innerHTML = html;
-            }
-        });
-}
-
-function eliminarRepuestoOtAjax(itemId, ordenId) {
-    fetch('/eliminar_repuesto_ot/' + itemId, { method: 'POST' })
-        .then(res => res.json())
-        .then(() => cargarRepuestosVinculadosOT(ordenId));
-}
-
-function editarRepuestoOtModal(itemId, nombre, cantActual, precioActual, ordenId) {
-    Swal.fire({
-        title: `Editar ${nombre}`,
-        html: `
-            <div class="space-y-3 text-left">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Cantidad</label>
-                    <input type="number" id="swal-cant" value="${cantActual}" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Precio Unidad ($)</label>
-                    <input type="number" id="swal-precio" value="${precioActual}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-emerald-400 font-bold">
-                </div>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Guardar Cambios',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#3b82f6',
-        preConfirm: () => {
-            return {
-                cantidad: document.getElementById('swal-cant').value,
-                precio: document.getElementById('swal-precio').value
-            }
         }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch('/actualizar_repuesto_ot', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    item_id: itemId,
-                    cantidad: result.value.cantidad,
-                    precio: result.value.precio
-                })
-            })
-            .then(res => res.json())
-            .then(() => cargarRepuestosVinculadosOT(ordenId));
-        }
-    });
-}
 
-        // SELECCIÓN MÚLTIPLE Y ELIMINACIÓN DE REPUESTOS
+        function eliminarRepuestoOtAjax(itemId, ordenId) {
+            fetch('/eliminar_repuesto_ot/' + itemId, { method: 'POST' })
+                .then(res => res.json())
+                .then(() => cargarRepuestosVinculadosOT(ordenId));
+        }
+
+        function editarRepuestoOtModal(itemId, nombre, cantActual, precioActual, ordenId) {
+            Swal.fire({
+                title: `Editar ${nombre}`,
+                html: `
+                    <div class="space-y-3 text-left">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Cantidad</label>
+                            <input type="number" id="swal-cant" value="${cantActual}" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Precio Unidad ($)</label>
+                            <input type="number" id="swal-precio" value="${precioActual}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-emerald-400 font-bold">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar Cambios',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#3b82f6',
+                preConfirm: () => {
+                    return {
+                        cantidad: document.getElementById('swal-cant').value,
+                        precio: document.getElementById('swal-precio').value
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/actualizar_repuesto_ot', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            item_id: itemId,
+                            cantidad: result.value.cantidad,
+                            precio: result.value.precio
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(() => cargarRepuestosVinculadosOT(ordenId));
+                }
+            });
+        }
+
+        // SELECCIÓN MÚLTIPLE Y ELIMINACIÓN
         function toggleSeleccionarTodos(chkPrincipal) {
             const checkboxes = document.querySelectorAll('.check-repuesto');
             checkboxes.forEach(chk => chk.checked = chkPrincipal.checked);
