@@ -1,0 +1,74 @@
+<div id="modal-detalle" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg p-6 rounded-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <div>
+                <span id="m-patente" class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded"></span>
+                <h3 id="m-vehiculo" class="text-base font-bold text-white mt-1"></h3>
+            </div>
+            <div class="flex items-center gap-3">
+                <a id="btn-historial-patente" href="#" target="_blank" class="text-xs text-blue-400 hover:underline font-semibold flex items-center gap-1">📜 Ver Historial Completo</a>
+                <button type="button" onclick="cerrarDetalleOrden()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+            </div>
+        </div>
+
+        <form action="/editar_ot" method="POST" class="space-y-3">
+            <input type="hidden" name="orden_id" id="edit-orden-id">
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <div><label class="block text-[10px] text-slate-400 mb-1">Cliente</label><input type="text" id="m-cliente" readonly class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-slate-400 text-xs"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Teléfono</label><input type="text" id="m-telefono" readonly class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-slate-400 text-xs"></div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-xs">
+                <div><label class="block text-[10px] text-slate-400 mb-1">Kilometraje</label><input type="number" name="km" id="edit-km" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold text-xs focus:border-blue-500 focus:outline-none"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Combustible</label>
+                    <select name="combustible" id="edit-combustible" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-amber-400 font-bold text-xs focus:border-blue-500 focus:outline-none">
+                        <option value="Reserva">⛽ Reserva</option><option value="1/4">⛽ 1/4</option><option value="1/2">⛽ 1/2</option><option value="3/4">⛽ 3/4</option><option value="Lleno">⛽ Lleno</option>
+                    </select>
+                </div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Tiempo Est.</label>
+                    <select name="tiempo_estimado" id="edit-tiempo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-blue-400 font-bold text-xs focus:border-blue-500 focus:outline-none">
+                        <option value="2">⏱️ 2h</option><option value="4">⏱️ 4h</option><option value="8">⏱️ 8h</option><option value="24">⏱️ 24h</option><option value="48">⏱️ 48h</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-xs">
+                <div class="col-span-2"><label class="block text-[10px] text-slate-400 mb-1">Síntomas / Trabajos</label><input type="text" name="sintomas" id="edit-sintomas" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:border-blue-500 focus:outline-none"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Total OT ($)</label><input type="number" name="costo" id="edit-costo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-emerald-400 font-bold text-xs focus:border-blue-500 focus:outline-none"></div>
+            </div>
+            <div id="m-alerta-box" class="hidden p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">⚠️ <strong>Atención:</strong> Esta orden superó el tiempo estimado de resolución. Se sugiere enviar un mensaje de tranquilidad.</div>
+            <div class="pt-2 flex gap-2">
+                <button type="submit" class="w-1/3 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg shadow-blue-600/20">💾 Guardar</button>
+                <a id="btn-pdf-modal" href="#" target="_blank" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1">📄 Descargar PDF</a>
+                <a id="btn-whatsapp-modal" href="#" target="_blank" class="w-1/3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg shadow-emerald-600/20">📱 WhatsApp</a>
+            </div>
+        </form>
+
+        <div class="border-t border-slate-800 pt-3 space-y-2">
+            <h4 class="text-xs font-bold text-slate-300 flex items-center gap-1">📦 Asignar Repuestos / Trabajos a la Orden</h4>
+            <div class="relative space-y-2">
+                <div class="relative">
+                    <input type="text" id="buscador-repuesto-input" onkeyup="filtrarRepuestosInventario()" placeholder="🔍 Buscar por nombre o código (ej: pastilla, FIL-001)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    <input type="hidden" id="repuesto-id-seleccionado">
+                    <div id="desplegable-autocompletado" class="absolute left-0 right-0 top-full mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-48 overflow-y-auto hidden z-50 divide-y divide-slate-800/60">
+                        {% for item in inventario %}
+                        <div class="opcion-repuesto p-2.5 hover:bg-blue-600/20 cursor-pointer flex justify-between items-center text-xs" data-id="{{ item[0] }}" data-codigo="{{ item[1] }}" data-nombre="{{ item[3] }}" data-stock="{{ item[4] }}" onclick="seleccionarRepuestoAutocompletado('{{ item[0] }}', '{{ item[1] }}', '{{ item[3] }}', '{{ item[4] }}')">
+                            <div><span class="font-mono font-bold text-blue-400">[{{ item[1] }}]</span><span class="font-semibold text-white ml-1">{{ item[3] }}</span></div>
+                            <span class="text-[10px] font-bold {{ 'text-emerald-400' if item[4] > 0 else 'text-rose-400' }}">{{ item[4] }} Unid.</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <div class="w-1/2"><label class="block text-[10px] text-slate-400 mb-1">Cantidad</label><input type="number" id="repuesto-cantidad-input" value="1" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-center text-white focus:outline-none"></div>
+                    <div class="w-1/2"><label class="block text-[10px] text-slate-400 mb-1">Precio Repuesto / Trabajo ($)</label><input type="number" id="repuesto-precio-input" placeholder="Opcional (Ej: 15000)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-emerald-400 font-bold focus:outline-none"></div>
+                </div>
+                <button type="button" onclick="agregarRepuestoAOrdenAjax()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg shadow-blue-600/20">+ Vincular Repuesto a la OT</button>
+            </div>
+            <div id="lista-repuestos-orden" class="space-y-1 text-xs text-slate-400 pt-1"></div>
+        </div>
+
+        <form id="form-archivar" action="/finalizar_ot" method="POST" class="border-t border-slate-800 pt-3">
+            <input type="hidden" name="orden_id" id="archivar-orden-id">
+            <button type="button" onclick="confirmarArchivar()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">🏁 Entregar Vehículo y Archivar Orden</button>
+        </form>
+    </div>
+</div>

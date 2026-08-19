@@ -1,0 +1,104 @@
+<div id="modal-ot" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl p-6 rounded-2xl shadow-2xl my-8">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">📸 Recepción Guiada del Vehículo</h3>
+                <p class="text-xs text-slate-400">Registra el auto, datos del cliente e inspección de fotos.</p>
+            </div>
+            <button onclick="document.getElementById('modal-ot').classList.add('hidden')" class="text-slate-400 hover:text-white">✕</button>
+        </div>
+
+        <form action="/crear_ot" method="POST" enctype="multipart/form-data" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Patente / VIN</label>
+                    <input type="text" name="patente" placeholder="Ej: AA123BB" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white font-mono font-bold focus:outline-none focus:border-blue-500" required>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Marca</label>
+                    <select id="select-marca" name="marca" onchange="evaluarNuevaMarca()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                        <option value="">Seleccionar Marca...</option>
+                        {% for m in marcas.keys() %}
+                        <option value="{{ m }}">{{ m }}</option>
+                        {% endfor %}
+                        <option value="OTRA">+ Agregar Nueva Marca...</option>
+                    </select>
+                    <input type="text" id="input-marca-nueva" name="marca_input" placeholder="Escribe la Marca..." class="hidden mt-1 w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Modelo</label>
+                    <input type="text" name="modelo_input" placeholder="Ej: Qashqai / Yaris" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre del Cliente</label>
+                    <input type="text" name="cliente" placeholder="Ej: Juan Pérez" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Teléfono WhatsApp</label>
+                    <input type="text" name="telefono" placeholder="+56912345678" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Kilometraje Actual</label>
+                    <input type="number" name="km" placeholder="Ej: 85000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Combustible</label>
+                    <select name="combustible" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                        <option value="Reserva">⛽ Reserva</option>
+                        <option value="1/4">⛽ 1/4 Estanque</option>
+                        <option value="1/2" selected>⛽ 1/2 Estanque</option>
+                        <option value="3/4">⛽ 3/4 Estanque</option>
+                        <option value="Lleno">⛽ Estanque Lleno</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Tiempo Estimado</label>
+                    <select name="tiempo_estimado" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-blue-400 font-bold focus:outline-none focus:border-blue-500">
+                        <option value="2">⏱️ 2 Horas</option>
+                        <option value="4" selected>⏱️ 4 Horas</option>
+                        <option value="8">⏱️ 8 Horas (1 Día)</option>
+                        <option value="24">⏱️ 24 Horas (2 Días)</option>
+                        <option value="48">⏱️ 48 Horas</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Síntomas / Trabajos Solicitados</label>
+                    <input type="text" name="sintomas" placeholder="Cambio de aceite 5W30 y revisión de frenos..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Costo Estimado ($)</label>
+                    <input type="number" name="costo" placeholder="45000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-2">📷 Inspección Fotográfica Guiada (5 Ángulos)</label>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    <div class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center"><span class="block text-[10px] text-slate-400 mb-1">Frontal</span><input type="file" name="foto_frontal" accept="image/*" class="text-[10px] text-slate-500 w-full"></div>
+                    <div class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center"><span class="block text-[10px] text-slate-400 mb-1">Trasera</span><input type="file" name="foto_trasera" accept="image/*" class="text-[10px] text-slate-500 w-full"></div>
+                    <div class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center"><span class="block text-[10px] text-slate-400 mb-1">Costado Izq.</span><input type="file" name="foto_izq" accept="image/*" class="text-[10px] text-slate-500 w-full"></div>
+                    <div class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center"><span class="block text-[10px] text-slate-400 mb-1">Costado Der.</span><input type="file" name="foto_der" accept="image/*" class="text-[10px] text-slate-500 w-full"></div>
+                    <div class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center"><span class="block text-[10px] text-slate-400 mb-1">Tablero (KM)</span><input type="file" name="foto_tablero" accept="image/*" class="text-[10px] text-slate-500 w-full"></div>
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-3">
+                <button type="button" onclick="document.getElementById('modal-ot').classList.add('hidden')" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-xs">Cancelar</button>
+                <button type="submit" class="w-1/2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i> Crear Orden e Ingresar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
