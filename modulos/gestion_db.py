@@ -51,35 +51,40 @@ CALENDARIO_RT_CHILE = {
 }
 
 def calcular_alerta_revision_tecnica(patente):
-    if not patente or len(str(patente).strip()) == 0:
+    """
+    Determina si un vehículo está próximo a su mes de Revisión Técnica.
+    A prueba de errores para valores Nulos o tipos de datos inesperados.
+    """
+    try:
+        if not patente or str(patente).strip() == '' or str(patente).strip().lower() == 'none':
+            return {"estado": "normal", "mensaje": ""}
+        
+        patente_limpia = str(patente).strip().upper()
+        
+        # Filtrar solo los números presentes en la patente
+        digitos = [c for c in patente_limpia if c.isdigit()]
+        if not digitos:
+            return {"estado": "normal", "mensaje": ""}
+        
+        ultimo_digito = digitos[-1]
+        mes_vencimiento = CALENDARIO_RT_CHILE.get(ultimo_digito, 12)
+        mes_actual = datetime.now().month
+
+        if mes_vencimiento == mes_actual:
+            return {
+                "estado": "urgente",
+                "mensaje": f"🔴 RT Vence este mes (Dígito {ultimo_digito})"
+            }
+        elif mes_vencimiento == (mes_actual + 1) or (mes_actual == 12 and mes_vencimiento == 1):
+            return {
+                "estado": "proximo",
+                "mensaje": f"⚠️ RT Vence el próximo mes (Dígito {ultimo_digito})"
+            }
+        
+        return {"estado": "normal", "mensaje": ""}
+    except Exception:
         return {"estado": "normal", "mensaje": ""}
     
-    patente_limpia = str(patente).strip().upper()
-    ultimo_digito = patente_limpia[-1]
-
-    if not ultimo_digito.isdigit():
-        digitos = [c for c in patente_limpia if c.isdigit()]
-        if digitos:
-            ultimo_digito = digitos[-1]
-        else:
-            return {"estado": "normal", "mensaje": ""}
-
-    mes_vencimiento = CALENDARIO_RT_CHILE.get(ultimo_digito, 12)
-    mes_actual = datetime.now().month
-
-    if mes_vencimiento == mes_actual:
-        return {
-            "estado": "urgente",
-            "mensaje": f"🔴 RT Vence este mes (Dígito {ultimo_digito})"
-        }
-    elif mes_vencimiento == (mes_actual + 1) or (mes_actual == 12 and mes_vencimiento == 1):
-        return {
-            "estado": "proximo",
-            "mensaje": f"⚠️ RT Vence el próximo mes (Dígito {ultimo_digito})"
-        }
-    
-    return {"estado": "normal", "mensaje": ""}
-
 # --- RECEPCIÓN Y ÓRDENES KANBAN ---
 
 def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, km_ingreso, combustible, detalles, fotos, tiempo_horas=4, nombre_cliente="Cliente General", telefono_cliente="", marca="Marca", modelo="Modelo"):
