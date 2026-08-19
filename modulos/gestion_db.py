@@ -431,6 +431,39 @@ def descontar_stock_orden(orden_id, taller_id):
 # --- MARCAS Y MODELOS DINÁMICOS ---
 
 def obtener_marcas_y_modelos():
+    """Obtiene marcas y modelos tolerando posibles tablas inexistentes."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    filas = []
+
+    try:
+        cursor.execute("""
+            SELECT DISTINCT marca, modelo FROM catalogo_vehiculos WHERE marca IS NOT NULL AND marca != ''
+            UNION
+            SELECT DISTINCT marca, modelo FROM vehiculos WHERE marca IS NOT NULL AND marca != ''
+        """)
+        filas = cursor.fetchall()
+    except Exception:
+        conexion.rollback()
+        try:
+            cursor.execute("SELECT DISTINCT marca, modelo FROM vehiculos WHERE marca IS NOT NULL AND marca != ''")
+            filas = cursor.fetchall()
+        except Exception:
+            filas = []
+    finally:
+        conexion.close()
+
+    marcas_dict = {}
+    for m, mod in filas:
+        if m and mod:
+            m_title = str(m).strip().title()
+            mod_title = str(mod).strip().title()
+            if m_title not in marcas_dict:
+                marcas_dict[m_title] = []
+            if mod_title not in marcas_dict[m_title]:
+                marcas_dict[m_title].append(mod_title)
+
+    return marcas_dict
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     
