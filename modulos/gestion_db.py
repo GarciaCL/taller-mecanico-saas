@@ -51,17 +51,11 @@ CALENDARIO_RT_CHILE = {
 }
 
 def calcular_alerta_revision_tecnica(patente):
-    """
-    Determina si un vehículo está próximo a su mes de Revisión Técnica.
-    A prueba de errores para valores Nulos o tipos de datos inesperados.
-    """
     try:
         if not patente or str(patente).strip() == '' or str(patente).strip().lower() == 'none':
             return {"estado": "normal", "mensaje": ""}
         
         patente_limpia = str(patente).strip().upper()
-        
-        # Filtrar solo los números presentes en la patente
         digitos = [c for c in patente_limpia if c.isdigit()]
         if not digitos:
             return {"estado": "normal", "mensaje": ""}
@@ -458,28 +452,6 @@ def obtener_marcas_y_modelos():
         if m and mod:
             m_title = str(m).strip().title()
             mod_title = str(mod).strip().title()
-            if m_title not in marcas_dict:
-                marcas_dict[m_title] = []
-            if mod_title not in marcas_dict[m_title]:
-                marcas_dict[m_title].append(mod_title)
-
-    return marcas_dict
-    conexion = obtener_conexion()
-    cursor = conexion.cursor()
-    
-    cursor.execute("""
-        SELECT DISTINCT marca, modelo FROM catalogo_vehiculos
-        UNION
-        SELECT DISTINCT marca, modelo FROM vehiculos WHERE marca IS NOT NULL AND marca != ''
-    """)
-    filas = cursor.fetchall()
-    conexion.close()
-
-    marcas_dict = {}
-    for m, mod in filas:
-        if m and mod:
-            m_title = m.strip().title()
-            mod_title = mod.strip().title()
             if m_title not in marcas_dict:
                 marcas_dict[m_title] = []
             if mod_title not in marcas_dict[m_title]:
