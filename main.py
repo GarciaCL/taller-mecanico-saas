@@ -10,7 +10,8 @@ from modulos.gestion_db import (
     agregar_repuesto_a_orden, descontar_stock_orden, obtener_repuestos_orden,
     obtener_marcas_y_modelos, agregar_repuestos_masivo,
     eliminar_repuesto, eliminar_repuestos_masivo,
-    eliminar_repuesto_orden, actualizar_repuesto_orden  # <--- Nuevas importaciones
+    eliminar_repuesto_orden, actualizar_repuesto_orden,
+    calcular_alerta_revision_tecnica
 )
 from modulos.generador_pdf import generar_pdf_ficha_recepcion
 
@@ -18,6 +19,9 @@ app = Flask(__name__)
 app.secret_key = "clave_secreta_saas_taller"
 
 inicializar_db_saas()
+
+# REGISTRAR FILTRO DE JINJA2 PARA ALERTAS DE REVISIÓN TÉCNICA
+app.jinja_env.filters['alerta_rt'] = calcular_alerta_revision_tecnica
 
 def guardar_foto(file, nombre_base):
     if not file or file.filename == '':
@@ -123,6 +127,27 @@ def obtener_repuestos_ot_web(orden_id):
         return jsonify([])
     items = obtener_repuestos_orden(orden_id)
     return jsonify([{"id": i[0], "nombre": i[1], "cantidad": i[2], "precio": i[3], "descontado": i[4]} for i in items])
+
+@app.route("/eliminar_repuesto_ot/<int:item_id>", methods=["POST"])
+def eliminar_repuesto_ot_web(item_id):
+    if "taller_id" not in session:
+        return jsonify({"success": False}), 401
+    
+    eliminar_repuesto_orden(item_id)
+    return jsonify({"success": True})
+
+@app.route("/actualizar_repuesto_ot", methods=["POST"])
+def actualizar_repuesto_ot_web():
+    if "taller_id" not in session:
+        return jsonify({"success": False}), 401
+    
+    data = request.get_json()
+    item_id = int(data["item_id"])
+    cantidad = int(data.get("cantidad", 1))
+    precio = float(data.get("precio", 0.0))
+
+    actualizar_repuesto_orden(item_id, cantidad, precio)
+    return jsonify({"success": True})
 
 @app.route("/editar_ot", methods=["POST"])
 def editar_ot_web():
@@ -251,27 +276,5 @@ def eliminar_repuestos_masivo_web():
     
     return jsonify({"success": False}), 400
 
-@app.route("/eliminar_repuesto_ot/<int:item_id>", methods=["POST"])
-def eliminar_repuesto_ot_web(item_id):
-    if "taller_id" not in session:
-        return jsonify({"success": False}), 401
-    
-    eliminar_repuesto_orden(item_id)
-    return jsonify({"success": True})
-
-@app.route("/actualizar_repuesto_ot", methods=["POST"])
-def actualizar_repuesto_ot_web():
-    if "taller_id" not in session:
-        return jsonify({"success": False}), 401
-    
-    data = request.get_json()
-    item_id = int(data["item_id"])
-    cantidad = int(data.get("cantidad", 1))
-    precio = float(data.get("precio", 0.0))
-
-    actualizar_repuesto_orden(item_id, cantidad, precio)
-    return jsonify({"success": True})
-
 if __name__ == "__main__":
     app.run(debug=True)
-

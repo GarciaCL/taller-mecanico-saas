@@ -425,7 +425,6 @@ def descontar_stock_orden(orden_id, taller_id):
 # --- MARCAS Y MODELOS DINÁMICOS ---
 
 def obtener_marcas_y_modelos():
-    """Obtiene marcas y modelos tolerando posibles tablas inexistentes."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     filas = []

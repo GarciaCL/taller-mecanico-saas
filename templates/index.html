@@ -97,13 +97,13 @@
                                 <span class="text-xs text-emerald-400 font-bold">${{ "{:,.0f}".format(o[3]) }}</span>
                             </div>
 
-                            <!-- ALERTA AUTOMÁTICA DE REVISIÓN TÉCNICA -->
-                            {% set alerta_rt = calcular_alerta_revision_tecnica(o[4]) %}
-                            {% if alerta_rt.estado == 'urgente' %}
+                            <!-- ALERTA AUTOMÁTICA DE REVISIÓN TÉCNICA VÍA FILTRO JINJA2 -->
+                            {% set alerta_rt = o[4]|alerta_rt %}
+                            {% if alerta_rt and alerta_rt.estado == 'urgente' %}
                             <div class="mb-2 px-2 py-1 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[10px] font-bold">
                                 {{ alerta_rt.mensaje }}
                             </div>
-                            {% elif alerta_rt.estado == 'proximo' %}
+                            {% elif alerta_rt and alerta_rt.estado == 'proximo' %}
                             <div class="mb-2 px-2 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-bold">
                                 {{ alerta_rt.mensaje }}
                             </div>
@@ -137,7 +137,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h2 class="text-2xl font-bold text-white tracking-tight">Inventario & Repuestos</h2>
-                    <p class="text-xs text-slate-400">Control de stock, compatibilidades y disponibilidad en taller.</p>
+                    <p class="text-xs text-slate-400">Control de stock, compatabilidades y disponibilidad en taller.</p>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="descargarPlantillaExcel()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-3 py-2 rounded-xl text-xs flex items-center gap-1">
