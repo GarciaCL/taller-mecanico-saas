@@ -1,0 +1,15 @@
+<div id="modal-historial" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl p-6 rounded-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <div>
+                <span id="hist-modal-patente" class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded"></span>
+                <h3 class="text-base font-bold text-white mt-1">📜 Historial de Reparaciones del Vehículo</h3>
+            </div>
+            <button type="button" onclick="cerrarModalHistorial()" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+        </div>
+
+        <div id="hist-modal-contenedor" class="space-y-3 min-h-[150px]">
+            <!-- Se carga dinámicamente mediante AJAX -->
+        </div>
+    </div>
+</div>

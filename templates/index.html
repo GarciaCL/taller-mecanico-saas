@@ -412,9 +412,9 @@
                     </td>
                     <td class="p-4 font-semibold text-slate-400">{{ v.ultima_visita }}</td>
                     <td class="p-4 text-right flex justify-end gap-2">
-                        <a href="/historial/{{ v.patente }}" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center gap-1">
-                            📜 Historial
-                        </a>
+                        <button onclick="abrirHistorialModal('{{ v.patente }}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center gap-1">
+    📜 Historial
+</button>
                         <a href="https://wa.me/{{ v.telefono.replace('+', '').replace(' ', '') }}?text={{ ('Hola ' ~ v.cliente ~ ' 👋 Te escribimos del taller para recordarte que tu vehículo ' ~ v.vehiculo ~ ' (' ~ v.patente ~ ') está próximo a su revisión/mantención sugerida.')|urlencode }}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center gap-1 shadow-lg shadow-emerald-600/20">
                             📱 Recordatorio
                         </a>
@@ -432,6 +432,7 @@
     {% include 'modales/crear_ot.html' %}
     {% include 'modales/carga_masiva.html' %}
     {% include 'modales/editar_cliente.html' %}
+    {% include 'modales/historial_modal.html' %}
 
     <script>
         lucide.createIcons();

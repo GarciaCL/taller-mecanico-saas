@@ -43,3 +43,44 @@ function ordenarVehiculosCRM(criterio) {
             tbody.innerHTML = html;
         });
 }
+
+function abrirHistorialModal(patente) {
+    document.getElementById('hist-modal-patente').innerText = patente;
+    const cont = document.getElementById('hist-modal-contenedor');
+    cont.innerHTML = '<div class="text-center text-slate-500 py-6">🔍 Cargando historial de intervenciones...</div>';
+    document.getElementById('modal-historial').classList.remove('hidden');
+
+    fetch('/api/historial/' + patente)
+        .then(res => res.json())
+        .then(data => {
+            if (!data || data.length === 0) {
+                cont.innerHTML = '<div class="text-center text-slate-500 py-6">No hay registros de atenciones previas para este vehículo.</div>';
+                return;
+            }
+
+            let html = '<div class="space-y-3">';
+            data.forEach(ot => {
+                const subtotalStr = Number(ot.costo).toLocaleString('es-CL');
+                html += `
+                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-blue-400 font-mono">OT #${ot.id} - ${ot.fecha}</span>
+                            <span class="bg-slate-800 text-emerald-400 font-bold px-2 py-0.5 rounded">$${subtotalStr}</span>
+                        </div>
+                        <div class="text-xs text-white font-semibold">👤 ${ot.cliente} (${ot.telefono})</div>
+                        <p class="text-xs text-slate-300 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">🔧 ${ot.sintomas}</p>
+                        <div class="flex justify-between items-center pt-1 text-[11px] text-slate-400">
+                            <span>🏎️ ${Number(ot.km).toLocaleString('es-CL')} KM | ⛽ ${ot.combustible}</span>
+                            <a href="/descargar_pdf/${ot.token}" target="_blank" class="text-blue-400 hover:underline font-semibold flex items-center gap-1">📄 Ver PDF OT</a>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            cont.innerHTML = html;
+        });
+}
+
+function cerrarModalHistorial() {
+    document.getElementById('modal-historial').classList.add('hidden');
+}
