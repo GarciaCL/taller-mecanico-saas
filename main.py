@@ -1,3 +1,5 @@
+import os
+import io
 from flask import Flask, render_template, session, redirect
 from base_datos.crear_db import inicializar_db_saas
 from modulos.ordenes import obtener_ordenes_kanban
@@ -14,12 +16,15 @@ from rutas.clientes_rutas import clientes_bp
 from rutas.vehiculos_rutas import vehiculos_bp
 
 app = Flask(__name__)
-app.secret_key = "clave_secreta_saas_taller"
+app.secret_key = os.environ.get("SECRET_KEY", "clave_secreta_saas_taller")
 
+# Inicializar Base de Datos
 inicializar_db_saas()
 
+# Filtros Jinja2
 app.jinja_env.filters['alerta_rt'] = calcular_alerta_revision_tecnica
 
+# Registrar Blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(ordenes_bp)
 app.register_blueprint(inventario_bp)
@@ -49,4 +54,5 @@ def inicio():
     )
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
