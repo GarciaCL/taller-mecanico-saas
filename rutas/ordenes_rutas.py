@@ -87,7 +87,6 @@ def cambiar_estado_ot_web():
     nuevo_estado = data["nuevo_estado"]
 
     actualizar_estado_orden(orden_id, session["taller_id"], nuevo_estado)
-
     if nuevo_estado == 'entrega':
         descontar_stock_orden(orden_id, session["taller_id"])
 
@@ -115,7 +114,6 @@ def descargar_pdf_web(token):
         return "Orden no encontrada", 404
     
     pdf_data = generar_pdf_ficha_recepcion(orden, request.host_url.rstrip('/'))
-    
     return send_file(
         io.BytesIO(pdf_data),
         mimetype='application/pdf',

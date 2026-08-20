@@ -1,124 +1,88 @@
-import os
-import io
-from flask import Blueprint, request, redirect, session, jsonify, send_file, render_template
-from werkzeug.utils import secure_filename
-from modulos.ordenes import (
-    crear_orden_recepcion_guiada, actualizar_estado_orden, 
-    obtener_detalle_orden_por_token, actualizar_orden_trabajo, 
-    finalizar_orden_trabajo, obtener_historial_vehiculo
+from flask import Blueprint, request, jsonify, redirect, session
+from modulos.inventario import (
+    agregar_repuesto, agregar_repuestos_masivo,
+    eliminar_repuesto, eliminar_repuestos_masivo,
+    agregar_repuesto_a_orden, obtener_repuestos_orden,
+    eliminar_repuesto_orden, actualizar_repuesto_orden
 )
-from modulos.inventario import descontar_stock_orden
-from modulos.generador_pdf import generar_pdf_ficha_recepcion
 
-ordenes_bp = Blueprint('ordenes', __name__)
+# Declaracion explicita para solucionar el ImportError en Render
+inventario_bp = Blueprint('inventario', __name__)
 
-def guardar_foto(file, nombre_base):
-    if not file or file.filename == '':
-        return ''
-    filename = secure_filename(f"{nombre_base}_{file.filename}")
-    path = os.path.join('static', 'uploads', filename)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    file.save(path)
-    return f"/static/uploads/{filename}"
-
-@ordenes_bp.route("/crear_ot", methods=["POST"])
-def crear_ot_web():
+@inventario_bp.route("/guardar_repuesto", methods=["POST"])
+def guardar_repuesto_web():
     if "taller_id" not in session:
         return redirect("/login")
     
-    patente = request.form["patente"]
-    cliente = request.form.get("cliente", "Cliente General")
-    telefono = request.form.get("telefono", "")
-    marca = request.form.get("marca_input") or request.form.get("marca", "Marca")
-    modelo = request.form.get("modelo_input") or request.form.get("modelo", "Modelo")
-    sintomas = request.form["sintomas"]
-    costo = float(request.form["costo"]) if request.form.get("costo") else 0.0
-    km = int(request.form["km"]) if request.form.get("km") else 0
-    combustible = request.form.get("combustible", "1/2")
-    detalles = request.form.get("detalles", "")
-    tiempo_horas = int(request.form.get("tiempo_estimado", 4))
+    codigo = request.form.get("codigo", "").strip()
+    categoria = request.form.get("categoria", "General").strip()
+    nombre = request.form.get("nombre", "").strip()
+    stock = int(request.form["stock"]) if request.form.get("stock") and request.form.get("stock").isdigit() else 0
+    compat = request.form.get("compatabilidades_final", "Universal").strip() or "Universal"
 
-    fotos = {
-        'frontal': guardar_foto(request.files.get('foto_frontal'), f"{patente}_frontal"),
-        'trasera': guardar_foto(request.files.get('foto_trasera'), f"{patente}_trasera"),
-        'costado_izq': guardar_foto(request.files.get('foto_izq'), f"{patente}_izq"),
-        'costado_der': guardar_foto(request.files.get('foto_der'), f"{patente}_der"),
-        'tablero': guardar_foto(request.files.get('foto_tablero'), f"{patente}_tablero")
-    }
-    
-    crear_orden_recepcion_guiada(
-        session["taller_id"], patente, sintomas, costo, km, combustible, 
-        detalles, fotos, tiempo_horas, cliente, telefono, marca, modelo
-    )
+    agregar_repuesto(session["taller_id"], codigo, categoria, nombre, stock, 0, 0, 0, compat)
     return redirect("/")
 
-@ordenes_bp.route("/editar_ot", methods=["POST"])
-def editar_ot_web():
-    if "taller_id" not in session:
-        return redirect("/login")
-    
-    orden_id = int(request.form["orden_id"])
-    km = int(request.form["km"]) if request.form.get("km") else 0
-    combustible = request.form.get("combustible", "1/2")
-    tiempo_horas = int(request.form.get("tiempo_estimado", 4))
-    sintomas = request.form.get("sintomas", "")
-    costo = float(request.form["costo"]) if request.form.get("costo") else 0.0
-
-    actualizar_orden_trabajo(session["taller_id"], orden_id, km, combustible, tiempo_horas, sintomas, costo)
-    return redirect("/")
-
-@ordenes_bp.route("/finalizar_ot", methods=["POST"])
-def finalizar_ot_web():
-    if "taller_id" not in session:
-        return redirect("/login")
-    
-    orden_id = int(request.form["orden_id"])
-    descontar_stock_orden(orden_id, session["taller_id"])
-    finalizar_orden_trabajo(orden_id, session["taller_id"])
-    return redirect("/")
-
-@ordenes_bp.route("/cambiar_estado_ot", methods=["POST"])
-def cambiar_estado_ot_web():
+@inventario_bp.route("/carga_masiva_repuestos", methods=["POST"])
+def carga_masiva_repuestos_web():
     if "taller_id" not in session:
         return jsonify({"success": False}), 401
     
     data = request.get_json()
-    orden_id = data["orden_id"]
-    nuevo_estado = data["nuevo_estado"]
+    repuestos = data.get("repuestos", [])
+    if repuestos:
+        agregar_repuestos_masivo(session["taller_id"], repuestos)
+        return jsonify({"success": True, "count": len(repuestos)})
+    return jsonify({"success": False}), 400
 
-    actualizar_estado_orden(orden_id, session["taller_id"], nuevo_estado)
-
-    if nuevo_estado == 'entrega':
-        descontar_stock_orden(orden_id, session["taller_id"])
-
+@inventario_bp.route("/eliminar_repuesto/<int:repuesto_id>", methods=["POST"])
+def eliminar_repuesto_web(repuesto_id):
+    if "taller_id" not in session:
+        return jsonify({"success": False}), 401
+    eliminar_repuesto(session["taller_id"], repuesto_id)
     return jsonify({"success": True})
 
-@ordenes_bp.route("/seguimiento/<token>")
-def seguimiento_cliente(token):
-    orden = obtener_detalle_orden_por_token(token)
-    if not orden:
-        return render_template("seguimiento.html", error="Orden no encontrada"), 404
-    return render_template("seguimiento.html", o=orden)
-
-@ordenes_bp.route("/historial/<patente>")
-def historial_vehiculo_web(patente):
+@inventario_bp.route("/eliminar_repuestos_masivo", methods=["POST"])
+def eliminar_repuestos_masivo_web():
     if "taller_id" not in session:
-        return redirect("/login")
-    
-    historial = obtener_historial_vehiculo(session["taller_id"], patente)
-    return render_template("historial.html", historial=historial, patente=patente.upper())
+        return jsonify({"success": False}), 401
+    data = request.get_json()
+    ids = data.get("ids", [])
+    if ids:
+        eliminar_repuestos_masivo(session["taller_id"], ids)
+        return jsonify({"success": True, "count": len(ids)})
+    return jsonify({"success": False}), 400
 
-@ordenes_bp.route("/descargar_pdf/<token>")
-def descargar_pdf_web(token):
-    orden = obtener_detalle_orden_por_token(token)
-    if not orden:
-        return "Orden no encontrada", 404
-    
-    pdf_data = generar_pdf_ficha_recepcion(orden, request.host_url.rstrip('/'))
-    
-    return send_file(
-        io.BytesIO(pdf_data),
-        mimetype='application/pdf',
-        as_attachment=True,
-        download_name=f"Ficha_Recepcion_{orden[12]}.pdf"
-    )
+@inventario_bp.route("/vincular_repuesto_ot", methods=["POST"])
+def vincular_repuesto_ot_web():
+    if "taller_id" not in session:
+        return jsonify({"success": False}), 401
+    orden_id = int(request.form["orden_id"])
+    inventario_id = int(request.form["inventario_id"])
+    cantidad = int(request.form.get("cantidad", 1))
+    precio_unidad = float(request.form.get("precio_unidad", 0.0)) if request.form.get("precio_unidad") else 0.0
+
+    agregar_repuesto_a_orden(orden_id, inventario_id, cantidad, precio_unidad)
+    return redirect("/")
+
+@inventario_bp.route("/obtener_repuestos_ot/<int:orden_id>")
+def obtener_repuestos_ot_web(orden_id):
+    if "taller_id" not in session:
+        return jsonify([])
+    items = obtener_repuestos_orden(orden_id)
+    return jsonify([{"id": i[0], "nombre": i[1], "cantidad": i[2], "precio": i[3], "descontado": i[4]} for i in items])
+
+@inventario_bp.route("/eliminar_repuesto_ot/<int:item_id>", methods=["POST"])
+def eliminar_repuesto_ot_web(item_id):
+    if "taller_id" not in session:
+        return jsonify({"success": False}), 401
+    eliminar_repuesto_orden(item_id)
+    return jsonify({"success": True})
+
+@inventario_bp.route("/actualizar_repuesto_ot", methods=["POST"])
+def actualizar_repuesto_ot_web():
+    if "taller_id" not in session:
+        return jsonify({"success": False}), 401
+    data = request.get_json()
+    actualizar_repuesto_orden(int(data["item_id"]), int(data.get("cantidad", 1)), float(data.get("precio", 0.0)))
+    return jsonify({"success": True})
