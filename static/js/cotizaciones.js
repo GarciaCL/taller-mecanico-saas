@@ -88,3 +88,53 @@ function revalidarCotizacionAjax(cotId) {
         }
     });
 }
+
+function actualizarModelosSegunMarca(prefix) {
+    const selectMarca = document.getElementById(`select-marca-${prefix}`);
+    const inputMarcaNueva = document.getElementById(`input-marca-nueva-${prefix}`);
+    const selectModelo = document.getElementById(`select-modelo-${prefix}`);
+    const inputModeloNuevo = document.getElementById(`input-modelo-nuevo-${prefix}`);
+
+    if (!selectMarca || !selectModelo) return;
+
+    const marcaSeleccionada = selectMarca.value;
+
+    if (marcaSeleccionada === 'OTRA') {
+        inputMarcaNueva.classList.remove('hidden');
+        selectModelo.innerHTML = '<option value="OTRO">+ Agregar Nuevo Modelo...</option>';
+        selectModelo.value = 'OTRO';
+        evaluarNuevoModelo(prefix);
+    } else {
+        inputMarcaNueva.classList.add('hidden');
+        selectModelo.innerHTML = '<option value="">Seleccionar Modelo...</option>';
+
+        if (typeof mapaMarcasModelos !== 'undefined' && mapaMarcasModelos[marcaSeleccionada]) {
+            mapaMarcasModelos[marcaSeleccionada].forEach(mod => {
+                const opt = document.createElement('option');
+                opt.value = mod;
+                opt.innerText = mod;
+                selectModelo.appendChild(opt);
+            });
+        }
+
+        const optOtro = document.createElement('option');
+        optOtro.value = 'OTRO';
+        optOtro.innerText = '+ Agregar Nuevo Modelo...';
+        selectModelo.appendChild(optOtro);
+
+        if (inputModeloNuevo) inputModeloNuevo.classList.add('hidden');
+    }
+}
+
+function evaluarNuevoModelo(prefix) {
+    const selectModelo = document.getElementById(`select-modelo-${prefix}`);
+    const inputModeloNuevo = document.getElementById(`input-modelo-nuevo-${prefix}`);
+
+    if (selectModelo && inputModeloNuevo) {
+        if (selectModelo.value === 'OTRO') {
+            inputModeloNuevo.classList.remove('hidden');
+        } else {
+            inputModeloNuevo.classList.add('hidden');
+        }
+    }
+}

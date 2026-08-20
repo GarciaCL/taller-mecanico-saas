@@ -13,9 +13,10 @@
                     <span id="cot-msg-autocompletado" class="text-[10px] text-emerald-400 hidden">✨ Datos autocompletados</span>
                 </div>
 
+                <!-- MARCA -->
                 <div>
                     <label class="block text-slate-400 mb-1 font-semibold">Marca</label>
-                    <select id="select-marca-cot" name="marca" onchange="evaluarNuevaMarcaCot()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+                    <select id="select-marca-cot" name="marca" onchange="actualizarModelosSegunMarca('cot')" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500">
                         <option value="">Seleccionar Marca...</option>
                         {% for m in marcas.keys() %}
                         <option value="{{ m }}">{{ m }}</option>
@@ -25,9 +26,14 @@
                     <input type="text" id="input-marca-nueva-cot" name="marca_input" placeholder="Escribe la Marca..." class="hidden mt-1 w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
                 </div>
 
+                <!-- MODELO DINÁMICO -->
                 <div>
                     <label class="block text-slate-400 mb-1 font-semibold">Modelo</label>
-                    <input type="text" id="cot-modelo-input" name="modelo_input" placeholder="Ej: Qashqai / Yaris" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+                    <select id="select-modelo-cot" name="modelo" onchange="evaluarNuevoModelo('cot')" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+                        <option value="">Seleccionar Modelo...</option>
+                        <option value="OTRO">+ Agregar Nuevo Modelo...</option>
+                    </select>
+                    <input type="text" id="input-modelo-nuevo-cot" name="modelo_input" placeholder="Escribe el Modelo..." class="hidden mt-1 w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
                 </div>
             </div>
 

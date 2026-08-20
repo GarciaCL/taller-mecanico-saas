@@ -3,17 +3,15 @@ from datetime import datetime, timedelta
 from modulos.conexion import obtener_conexion, obtener_placeholder
 
 def calcular_dias_habiles(fecha_inicio, fecha_fin):
-    """Calcula la cantidad de días hábiles transcurridos (excluyendo Sábados y Domingos)."""
     dias_habiles = 0
     actual = fecha_inicio
     while actual.date() < fecha_fin.date():
-        if actual.weekday() < 5:  # 0 es Lunes, 4 es Viernes
+        if actual.weekday() < 5:
             dias_habiles += 1
         actual += timedelta(days=1)
     return dias_habiles
 
 def buscar_vehiculo_o_cliente_por_patente(taller_id, patente):
-    """Devuelve los datos del propietario y auto si la patente ya existe."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -81,17 +79,44 @@ def obtener_lista_cotizaciones(taller_id):
         fecha_obj = f_list[10] if isinstance(f_list[10], datetime) else datetime.now()
         f_list[10] = fecha_obj.strftime("%d/%m/%Y")
 
-        # Cálculo de días hábiles
         dias_habiles = calcular_dias_habiles(fecha_obj, ahora)
         f_list.append(dias_habiles)
 
-        # Evaluar si venció por 15 días hábiles
         if f_list[8] == 'pendiente' and dias_habiles > 15:
             f_list[8] = 'vencida'
 
         resultado.append(f_list)
 
     return resultado
+
+def obtener_detalle_cotizacion(cot_id):
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"""
+        SELECT c.id, c.cliente_nombre, c.cliente_telefono, c.patente, c.marca, c.modelo, c.sintomas, c.total, c.estado, c.token,
+               t.nombre_taller, COALESCE(t.logo_url, '/static/logo_defecto.png'), COALESCE(t.color_primario, '#3b82f6')
+        FROM cotizaciones c
+        JOIN talleres t ON c.taller_id = t.id
+        WHERE c.id = {p} OR c.token = {p}
+    """, (str(cot_id), str(cot_id)))
+
+    cot = cursor.fetchone()
+    if not cot:
+        conexion.close()
+        return None, []
+
+    cursor.execute(f"""
+        SELECT ci.id, COALESCE(i.nombre, ci.descripcion), ci.cantidad, ci.precio_unidad
+        FROM cotizaciones_items ci
+        LEFT JOIN inventario i ON ci.inventario_id = i.id
+        WHERE ci.cotizacion_id = {p}
+    """, (cot[0],))
+
+    items = cursor.fetchall()
+    conexion.close()
+    return cot, items
 
 def cambiar_estado_cotizacion(cot_id, taller_id, nuevo_estado):
     conexion = obtener_conexion()
@@ -109,7 +134,6 @@ def cambiar_estado_cotizacion(cot_id, taller_id, nuevo_estado):
     return True
 
 def revalidar_cotizacion_vencida(cot_id, taller_id):
-    """Reinicia la fecha de creación a la actual para refrescar la validez por otros 15 días hábiles."""
     conexion = obtener_conexion()
     cursor = conexion.cursor()
     p = obtener_placeholder()
@@ -120,6 +144,29 @@ def revalidar_cotizacion_vencida(cot_id, taller_id):
         WHERE id = {p} AND taller_id = {p}
     """, (cot_id, taller_id))
 
+    conexion.commit()
+    conexion.close()
+    return True
+
+def convertir_cotizacion_a_ot(cot_id, taller_id):
+    """Transforma el Presupuesto aprobado en una Orden de Trabajo (OT) activa."""
+    from modulos.ordenes import crear_orden_recepcion_guiada
+    
+    cot, items = obtener_detalle_cotizacion(cot_id)
+    if not cot:
+        return False
+
+    fotos_vacias = {'frontal':'', 'trasera':'', 'costado_izq':'', 'costado_der':'', 'tablero':''}
+    crear_orden_recepcion_guiada(
+        taller_id, cot[3], cot[6], cot[7], 0, "1/2", 
+        "Convertido desde Cotización #" + str(cot[0]), fotos_vacias, 4, 
+        cot[1], cot[2], cot[4], cot[5]
+    )
+
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+    cursor.execute(f"UPDATE cotizaciones SET estado = 'aprobada' WHERE id = {p}", (cot_id,))
     conexion.commit()
     conexion.close()
     return True
