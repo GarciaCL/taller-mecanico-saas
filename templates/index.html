@@ -51,6 +51,9 @@
                 <button onclick="cambiarPestana('cli')" id="btn-cli" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
                     <i data-lucide="users" class="w-4 h-4 text-emerald-400"></i> Clientes
                 </button>
+                <button onclick="cambiarPestana('veh')" id="btn-veh" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
+                    <i data-lucide="car" class="w-4 h-4 text-blue-400"></i> Vehículos & CRM
+                </button>
             </nav>
         </div>
 
@@ -351,6 +354,77 @@
         </table>
     </div>
         </section>
+
+        <!-- 5. VEHÍCULOS Y CRM PREVENTIVO -->
+<section id="sec-veh" class="space-y-6 hidden">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-white tracking-tight">Parque Automotor & CRM Preventivo</h2>
+            <p class="text-xs text-slate-400">Seguimiento de mantenciones, alertas de revisión técnica y avisos de servicio.</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <select id="select-orden-vehiculos" onchange="ordenarVehiculosCRM(this.value)" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500">
+                <option value="visita">📅 Ordenar por Última Visita</option>
+                <option value="alerta">🔴 Ordenar por Alertas Críticas</option>
+                <option value="patente">🚗 Ordenar por Patente</option>
+            </select>
+
+            <input type="text" id="filtro-vehiculo-input" onkeyup="filtrarVehiculosCRM()" placeholder="🔍 Buscar patente, modelo, cliente..." class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white w-64 focus:outline-none focus:border-blue-500">
+        </div>
+    </div>
+
+    <!-- TABLA CRM VEHÍCULOS -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
+        <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold uppercase">
+                <tr>
+                    <th class="p-4">Patente</th>
+                    <th class="p-4">Vehículo</th>
+                    <th class="p-4">Propietario</th>
+                    <th class="p-4">KM Actual / Prox. Aceite</th>
+                    <th class="p-4">Alerta RT</th>
+                    <th class="p-4">Última Visita</th>
+                    <th class="p-4 text-right">Acción Preventiva</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-vehiculos-crm" class="divide-y divide-slate-800/60">
+                {% for v in vehiculos_crm %}
+                <tr class="fila-vehiculo-crm hover:bg-slate-900/50">
+                    <td class="p-4 font-mono font-bold text-white bg-slate-950/40 rounded-lg">{{ v.patente }}</td>
+                    <td class="p-4 font-bold text-slate-200">{{ v.vehiculo }}</td>
+                    <td class="p-4">
+                        <span class="block font-bold text-white">{{ v.cliente }}</span>
+                        <span class="block text-[10px] text-slate-400">📱 {{ v.telefono }}</span>
+                    </td>
+                    <td class="p-4">
+                        <span class="block font-bold text-slate-200">{{ "{:,.0f}".format(v.km_actual) }} KM</span>
+                        <span class="block text-[10px] text-emerald-400">🛢️ Prox: {{ "{:,.0f}".format(v.km_proximo_aceite) }} KM</span>
+                    </td>
+                    <td class="p-4">
+                        {% if v.alerta_rt == 'urgente' %}
+                        <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[10px] font-bold">🔴 Vence este mes (Dígito {{ v.digito }})</span>
+                        {% elif v.alerta_rt == 'proximo' %}
+                        <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-bold">⚠️ Vence próximo mes</span>
+                        {% else %}
+                        <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-[10px]">✅ Al día (Mes {{ v.mes_rt }})</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 font-semibold text-slate-400">{{ v.ultima_visita }}</td>
+                    <td class="p-4 text-right flex justify-end gap-2">
+                        <a href="/historial/{{ v.patente }}" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center gap-1">
+                            📜 Historial
+                        </a>
+                        <a href="https://wa.me/{{ v.telefono.replace('+', '').replace(' ', '') }}?text={{ ('Hola ' ~ v.cliente ~ ' 👋 Te escribimos del taller para recordarte que tu vehículo ' ~ v.vehiculo ~ ' (' ~ v.patente ~ ') está próximo a su revisión/mantención sugerida.')|urlencode }}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center gap-1 shadow-lg shadow-emerald-600/20">
+                            📱 Recordatorio
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
     </main>
 
     <!-- INCLUIR MODALES SEPARADOS -->
@@ -373,5 +447,6 @@
     <script src="/static/js/inventario.js"></script>
     <script src="/static/js/excel.js"></script>
     <script src="/static/js/clientes.js"></script>
+    <script src="/static/js/vehiculos.js"></script>
 </body>
 </html>
