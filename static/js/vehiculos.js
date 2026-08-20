@@ -50,8 +50,11 @@ function abrirHistorialModal(patente) {
     cont.innerHTML = '<div class="text-center text-slate-500 py-6">🔍 Cargando historial de intervenciones...</div>';
     document.getElementById('modal-historial').classList.remove('hidden');
 
-    fetch('/api/historial/' + patente)
-        .then(res => res.json())
+    fetch('/api/historial/' + encodeURIComponent(patente))
+        .then(res => {
+            if (!res.ok) throw new Error('Error al obtener datos');
+            return res.json();
+        })
         .then(data => {
             if (!data || data.length === 0) {
                 cont.innerHTML = '<div class="text-center text-slate-500 py-6">No hay registros de atenciones previas para este vehículo.</div>';
@@ -61,6 +64,8 @@ function abrirHistorialModal(patente) {
             let html = '<div class="space-y-3">';
             data.forEach(ot => {
                 const subtotalStr = Number(ot.costo).toLocaleString('es-CL');
+                const kmStr = Number(ot.km).toLocaleString('es-CL');
+
                 html += `
                     <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-2">
                         <div class="flex justify-between items-center text-xs">
@@ -70,7 +75,7 @@ function abrirHistorialModal(patente) {
                         <div class="text-xs text-white font-semibold">👤 ${ot.cliente} (${ot.telefono})</div>
                         <p class="text-xs text-slate-300 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">🔧 ${ot.sintomas}</p>
                         <div class="flex justify-between items-center pt-1 text-[11px] text-slate-400">
-                            <span>🏎️ ${Number(ot.km).toLocaleString('es-CL')} KM | ⛽ ${ot.combustible}</span>
+                            <span>🏎️ ${kmStr} KM | ⛽ ${ot.combustible}</span>
                             <a href="/descargar_pdf/${ot.token}" target="_blank" class="text-blue-400 hover:underline font-semibold flex items-center gap-1">📄 Ver PDF OT</a>
                         </div>
                     </div>
@@ -78,7 +83,15 @@ function abrirHistorialModal(patente) {
             });
             html += '</div>';
             cont.innerHTML = html;
+        })
+        .catch(err => {
+            console.error(err);
+            cont.innerHTML = '<div class="text-center text-rose-400 py-6">⚠️ Ocurrió un error al cargar el historial del vehículo.</div>';
         });
+}
+
+function cerrarModalHistorial() {
+    document.getElementById('modal-historial').classList.add('hidden');
 }
 
 function cerrarModalHistorial() {

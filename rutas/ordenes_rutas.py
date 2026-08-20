@@ -9,6 +9,8 @@ from modulos.ordenes import (
 )
 from modulos.inventario import descontar_stock_orden
 from modulos.generador_pdf import generar_pdf_ficha_recepcion
+from datetime import datetime
+
 
 ordenes_bp = Blueprint('ordenes', __name__)
 
@@ -120,3 +122,41 @@ def descargar_pdf_web(token):
         as_attachment=True,
         download_name=f"Ficha_Recepcion_{orden[12]}.pdf"
     )
+
+
+@ordenes_bp.route("/api/historial/<patente>")
+def api_historial_vehiculo(patente):
+    if "taller_id" not in session:
+        return jsonify([]), 401
+    
+    try:
+        historial = obtener_historial_vehiculo(session["taller_id"], patente)
+        
+        resultado = []
+        for h in historial:
+            # Formatear la fecha de forma segura independientemente del tipo
+            fecha_val = h[7]
+            if isinstance(fecha_val, datetime):
+                fecha_str = fecha_val.strftime("%d/%m/%Y %H:%M")
+            else:
+                fecha_str = str(fecha_val) if fecha_val else "Fecha no disponible"
+
+            resultado.append({
+                "id": h[0],
+                "estado": h[1],
+                "sintomas": h[2] or "",
+                "costo": h[3] or 0,
+                "km": h[4] or 0,
+                "combustible": h[5] or "1/2",
+                "token": h[6] or "",
+                "fecha": fecha_str,
+                "patente": h[8],
+                "marca": h[9] or "",
+                "modelo": h[10] or "",
+                "cliente": h[12] or "Cliente General",
+                "telefono": h[13] or ""
+            })
+        return jsonify(resultado)
+    except Exception as e:
+        print(f"Error en API historial: {e}")
+        return jsonify([])
