@@ -152,6 +152,39 @@ def inicializar_db_saas():
 
     conexion.commit()
 
+# 9. COTIZACIONES Y PRESUPUESTOS
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS cotizaciones (
+            id {serial_pk},
+            taller_id INT NOT NULL,
+            cliente_nombre VARCHAR(100) NOT NULL,
+            cliente_telefono VARCHAR(20),
+            patente VARCHAR(20) NOT NULL,
+            marca VARCHAR(50),
+            modelo VARCHAR(50),
+            sintomas TEXT,
+            total FLOAT DEFAULT 0,
+            estado VARCHAR(30) DEFAULT 'pendiente',
+            token VARCHAR(100),
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (taller_id) REFERENCES talleres(id)
+        );
+    """)
+
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS cotizaciones_items (
+            id {serial_pk},
+            cotizacion_id INT NOT NULL,
+            inventario_id INT,
+            descripcion VARCHAR(150),
+            cantidad INT DEFAULT 1,
+            precio_unidad FLOAT DEFAULT 0,
+            FOREIGN KEY (cotizacion_id) REFERENCES cotizaciones(id)
+        );
+    """)
+
+    conexion.commit()
+
     # POBLAR CATÁLOGO BASE SI ESTÁ VACÍO
     try:
         cursor.execute("SELECT COUNT(*) FROM catalogo_vehiculos")

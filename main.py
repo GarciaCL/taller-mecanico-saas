@@ -7,6 +7,7 @@ from modulos.inventario import obtener_inventario
 from modulos.vehiculos import obtener_marcas_y_modelos, calcular_alerta_revision_tecnica
 from modulos.clientes import obtener_lista_clientes
 from modulos.vehiculos_crm import obtener_lista_vehiculos_crm
+from modulos.cotizaciones import obtener_lista_cotizaciones
 
 # Blueprints
 from rutas.auth_rutas import auth_bp
@@ -14,6 +15,7 @@ from rutas.ordenes_rutas import ordenes_bp
 from rutas.inventario_rutas import inventario_bp
 from rutas.clientes_rutas import clientes_bp
 from rutas.vehiculos_rutas import vehiculos_bp
+from rutas.cotizaciones_rutas import cotizaciones_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "clave_secreta_saas_taller")
@@ -30,6 +32,7 @@ app.register_blueprint(ordenes_bp)
 app.register_blueprint(inventario_bp)
 app.register_blueprint(clientes_bp)
 app.register_blueprint(vehiculos_bp)
+app.register_blueprint(cotizaciones_bp)
 
 @app.route("/")
 def inicio():
@@ -50,7 +53,8 @@ def inicio():
         inventario=obtener_inventario(taller_id), 
         marcas=obtener_marcas_y_modelos(),
         clientes=obtener_lista_clientes(taller_id),
-        vehiculos_crm=obtener_lista_vehiculos_crm(taller_id)
+        vehiculos_crm=obtener_lista_vehiculos_crm(taller_id),
+        cotizaciones=obtener_lista_cotizaciones(taller_id)
     )
 
 if __name__ == "__main__":

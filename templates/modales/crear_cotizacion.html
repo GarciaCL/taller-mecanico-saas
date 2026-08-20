@@ -1,0 +1,30 @@
+<div id="modal-crear-cotizacion" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg p-6 rounded-2xl shadow-2xl space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">📑 Armar Nueva Cotización / Presupuesto</h3>
+            <button type="button" onclick="document.getElementById('modal-crear-cotizacion').classList.add('hidden')" class="text-slate-400 hover:text-white font-bold">✕</button>
+        </div>
+
+        <form action="/crear_cotizacion" method="POST" class="space-y-3 text-xs">
+            <div class="grid grid-cols-2 gap-2">
+                <div><label class="block text-slate-400 mb-1">Nombre Cliente</label><input type="text" name="cliente" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"></div>
+                <div><label class="block text-slate-400 mb-1">WhatsApp</label><input type="text" name="telefono" placeholder="+56912345678" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+                <div><label class="block text-slate-400 mb-1">Patente</label><input type="text" name="patente" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white uppercase font-mono"></div>
+                <div><label class="block text-slate-400 mb-1">Marca</label><input type="text" name="marca" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"></div>
+                <div><label class="block text-slate-400 mb-1">Modelo</label><input type="text" name="modelo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white"></div>
+            </div>
+
+            <div>
+                <label class="block text-slate-400 mb-1">Trabajos / Síntomas Solicitados</label>
+                <textarea name="sintomas" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none" placeholder="Cotización de cambio de embrague y afinamiento..."></textarea>
+            </div>
+
+            <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2.5 rounded-xl shadow-lg shadow-amber-600/20">
+                💾 Generar Presupuesto
+            </button>
+        </form>
+    </div>
+</div>
