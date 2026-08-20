@@ -1,9 +1,10 @@
-function editarClienteModal(id, nombre, rut, telefono) {
+function editarClienteModal(id, nombre, rut, telefono, email) {
     document.getElementById('cli-edit-id').value = id;
     document.getElementById('cli-vehiculo-cliente-id').value = id;
     document.getElementById('cli-edit-nombre').value = nombre;
     document.getElementById('cli-edit-rut').value = rut;
     document.getElementById('cli-edit-telefono').value = telefono;
+    document.getElementById('cli-edit-email').value = email || '';
 
     fetch('/obtener_cliente/' + id)
         .then(res => res.json())

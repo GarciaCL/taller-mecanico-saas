@@ -12,8 +12,9 @@ def actualizar_cliente_web():
     nombre = request.form["nombre"]
     rut = request.form.get("rut", "N/A")
     telefono = request.form.get("telefono", "")
+    email = request.form.get("email", "")
 
-    actualizar_cliente(session["taller_id"], cliente_id, nombre, rut, telefono)
+    actualizar_cliente(session["taller_id"], cliente_id, nombre, rut, telefono, email)
     return redirect("/")
 
 @clientes_bp.route("/obtener_cliente/<int:cliente_id>")

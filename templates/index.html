@@ -316,34 +316,37 @@
     <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
         <table class="w-full text-left text-xs text-slate-300">
             <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold uppercase">
-                <tr>
-                    <th class="p-4">Nombre / Cliente</th>
-                    <th class="p-4">RUT</th>
-                    <th class="p-4">Teléfono WhatsApp</th>
-                    <th class="p-4">Vehículos (Patentes)</th>
-                    <th class="p-4">Total OTs</th>
-                    <th class="p-4 text-right">Acción</th>
-                </tr>
+    <tr>
+        <th class="p-4">Nombre / Cliente</th>
+        <th class="p-4">RUT</th>
+        <th class="p-4">Contacto (Tel / Email)</th>
+        <th class="p-4">Vehículos (Patentes)</th>
+        <th class="p-4">Total OTs</th>
+        <th class="p-4 text-right">Acción</th>
+    </tr>
             </thead>
             <tbody class="divide-y divide-slate-800/60">
-                {% for c in clientes %}
-                <tr class="fila-cliente hover:bg-slate-900/50">
-                    <td class="p-4 font-bold text-white">{{ c[1] }}</td>
-                    <td class="p-4 font-mono text-slate-400">{{ c[2] }}</td>
-                    <td class="p-4 text-emerald-400 font-semibold">📱 {{ c[3] }}</td>
-                    <td class="p-4">
-                        <span class="bg-slate-800 text-blue-300 font-mono text-[10px] px-2 py-1 rounded-lg">
-                            🚗 {{ c[6] if c[6] else 'Sin vehículo' }}
-                        </span>
-                    </td>
-                    <td class="p-4 font-bold text-slate-200">{{ c[5] }} OTs</td>
-                    <td class="p-4 text-right">
-                        <button onclick="editarClienteModal('{{ c[0] }}', '{{ c[1] }}', '{{ c[2] }}', '{{ c[3] }}')" class="text-blue-400 hover:text-blue-300 font-semibold text-xs">
-                            ✏️ Editar Ficha
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
+    {% for c in clientes %}
+    <tr class="fila-cliente hover:bg-slate-900/50">
+        <td class="p-4 font-bold text-white">{{ c[1] }}</td>
+        <td class="p-4 font-mono text-slate-400">{{ c[2] }}</td>
+        <td class="p-4">
+            <span class="block text-emerald-400 font-semibold">📱 {{ c[3] }}</span>
+            <span class="block text-[10px] text-slate-400">✉️ {{ c[4] if c[4] else 'Sin correo' }}</span>
+        </td>
+        <td class="p-4">
+            <span class="bg-slate-800 text-blue-300 font-mono text-[10px] px-2 py-1 rounded-lg">
+                🚗 {{ c[7] if c[7] else 'Sin vehículo' }}
+            </span>
+        </td>
+        <td class="p-4 font-bold text-slate-200">{{ c[6] }} OTs</td>
+        <td class="p-4 text-right">
+            <button onclick="editarClienteModal('{{ c[0] }}', '{{ c[1] }}', '{{ c[2] }}', '{{ c[3] }}', '{{ c[4] }}')" class="text-blue-400 hover:text-blue-300 font-semibold text-xs">
+                ✏️ Editar Ficha
+            </button>
+        </td>
+    </tr>
+    {% endfor %}
             </tbody>
         </table>
     </div>

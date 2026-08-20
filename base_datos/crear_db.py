@@ -69,9 +69,16 @@ def inicializar_db_saas():
             nombre VARCHAR(100) NOT NULL,
             rut VARCHAR(20),
             telefono VARCHAR(20),
+            email VARCHAR(100),
             FOREIGN KEY (taller_id) REFERENCES talleres(id)
         );
     """)
+    # Migración defensiva para bases de datos existentes
+    try:
+        cursor.execute("ALTER TABLE clientes ADD COLUMN email VARCHAR(100);")
+        conexion.commit()
+    except Exception:
+        conexion.rollback()
 
     # 5. VEHÍCULOS
     cursor.execute(f"""
