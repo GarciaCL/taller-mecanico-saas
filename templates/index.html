@@ -434,7 +434,7 @@
     <div class="flex justify-between items-center">
         <div>
             <h2 class="text-2xl font-bold text-white tracking-tight">Presupuestos & Cotizaciones</h2>
-            <p class="text-xs text-slate-400">Genera propuestas formales y conviértelas a Órdenes de Trabajo con un clic.</p>
+            <p class="text-xs text-slate-400">Control de validez (15 días hábiles), reajustes y conversión a OT.</p>
         </div>
         <button onclick="document.getElementById('modal-crear-cotizacion').classList.remove('hidden')" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-amber-600/20">
             + Nueva Cotización
@@ -448,32 +448,47 @@
                     <th class="p-4">Cotización</th>
                     <th class="p-4">Cliente / Teléfono</th>
                     <th class="p-4">Vehículo</th>
-                    <th class="p-4">Trabajos Solicitados</th>
                     <th class="p-4">Total ($)</th>
+                    <th class="p-4">Antigüedad</th>
                     <th class="p-4">Estado</th>
-                    <th class="p-4 text-right">Acción</th>
+                    <th class="p-4 text-right">Acciones</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-800/60">
                 {% for c in cotizaciones %}
-                <tr class="hover:bg-slate-900/50">
+                <tr class="hover:bg-slate-900/50 {{ 'bg-rose-950/20 border-l-2 border-rose-500' if c[8] == 'vencida' else '' }}">
                     <td class="p-4 font-mono font-bold text-amber-400">#COT-{{ c[0] }}</td>
                     <td class="p-4">
                         <span class="block font-bold text-white">{{ c[1] }}</span>
                         <span class="block text-[10px] text-slate-400">📱 {{ c[2] }}</span>
                     </td>
                     <td class="p-4 font-bold text-slate-200">{{ c[3] }} ({{ c[4] }} {{ c[5] }})</td>
-                    <td class="p-4 text-slate-300">{{ c[6] }}</td>
                     <td class="p-4 font-bold text-emerald-400">${{ "{:,.0f}".format(c[7]) }}</td>
-                    <td class="p-4">
-                        <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold {{ 'bg-emerald-500/20 text-emerald-400' if c[8] == 'aprobada' else 'bg-amber-500/20 text-amber-300' }}">
-                            {{ c[8]|upper }}
-                        </span>
+                    <td class="p-4 font-semibold text-slate-400">
+                        {{ c[10] }}
+                        <span class="block text-[10px] text-amber-400">⏱️ {{ c[11] }} días hábiles</span>
                     </td>
-                    <td class="p-4 text-right flex justify-end gap-2">
-                        <a href="https://wa.me/{{ c[2].replace('+', '').replace(' ', '') }}?text={{ ('Hola ' ~ c[1] ~ ' 👋 Adjunto el presupuesto solicitado para tu vehículo ' ~ c[3] ~ ' por un total de $' ~ "{:,.0f}".format(c[7]))|urlencode }}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px]">📱 WhatsApp</a>
-                        {% if c[8] != 'aprobada' %}
-                        <button onclick="convertirCotizacionOtAjax('{{ c[0] }}')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px]">🚀 Convertir a OT</button>
+                    <td class="p-4">
+                        {% if c[8] == 'aprobada' %}
+                        <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">✅ APROBADA</span>
+                        {% elif c[8] == 'vencida' %}
+                        <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-[10px] font-bold">🔴 EXPIRADA (>15 días)</span>
+                        {% elif c[8] == 'rechazada' %}
+                        <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-[10px] font-bold">✕ RECHAZADA</span>
+                        {% else %}
+                        <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-[10px] font-bold">⏳ PENDIENTE</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-right flex justify-end gap-1.5">
+                        <a href="https://wa.me/{{ c[2].replace('+', '').replace(' ', '') }}?text={{ ('Hola ' ~ c[1] ~ ' 👋 Te escribimos del taller para recordarte tu presupuesto #' ~ c[0] ~ ' por $' ~ "{:,.0f}".format(c[7]) ~ ' para tu auto ' ~ c[3] ~ '. ¿Deseas agendar tu atención?')|urlencode }}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-2 py-1.5 rounded-lg text-[11px]">📱 Recordatorio</a>
+
+                        {% if c[8] == 'vencida' %}
+                        <button onclick="revalidarCotizacionAjax('{{ c[0] }}')" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-2 py-1.5 rounded-lg text-[11px]">🔄 Revalidar / Actualizar</button>
+                        {% endif %}
+
+                        {% if c[8] in ['pendiente', 'vencida'] %}
+                        <button onclick="convertirCotizacionOtAjax('{{ c[0] }}')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-2 py-1.5 rounded-lg text-[11px]">🚀 Convertir OT</button>
+                        <button onclick="rechazarCotizacionAjax('{{ c[0] }}')" class="bg-rose-600/20 border border-rose-500/30 text-rose-300 hover:bg-rose-600 hover:text-white font-semibold px-2 py-1.5 rounded-lg text-[11px]">✕ Rechazar</button>
                         {% endif %}
                     </td>
                 </tr>

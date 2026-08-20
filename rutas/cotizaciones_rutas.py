@@ -1,11 +1,19 @@
 from flask import Blueprint, request, jsonify, redirect, session
 from modulos.cotizaciones import (
     crear_cotizacion, obtener_lista_cotizaciones,
-    obtener_detalle_cotizacion, agregar_item_cotizacion,
-    convertir_cotizacion_a_ot
+    buscar_vehiculo_o_cliente_por_patente, cambiar_estado_cotizacion,
+    revalidar_cotizacion_vencida, convertir_cotizacion_a_ot
 )
 
 cotizaciones_bp = Blueprint('cotizaciones', __name__)
+
+@cotizaciones_bp.route("/buscar_patente_cotizacion/<patente>")
+def buscar_patente_cotizacion_web(patente):
+    if "taller_id" not in session:
+        return jsonify({"encontrado": False}), 401
+    
+    datos = buscar_vehiculo_o_cliente_por_patente(session["taller_id"], patente)
+    return jsonify(datos)
 
 @cotizaciones_bp.route("/crear_cotizacion", methods=["POST"])
 def crear_cotizacion_web():
@@ -15,28 +23,28 @@ def crear_cotizacion_web():
     cliente = request.form["cliente"]
     telefono = request.form.get("telefono", "")
     patente = request.form["patente"]
-    
-    # Toma la nueva marca escrita si seleccionó "OTRA"
     marca = request.form.get("marca_input") or request.form.get("marca", "Marca")
     modelo = request.form.get("modelo_input") or "Modelo"
     sintomas = request.form.get("sintomas", "Presupuesto General")
 
     crear_cotizacion(session["taller_id"], cliente, telefono, patente, marca, modelo, sintomas)
-    return redirect("/")
+    return redirect("/#cot")
 
-@cotizaciones_bp.route("/vincular_item_cotizacion", methods=["POST"])
-def vincular_item_cotizacion_web():
+@cotizaciones_bp.route("/rechazar_cotizacion/<int:cot_id>", methods=["POST"])
+def rechazar_cotizacion_web(cot_id):
     if "taller_id" not in session:
         return jsonify({"success": False}), 401
 
-    cot_id = int(request.form["cotizacion_id"])
-    inventario_id = int(request.form["inventario_id"]) if request.form.get("inventario_id") else None
-    descripcion = request.form.get("descripcion", "")
-    cantidad = int(request.form.get("cantidad", 1))
-    precio = float(request.form.get("precio_unidad", 0.0))
+    cambiar_estado_cotizacion(cot_id, session["taller_id"], "rechazada")
+    return jsonify({"success": True})
 
-    nuevo_total = agregar_item_cotizacion(cot_id, inventario_id, descripcion, cantidad, precio)
-    return jsonify({"success": True, "nuevo_total": nuevo_total})
+@cotizaciones_bp.route("/revalidar_cotizacion/<int:cot_id>", methods=["POST"])
+def revalidar_cotizacion_web(cot_id):
+    if "taller_id" not in session:
+        return jsonify({"success": False}), 401
+
+    revalidar_cotizacion_vencida(cot_id, session["taller_id"])
+    return jsonify({"success": True})
 
 @cotizaciones_bp.route("/convertir_cotizacion_ot/<int:cot_id>", methods=["POST"])
 def convertir_cotizacion_ot_web(cot_id):
