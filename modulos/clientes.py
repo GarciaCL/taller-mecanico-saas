@@ -57,3 +57,20 @@ def obtener_detalle_cliente(taller_id, cliente_id):
 
     conexion.close()
     return {"cliente": cliente, "vehiculos": vehiculos}
+
+def agregar_vehiculo_a_cliente(cliente_id, patente, marca, modelo, anio=2020, km=0):
+    """Vincula un nuevo vehículo a un cliente existente."""
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    patente_limpia = patente.strip().upper()
+
+    cursor.execute(f"""
+        INSERT INTO vehiculos (cliente_id, patente_vin, marca, modelo, anio, kilometraje)
+        VALUES ({p}, {p}, {p}, {p}, {p}, {p})
+    """, (cliente_id, patente_limpia, marca.strip(), modelo.strip(), anio, km))
+
+    conexion.commit()
+    conexion.close()
+    return True

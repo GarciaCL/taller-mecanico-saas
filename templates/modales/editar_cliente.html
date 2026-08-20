@@ -1,0 +1,60 @@
+<div id="modal-editar-cliente" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg p-6 rounded-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">👤 Ficha de Cliente y Vehículos</h3>
+            <button type="button" onclick="cerrarModalCliente()" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+        </div>
+
+        <!-- FORMULARIO DATOS PERSONALES -->
+        <form action="/actualizar_cliente" method="POST" class="space-y-3">
+            <input type="hidden" name="cliente_id" id="cli-edit-id">
+
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Nombre Completo</label>
+                    <input type="text" name="nombre" id="cli-edit-nombre" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">RUT</label>
+                    <input type="text" name="rut" id="cli-edit-rut" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Teléfono WhatsApp</label>
+                <input type="text" name="telefono" id="cli-edit-telefono" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs">
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 rounded-xl text-xs shadow-lg shadow-blue-600/20">
+                💾 Actualizar Datos del Cliente
+            </button>
+        </form>
+
+        <!-- SECCIÓN VEHÍCULOS ASOCIADOS Y AGREGAR NUEVO -->
+        <div class="border-t border-slate-800 pt-3 space-y-3">
+            <h4 class="text-xs font-bold text-slate-300">🚗 Vehículos Registrados</h4>
+            
+            <div id="cli-lista-vehiculos" class="space-y-1.5 text-xs"></div>
+
+            <form action="/agregar_vehiculo_cliente" method="POST" class="bg-slate-950 p-3 rounded-xl border border-slate-800/80 space-y-2">
+                <input type="hidden" name="cliente_id" id="cli-vehiculo-cliente-id">
+                <span class="block text-[11px] font-bold text-emerald-400">+ Agregar Nuevo Vehículo a este Cliente</span>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <input type="text" name="patente" placeholder="Patente (Ej: BB123CC)" required class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-white uppercase font-mono">
+                    <input type="text" name="marca" placeholder="Marca (Ej: Nissan)" class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-white">
+                    <input type="text" name="modelo" placeholder="Modelo (Ej: Kicks)" class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-white">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" name="anio" placeholder="Año (Ej: 2021)" class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-white">
+                    <input type="number" name="km" placeholder="Kilometraje" class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-white">
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-1.5 rounded-lg text-xs shadow-lg shadow-emerald-600/20">
+                    + Vincular Vehículo
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
