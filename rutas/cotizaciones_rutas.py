@@ -15,8 +15,10 @@ def crear_cotizacion_web():
     cliente = request.form["cliente"]
     telefono = request.form.get("telefono", "")
     patente = request.form["patente"]
-    marca = request.form.get("marca", "")
-    modelo = request.form.get("modelo", "")
+    
+    # Toma la nueva marca escrita si seleccionó "OTRA"
+    marca = request.form.get("marca_input") or request.form.get("marca", "Marca")
+    modelo = request.form.get("modelo_input") or "Modelo"
     sintomas = request.form.get("sintomas", "Presupuesto General")
 
     crear_cotizacion(session["taller_id"], cliente, telefono, patente, marca, modelo, sintomas)

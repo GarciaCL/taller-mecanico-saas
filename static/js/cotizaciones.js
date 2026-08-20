@@ -19,3 +19,15 @@ function convertirCotizacionOtAjax(cotId) {
         }
     });
 }
+
+function evaluarNuevaMarcaCot() {
+    const select = document.getElementById('select-marca-cot');
+    const inputNueva = document.getElementById('input-marca-nueva-cot');
+    if (select && inputNueva) {
+        if (select.value === 'OTRA') {
+            inputNueva.classList.remove('hidden');
+        } else {
+            inputNueva.classList.add('hidden');
+        }
+    }
+}
