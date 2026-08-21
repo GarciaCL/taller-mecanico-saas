@@ -201,9 +201,11 @@ def generar_pdf_cotizacion(cot_id):
     y -= 20
     c.setFont("Helvetica", 9)
     for item in items:
-        subtotal = item[2] * item[3]
-        c.drawString(50, y, str(item[1]))
-        c.drawString(350, y, str(item[2]))
+        cant = item[2] or 1
+        precio = item[3] or 0.0
+        subtotal = cant * precio
+        c.drawString(50, y, str(item[1] or "Servicio / Repuesto"))
+        c.drawString(350, y, str(cant))
         c.drawString(450, y, f"${subtotal:,.0f}")
         y -= 18
 

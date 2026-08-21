@@ -73,24 +73,23 @@
         <!-- 1. TABLERO KANBAN DE ÓRDENES DE TRABAJO -->
         <section id="sec-ot" class="space-y-6">
             <div class="flex justify-between items-center">
-    <div>
-        <h2 class="text-2xl font-bold text-white tracking-tight">Tablero Kanban de Órdenes de Trabajo</h2>
-        <p class="text-xs text-slate-400">Control de tiempos y estado de reparación en tiempo real.</p>
-    </div>
-    <div class="flex gap-2">
-        <!-- FILTRO POR TÉCNICO -->
-        <select id="filtro-mecanico-kanban" onchange="filtrarKanbanPorMecanico(this.value)" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500">
-            <option value="">👨‍🔧 Todos los Mecánicos</option>
-            {% for m in mecanicos %}
-            <option value="{{ m[0] }}">{{ m[1] }} ({{ m[4] }} OTs)</option>
-            {% endfor %}
-        </select>
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">Tablero Kanban de Órdenes de Trabajo</h2>
+                    <p class="text-xs text-slate-400">Control de tiempos y estado de reparación en tiempo real.</p>
+                </div>
+                <div class="flex gap-2">
+                    <select id="filtro-mecanico-kanban" onchange="filtrarKanbanPorMecanico(this.value)" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500">
+                        <option value="">👨‍🔧 Todos los Mecánicos</option>
+                        {% for m in mecanicos %}
+                        <option value="{{ m[0] }}">{{ m[1] }} ({{ m[4] }} OTs)</option>
+                        {% endfor %}
+                    </select>
 
-        <button onclick="document.getElementById('modal-ot').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all">
-            <i data-lucide="plus" class="w-4 h-4"></i> Nueva Orden (OT)
-        </button>
-    </div>
-</div>
+                    <button onclick="document.getElementById('modal-ot').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Nueva Orden (OT)
+                    </button>
+                </div>
+            </div>
 
             <!-- COLUMNAS KANBAN -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -141,12 +140,17 @@
 
                             <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between items-center">
                                 <span>👤 {{ o[7] }}</span>
-                                <span class="text-blue-400 font-semibold">Editar / Ver →</span>
-                            <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between items-center">
-        <span>👤 {{ o[7] }}</span>
-        <span class="text-amber-400 font-semibold">👨‍🔧 {{ o[15] }}</span>
-    </div>
+                                <span class="text-amber-400 font-semibold">👨‍🔧 {{ o[15] }}</span>
                             </div>
+
+                            {% if o[1] == 'entrega' %}
+                            <a href="https://wa.me/{{ o[8].replace('+', '').replace(' ', '') }}?text={{ ('¡Hola ' ~ o[7] ~ '! 🚀 Tu vehículo ' ~ o[5] ~ ' ' ~ o[6] ~ ' (' ~ o[4] ~ ') ya se encuentra LISTO PARA ENTREGA en el taller. Puedes ver el detalle aquí: /seguimiento/' ~ o[11])|urlencode }}" 
+                               target="_blank" 
+                               onclick="event.stopPropagation();"
+                               class="mt-2 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 rounded-lg text-[10px] flex items-center justify-center gap-1 shadow-md shadow-emerald-600/20">
+                               📲 Notificar 'Vehículo Listo' por WhatsApp
+                            </a>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
@@ -309,7 +313,6 @@
             </div>
         </section>
 
-        <!-- 3. DASHBOARD Y MÉTRICAS -->
         <!-- 3. DASHBOARD Y MÉTRICAS ESTIMADAS -->
         <section id="sec-dash" class="space-y-6 hidden">
             <div>
@@ -390,232 +393,228 @@
                         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
                             <span class="text-slate-400 text-[10px] block">🚀 Listos para Entrega</span>
                             <span class="text-lg font-bold text-emerald-400">{{ metricas.estados.entrega }}</span>
-                            {% if o[1] == 'entrega' %}
-<a href="https://wa.me/{{ o[8].replace('+', '').replace(' ', '') }}?text={{ ('¡Hola ' ~ o[7] ~ '! 🚀 Tu vehículo ' ~ o[5] ~ ' ' ~ o[6] ~ ' (' ~ o[4] ~ ') ya se encuentra LISTO PARA ENTREGA en el taller. Puedes ver el detalle aquí: ' ~ request.host_url ~ 'seguimiento/' ~ o[11])|urlencode }}" 
-   target="_blank" 
-   class="mt-2 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 rounded-lg text-[10px] flex items-center justify-center gap-1 shadow-md shadow-emerald-600/20">
-   📲 Notificar 'Vehículo Listo' por WhatsApp
-</a>
-{% endif %}
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl space-y-4">
-    <div class="flex justify-between items-center">
-        <h3 class="text-sm font-bold text-white">👨‍🔧 Rendimiento por Técnico / Mecánico</h3>
-        <button onclick="document.getElementById('modal-crear-mecanico').classList.remove('hidden')" class="bg-slate-800 hover:bg-slate-700 text-blue-400 font-semibold px-3 py-1.5 rounded-lg text-xs">
-            + Agregar Mecánico
-        </button>
-    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {% for m in mecanicos %}
-        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800/80 space-y-2">
-            <div class="flex justify-between items-start">
-                <div>
-                    <span class="font-bold text-white text-xs block">{{ m[1] }}</span>
-                    <span class="text-[10px] text-slate-400">{{ m[2] }}</span>
+            <!-- RENDIMIENTO POR MECÁNICO -->
+            <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-white">👨‍🔧 Rendimiento por Técnico / Mecánico</h3>
+                    <button onclick="document.getElementById('modal-crear-mecanico').classList.remove('hidden')" class="bg-slate-800 hover:bg-slate-700 text-blue-400 font-semibold px-3 py-1.5 rounded-lg text-xs">
+                        + Agregar Mecánico
+                    </button>
                 </div>
-                <span class="bg-blue-500/20 text-blue-400 font-bold px-2 py-0.5 rounded text-[10px]">{{ m[4] }} OTs Activas</span>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {% for m in mecanicos %}
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800/80 space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="font-bold text-white text-xs block">{{ m[1] }}</span>
+                                <span class="text-[10px] text-slate-400">{{ m[2] }}</span>
+                            </div>
+                            <span class="bg-blue-500/20 text-blue-400 font-bold px-2 py-0.5 rounded text-[10px]">{{ m[4] }} OTs Activas</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t border-slate-800/80 text-[11px]">
+                            <span class="text-slate-400">Completadas: <b class="text-slate-200">{{ m[5] }}</b></span>
+                            <span class="text-emerald-400 font-bold">${{ "{:,.0f}".format(m[6]) }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
-            <div class="flex justify-between items-center pt-2 border-t border-slate-800/80 text-[11px]">
-                <span class="text-slate-400">Completadas: <b class="text-slate-200">{{ m[5] }}</b></span>
-                <span class="text-emerald-400 font-bold">${{ "{:,.0f}".format(m[6]) }}</span>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</div>
         </section>
     
         <!-- 4. GESTIÓN DE CLIENTES -->
         <section id="sec-cli" class="space-y-6 hidden">
-    <div class="flex justify-between items-center">
-        <div>
-            <h2 class="text-2xl font-bold text-white tracking-tight">Directorio de Clientes</h2>
-            <p class="text-xs text-slate-400">Base de datos de propietarios y sus vehículos registrados.</p>
-        </div>
-        <input type="text" id="filtro-cliente-input" onkeyup="filtrarClientes()" placeholder="🔍 Buscar cliente, RUT, patente..." class="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white w-64 focus:outline-none focus:border-emerald-500">
-    </div>
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">Directorio de Clientes</h2>
+                    <p class="text-xs text-slate-400">Base de datos de propietarios y sus vehículos registrados.</p>
+                </div>
+                <input type="text" id="filtro-cliente-input" onkeyup="filtrarClientes()" placeholder="🔍 Buscar cliente, RUT, patente..." class="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white w-64 focus:outline-none focus:border-emerald-500">
+            </div>
 
-    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
-        <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold uppercase">
-    <tr>
-        <th class="p-4">Nombre / Cliente</th>
-        <th class="p-4">RUT</th>
-        <th class="p-4">Contacto (Tel / Email)</th>
-        <th class="p-4">Vehículos (Patentes)</th>
-        <th class="p-4">Total OTs</th>
-        <th class="p-4 text-right">Acción</th>
-    </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-800/60">
-    {% for c in clientes %}
-    <tr class="fila-cliente hover:bg-slate-900/50">
-        <td class="p-4 font-bold text-white">{{ c[1] }}</td>
-        <td class="p-4 font-mono text-slate-400">{{ c[2] }}</td>
-        <td class="p-4">
-            <span class="block text-emerald-400 font-semibold">📱 {{ c[3] }}</span>
-            <span class="block text-[10px] text-slate-400">✉️ {{ c[4] if c[4] else 'Sin correo' }}</span>
-        </td>
-        <td class="p-4">
-            <span class="bg-slate-800 text-blue-300 font-mono text-[10px] px-2 py-1 rounded-lg">
-                🚗 {{ c[7] if c[7] else 'Sin vehículo' }}
-            </span>
-        </td>
-        <td class="p-4 font-bold text-slate-200">{{ c[6] }} OTs</td>
-        <td class="p-4 text-right">
-            <button onclick="editarClienteModal('{{ c[0] }}', '{{ c[1] }}', '{{ c[2] }}', '{{ c[3] }}', '{{ c[4] }}')" class="text-blue-400 hover:text-blue-300 font-semibold text-xs">
-                ✏️ Editar Ficha
-            </button>
-        </td>
-    </tr>
-    {% endfor %}
-            </tbody>
-        </table>
-    </div>
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold uppercase">
+                        <tr>
+                            <th class="p-4">Nombre / Cliente</th>
+                            <th class="p-4">RUT</th>
+                            <th class="p-4">Contacto (Tel / Email)</th>
+                            <th class="p-4">Vehículos (Patentes)</th>
+                            <th class="p-4">Total OTs</th>
+                            <th class="p-4 text-right">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/60">
+                        {% for c in clientes %}
+                        <tr class="fila-cliente hover:bg-slate-900/50">
+                            <td class="p-4 font-bold text-white">{{ c[1] }}</td>
+                            <td class="p-4 font-mono text-slate-400">{{ c[2] }}</td>
+                            <td class="p-4">
+                                <span class="block text-emerald-400 font-semibold">📱 {{ c[3] }}</span>
+                                <span class="block text-[10px] text-slate-400">✉️ {{ c[4] if c[4] else 'Sin correo' }}</span>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-slate-800 text-blue-300 font-mono text-[10px] px-2 py-1 rounded-lg">
+                                    🚗 {{ c[7] if c[7] else 'Sin vehículo' }}
+                                </span>
+                            </td>
+                            <td class="p-4 font-bold text-slate-200">{{ c[6] }} OTs</td>
+                            <td class="p-4 text-right">
+                                <button onclick="editarClienteModal('{{ c[0] }}', '{{ c[1] }}', '{{ c[2] }}', '{{ c[3] }}', '{{ c[4] }}')" class="text-blue-400 hover:text-blue-300 font-semibold text-xs">
+                                    ✏️ Editar Ficha
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <!-- 5. VEHÍCULOS Y CRM PREVENTIVO -->
         <section id="sec-veh" class="space-y-6 hidden">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-            <h2 class="text-2xl font-bold text-white tracking-tight">Parque Automotor & CRM Preventivo</h2>
-            <p class="text-xs text-slate-400">Seguimiento de mantenciones, alertas de revisión técnica y avisos de servicio.</p>
-        </div>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">Parque Automotor & CRM Preventivo</h2>
+                    <p class="text-xs text-slate-400">Seguimiento de mantenciones, alertas de revisión técnica y avisos de servicio.</p>
+                </div>
 
-        <div class="flex items-center gap-2">
-            <select id="select-orden-vehiculos" onchange="ordenarVehiculosCRM(this.value)" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500">
-                <option value="visita">📅 Ordenar por Última Visita</option>
-                <option value="alerta">🔴 Ordenar por Alertas Críticas</option>
-                <option value="patente">🚗 Ordenar por Patente</option>
-            </select>
+                <div class="flex items-center gap-2">
+                    <select id="select-orden-vehiculos" onchange="ordenarVehiculosCRM(this.value)" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500">
+                        <option value="visita">📅 Ordenar por Última Visita</option>
+                        <option value="alerta">🔴 Ordenar por Alertas Críticas</option>
+                        <option value="patente">🚗 Ordenar por Patente</option>
+                    </select>
 
-            <input type="text" id="filtro-vehiculo-input" onkeyup="filtrarVehiculosCRM()" placeholder="🔍 Buscar patente, modelo, cliente..." class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white w-64 focus:outline-none focus:border-blue-500">
-        </div>
-    </div>
+                    <input type="text" id="filtro-vehiculo-input" onkeyup="filtrarVehiculosCRM()" placeholder="🔍 Buscar patente, modelo, cliente..." class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white w-64 focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
 
-    <!-- TABLA CRM VEHÍCULOS -->
-    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
-        <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold uppercase">
-                <tr>
-                    <th class="p-4">Patente</th>
-                    <th class="p-4">Vehículo</th>
-                    <th class="p-4">Propietario</th>
-                    <th class="p-4">KM Actual / Prox. Aceite</th>
-                    <th class="p-4">Alerta RT</th>
-                    <th class="p-4">Última Visita</th>
-                    <th class="p-4 text-right">Acción Preventiva</th>
-                </tr>
-            </thead>
-            <tbody id="tbody-vehiculos-crm" class="divide-y divide-slate-800/60">
-                {% for v in vehiculos_crm %}
-                <tr class="fila-vehiculo-crm hover:bg-slate-900/50">
-                    <td class="p-4 font-mono font-bold text-white bg-slate-950/40 rounded-lg">{{ v.patente }}</td>
-                    <td class="p-4 font-bold text-slate-200">{{ v.vehiculo }}</td>
-                    <td class="p-4">
-                        <span class="block font-bold text-white">{{ v.cliente }}</span>
-                        <span class="block text-[10px] text-slate-400">📱 {{ v.telefono }}</span>
-                    </td>
-                    <td class="p-4">
-                        <span class="block font-bold text-slate-200">{{ "{:,.0f}".format(v.km_actual) }} KM</span>
-                        <span class="block text-[10px] text-emerald-400">🛢️ Prox: {{ "{:,.0f}".format(v.km_proximo_aceite) }} KM</span>
-                    </td>
-                    <td class="p-4">
-                        {% if v.alerta_rt == 'urgente' %}
-                        <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[10px] font-bold">🔴 Vence este mes (Dígito {{ v.digito }})</span>
-                        {% elif v.alerta_rt == 'proximo' %}
-                        <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-bold">⚠️ Vence próximo mes</span>
-                        {% else %}
-                        <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-[10px]">✅ Al día (Mes {{ v.mes_rt }})</span>
-                        {% endif %}
-                    </td>
-                    <td class="p-4 font-semibold text-slate-400">{{ v.ultima_visita }}</td>
-                    <td class="p-4 text-right flex justify-end gap-2">
-                        <button onclick="abrirHistorialModal('{{ v.patente }}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center gap-1">
-    📜 Historial
-</button>
-                        <a href="https://wa.me/{{ v.telefono.replace('+', '').replace(' ', '') }}?text={{ ('Hola ' ~ v.cliente ~ ' 👋 Te escribimos del taller para recordarte que tu vehículo ' ~ v.vehiculo ~ ' (' ~ v.patente ~ ') está próximo a su revisión/mantención sugerida.')|urlencode }}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center gap-1 shadow-lg shadow-emerald-600/20">
-                            📱 Recordatorio
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+            <!-- TABLA CRM VEHÍCULOS -->
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold uppercase">
+                        <tr>
+                            <th class="p-4">Patente</th>
+                            <th class="p-4">Vehículo</th>
+                            <th class="p-4">Propietario</th>
+                            <th class="p-4">KM Actual / Prox. Aceite</th>
+                            <th class="p-4">Alerta RT</th>
+                            <th class="p-4">Última Visita</th>
+                            <th class="p-4 text-right">Acción Preventiva</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-vehiculos-crm" class="divide-y divide-slate-800/60">
+                        {% for v in vehiculos_crm %}
+                        <tr class="fila-vehiculo-crm hover:bg-slate-900/50">
+                            <td class="p-4 font-mono font-bold text-white bg-slate-950/40 rounded-lg">{{ v.patente }}</td>
+                            <td class="p-4 font-bold text-slate-200">{{ v.vehiculo }}</td>
+                            <td class="p-4">
+                                <span class="block font-bold text-white">{{ v.cliente }}</span>
+                                <span class="block text-[10px] text-slate-400">📱 {{ v.telefono }}</span>
+                            </td>
+                            <td class="p-4">
+                                <span class="block font-bold text-slate-200">{{ "{:,.0f}".format(v.km_actual) }} KM</span>
+                                <span class="block text-[10px] text-emerald-400">🛢️ Prox: {{ "{:,.0f}".format(v.km_proximo_aceite) }} KM</span>
+                            </td>
+                            <td class="p-4">
+                                {% if v.alerta_rt == 'urgente' %}
+                                <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[10px] font-bold">🔴 Vence este mes (Dígito {{ v.digito }})</span>
+                                {% elif v.alerta_rt == 'proximo' %}
+                                <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-bold">⚠️ Vence próximo mes</span>
+                                {% else %}
+                                <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-[10px]">✅ Al día (Mes {{ v.mes_rt }})</span>
+                                {% endif %}
+                            </td>
+                            <td class="p-4 font-semibold text-slate-400">{{ v.ultima_visita }}</td>
+                            <td class="p-4 text-right flex justify-end gap-2">
+                                <button onclick="abrirHistorialModal('{{ v.patente }}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center gap-1">
+                                    📜 Historial
+                                </button>
+                                <a href="https://wa.me/{{ v.telefono.replace('+', '').replace(' ', '') }}?text={{ ('Hola ' ~ v.cliente ~ ' 👋 Te escribimos del taller para recordarte que tu vehículo ' ~ v.vehiculo ~ ' (' ~ v.patente ~ ') está próximo a su revisión/mantención sugerida.')|urlencode }}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-2.5 py-1.5 rounded-lg text-[11px] flex items-center gap-1 shadow-lg shadow-emerald-600/20">
+                                    📱 Recordatorio
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <!-- 6. COTIZACIONES Y PRESUPUESTOS -->
         <section id="sec-cot" class="space-y-6 hidden">
-    <div class="flex justify-between items-center">
-        <div>
-            <h2 class="text-2xl font-bold text-white tracking-tight">Presupuestos & Cotizaciones</h2>
-            <p class="text-xs text-slate-400">Control de validez (15 días hábiles), reajustes y conversión a OT.</p>
-        </div>
-        <button onclick="document.getElementById('modal-crear-cotizacion').classList.remove('hidden')" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-amber-600/20">
-            + Nueva Cotización
-        </button>
-    </div>
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">Presupuestos & Cotizaciones</h2>
+                    <p class="text-xs text-slate-400">Control de validez (15 días hábiles), reajustes y conversión a OT.</p>
+                </div>
+                <button onclick="document.getElementById('modal-crear-cotizacion').classList.remove('hidden')" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-amber-600/20">
+                    + Nueva Cotización
+                </button>
+            </div>
 
-    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
-        <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold uppercase">
-                <tr>
-                    <th class="p-4">Cotización</th>
-                    <th class="p-4">Cliente / Teléfono</th>
-                    <th class="p-4">Vehículo</th>
-                    <th class="p-4">Total ($)</th>
-                    <th class="p-4">Antigüedad</th>
-                    <th class="p-4">Estado</th>
-                    <th class="p-4 text-right">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-800/60">
-                {% for c in cotizaciones %}
-                <tr class="hover:bg-slate-900/50 {{ 'bg-rose-950/20 border-l-2 border-rose-500' if c[8] == 'vencida' else '' }}">
-                    <td class="p-4 font-mono font-bold text-amber-400">#COT-{{ c[0] }}</td>
-                    <td class="p-4">
-                        <span class="block font-bold text-white">{{ c[1] }}</span>
-                        <span class="block text-[10px] text-slate-400">📱 {{ c[2] }}</span>
-                    </td>
-                    <td class="p-4 font-bold text-slate-200">{{ c[3] }} ({{ c[4] }} {{ c[5] }})</td>
-                    <td class="p-4 font-bold text-emerald-400">${{ "{:,.0f}".format(c[7]) }}</td>
-                    <td class="p-4 font-semibold text-slate-400">
-                        {{ c[10] }}
-                        <span class="block text-[10px] text-amber-400">⏱️ {{ c[11] }} días hábiles</span>
-                    </td>
-                    <td class="p-4">
-                        {% if c[8] == 'aprobada' %}
-                        <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">✅ APROBADA</span>
-                        {% elif c[8] == 'vencida' %}
-                        <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-[10px] font-bold">🔴 EXPIRADA (>15 días)</span>
-                        {% elif c[8] == 'rechazada' %}
-                        <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-[10px] font-bold">✕ RECHAZADA</span>
-                        {% else %}
-                        <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-[10px] font-bold">⏳ PENDIENTE</span>
-                        {% endif %}
-                    </td>
-                    <td class="p-4 text-right flex justify-end gap-1.5">
-                        <a href="https://wa.me/{{ c[2].replace('+', '').replace(' ', '') }}?text={{ ('Hola ' ~ c[1] ~ ' 👋 Te escribimos del taller para recordarte tu presupuesto #' ~ c[0] ~ ' por $' ~ "{:,.0f}".format(c[7]) ~ ' para tu auto ' ~ c[3] ~ '. ¿Deseas agendar tu atención?')|urlencode }}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-2 py-1.5 rounded-lg text-[11px]">📱 Recordatorio</a>
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-hidden">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold uppercase">
+                        <tr>
+                            <th class="p-4">Cotización</th>
+                            <th class="p-4">Cliente / Teléfono</th>
+                            <th class="p-4">Vehículo</th>
+                            <th class="p-4">Total ($)</th>
+                            <th class="p-4">Antigüedad</th>
+                            <th class="p-4">Estado</th>
+                            <th class="p-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/60">
+                        {% for c in cotizaciones %}
+                        <tr class="hover:bg-slate-900/50 {{ 'bg-rose-950/20 border-l-2 border-rose-500' if c[8] == 'vencida' else '' }}">
+                            <td class="p-4 font-mono font-bold text-amber-400">#COT-{{ c[0] }}</td>
+                            <td class="p-4">
+                                <span class="block font-bold text-white">{{ c[1] }}</span>
+                                <span class="block text-[10px] text-slate-400">📱 {{ c[2] }}</span>
+                            </td>
+                            <td class="p-4 font-bold text-slate-200">{{ c[3] }} ({{ c[4] }} {{ c[5] }})</td>
+                            <td class="p-4 font-bold text-emerald-400">${{ "{:,.0f}".format(c[7]) }}</td>
+                            <td class="p-4 font-semibold text-slate-400">
+                                {{ c[10] }}
+                                <span class="block text-[10px] text-amber-400">⏱️ {{ c[11] }} días hábiles</span>
+                            </td>
+                            <td class="p-4">
+                                {% if c[8] == 'aprobada' %}
+                                <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">✅ APROBADA</span>
+                                {% elif c[8] == 'vencida' %}
+                                <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-[10px] font-bold">🔴 EXPIRADA (>15 días)</span>
+                                {% elif c[8] == 'rechazada' %}
+                                <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-[10px] font-bold">✕ RECHAZADA</span>
+                                {% else %}
+                                <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-[10px] font-bold">⏳ PENDIENTE</span>
+                                {% endif %}
+                            </td>
+                            <td class="p-4 text-right flex justify-end gap-1.5">
+                                <a href="/descargar_pdf_cotizacion/{{ c[0] }}" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold px-2 py-1.5 rounded-lg text-[11px]">📄 PDF</a>
+                                <a href="https://wa.me/{{ c[2].replace('+', '').replace(' ', '') }}?text={{ ('Hola ' ~ c[1] ~ ' 👋 Te escribimos del taller para recordarte tu presupuesto #' ~ c[0] ~ ' por $' ~ "{:,.0f}".format(c[7]) ~ ' para tu auto ' ~ c[3] ~ '. ¿Deseas agendar tu atención?')|urlencode }}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-2 py-1.5 rounded-lg text-[11px]">📱 Recordatorio</a>
 
-                        {% if c[8] == 'vencida' %}
-                        <button onclick="revalidarCotizacionAjax('{{ c[0] }}')" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-2 py-1.5 rounded-lg text-[11px]">🔄 Revalidar / Actualizar</button>
-                        {% endif %}
+                                {% if c[8] == 'vencida' %}
+                                <button onclick="revalidarCotizacionAjax('{{ c[0] }}')" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-2 py-1.5 rounded-lg text-[11px]">🔄 Revalidar / Actualizar</button>
+                                {% endif %}
 
-                        {% if c[8] in ['pendiente', 'vencida'] %}
-                        <button onclick="convertirCotizacionOtAjax('{{ c[0] }}')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-2 py-1.5 rounded-lg text-[11px]">🚀 Convertir OT</button>
-                        <button onclick="rechazarCotizacionAjax('{{ c[0] }}')" class="bg-rose-600/20 border border-rose-500/30 text-rose-300 hover:bg-rose-600 hover:text-white font-semibold px-2 py-1.5 rounded-lg text-[11px]">✕ Rechazar</button>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                                {% if c[8] in ['pendiente', 'vencida'] %}
+                                <button onclick="convertirCotizacionOtAjax('{{ c[0] }}')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-2 py-1.5 rounded-lg text-[11px]">🚀 Convertir OT</button>
+                                <button onclick="rechazarCotizacionAjax('{{ c[0] }}')" class="bg-rose-600/20 border border-rose-500/30 text-rose-300 hover:bg-rose-600 hover:text-white font-semibold px-2 py-1.5 rounded-lg text-[11px]">✕ Rechazar</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </section>
     </main>
 
@@ -631,39 +630,34 @@
     <script>
         lucide.createIcons();
         const mapaMarcasModelos = {{ marcas|tojson }};
+        
         function cambiarPestana(id) {
-    // 1. Ocultar todas las secciones
-    document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
-    
-    // 2. Mostrar la sección seleccionada
-    const sec = document.getElementById('sec-' + id);
-    if (sec) sec.classList.remove('hidden');
+            document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+            const sec = document.getElementById('sec-' + id);
+            if (sec) sec.classList.remove('hidden');
 
-    // 3. Guardar el estado en el Hash de la URL sin recargar
-    window.location.hash = id;
+            window.location.hash = id;
 
-    // 4. Actualizar estilos de los botones del menú lateral
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('text-white', 'bg-slate-800/80');
-        btn.classList.add('text-slate-400');
-    });
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-white', 'bg-slate-800/80');
+                btn.classList.add('text-slate-400');
+            });
 
-    const btnActivo = document.getElementById('btn-' + id);
-    if (btnActivo) {
-        btnActivo.classList.add('text-white', 'bg-slate-800/80');
-        btnActivo.classList.remove('text-slate-400');
-    }
-}
+            const btnActivo = document.getElementById('btn-' + id);
+            if (btnActivo) {
+                btnActivo.classList.add('text-white', 'bg-slate-800/80');
+                btnActivo.classList.remove('text-slate-400');
+            }
+        }
 
-// AL CARGAR LA PÁGINA: Detectar si viene un #hash en la URL
-document.addEventListener('DOMContentLoaded', function() {
-    const hash = window.location.hash.replace('#', '');
-    if (hash && document.getElementById('sec-' + hash)) {
-        cambiarPestana(hash);
-    } else {
-        cambiarPestana('ot');
-    }
-});
+        document.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && document.getElementById('sec-' + hash)) {
+                cambiarPestana(hash);
+            } else {
+                cambiarPestana('ot');
+            }
+        });
     </script>
 
     <!-- JS EXTERNOS -->
