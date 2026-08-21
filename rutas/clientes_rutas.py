@@ -39,3 +39,37 @@ def agregar_vehiculo_cliente_web():
 
     agregar_vehiculo_a_cliente(cliente_id, patente, marca, modelo, anio, km)
     return redirect("/")
+
+@clientes_bp.route("/api/buscar_cliente_contacto")
+def buscar_cliente_contacto_web():
+    if "taller_id" not in session:
+        return jsonify({"encontrado": False}), 401
+
+    query = request.args.get("q", "").strip()
+    if not query or len(query) < 3:
+        return jsonify({"encontrado": False})
+
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"""
+        SELECT id, nombre, rut, telefono, email
+        FROM clientes
+        WHERE taller_id = {p} AND (telefono LIKE {p} OR email LIKE {p})
+        LIMIT 1
+    """, (session["taller_id"], f"%{query}%", f"%{query}%"))
+
+    cli = cursor.fetchone()
+    conexion.close()
+
+    if cli:
+        return jsonify({
+            "encontrado": True,
+            "id": cli[0],
+            "nombre": cli[1],
+            "rut": cli[2] or "",
+            "telefono": cli[3] or "",
+            "email": cli[4] or ""
+        })
+    return jsonify({"encontrado": False})

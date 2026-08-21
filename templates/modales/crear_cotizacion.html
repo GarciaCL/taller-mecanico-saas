@@ -1,19 +1,36 @@
 <div id="modal-crear-cotizacion" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
-    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg p-6 rounded-2xl shadow-2xl space-y-4 my-8">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl p-6 rounded-2xl shadow-2xl space-y-4 my-8">
         <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-            <h3 class="text-base font-bold text-white flex items-center gap-2">📑 Armar Nueva Cotización / Presupuesto</h3>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">📑 Armar Cotización & Presupuesto Validadas</h3>
             <button type="button" onclick="document.getElementById('modal-crear-cotizacion').classList.add('hidden')" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
         </div>
 
-        <form action="/crear_cotizacion#cot" method="POST" class="space-y-3 text-xs">
+        <form action="/crear_cotizacion#cot" method="POST" id="form-crear-cotizacion" class="space-y-4 text-xs">
+            <!-- BUSCADOR / DATOS DEL CLIENTE -->
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80 space-y-3">
+                <span class="text-[11px] font-bold text-amber-400 uppercase tracking-wider block">👤 Propietario & Contacto</span>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-slate-400 mb-1 font-semibold">Teléfono / WhatsApp o Correo</label>
+                        <input type="text" id="cot-telefono-input" name="telefono" onkeyup="buscarClientePorContactoCot()" placeholder="+56912345678 o correo@ejemplo.com" required class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+                        <span id="cot-msg-cliente-hallado" class="text-[10px] text-emerald-400 hidden mt-1 block">✨ ¡Cliente registrado encontrado! Cargarás sus datos.</span>
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-400 mb-1 font-semibold">Nombre del Cliente</label>
+                        <input type="text" id="cot-cliente-input" name="cliente" placeholder="Ej: Juan Pérez" required class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- PATENTE, MARCA Y MODELO -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <div>
                     <label class="block text-slate-400 mb-1 font-semibold">Patente / VIN</label>
                     <input type="text" id="cot-patente-input" name="patente" onkeyup="autocompletarDatosCotizacion()" placeholder="Ej: AA123BB" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono font-bold uppercase focus:outline-none focus:border-amber-500">
-                    <span id="cot-msg-autocompletado" class="text-[10px] text-emerald-400 hidden">✨ Datos autocompletados</span>
                 </div>
 
-                <!-- MARCA -->
                 <div>
                     <label class="block text-slate-400 mb-1 font-semibold">Marca</label>
                     <select id="select-marca-cot" name="marca" onchange="actualizarModelosSegunMarca('cot')" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500">
@@ -26,7 +43,6 @@
                     <input type="text" id="input-marca-nueva-cot" name="marca_input" placeholder="Escribe la Marca..." class="hidden mt-1 w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
                 </div>
 
-                <!-- MODELO DINÁMICO -->
                 <div>
                     <label class="block text-slate-400 mb-1 font-semibold">Modelo</label>
                     <select id="select-modelo-cot" name="modelo" onchange="evaluarNuevoModelo('cot')" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500">
@@ -37,26 +53,55 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <div>
-                    <label class="block text-slate-400 mb-1 font-semibold">Nombre del Cliente</label>
-                    <input type="text" id="cot-cliente-input" name="cliente" placeholder="Ej: Juan Pérez" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+            <!-- DETALLE DE TRABAJOS SOLICITADOS -->
+            <div>
+                <label class="block text-slate-400 mb-1 font-semibold">Diagnóstico u Observaciones Iniciales</label>
+                <textarea name="sintomas" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500" placeholder="Presupuesto por ruido en frenos delanteros y afinamiento..."></textarea>
+            </div>
+
+            <!-- DESGLOSE DE REPUESTOS Y MANO DE OBRA (CON PRECIOS PARA EL PDF) -->
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-amber-400">🛠️ Desglose de Repuestos y Trabajos a Cotizar</span>
+                    <span class="text-xs font-bold text-emerald-400" id="cot-total-vista">Total: $0</span>
                 </div>
-                <div>
-                    <label class="block text-slate-400 mb-1 font-semibold">Teléfono WhatsApp</label>
-                    <input type="text" id="cot-telefono-input" name="telefono" placeholder="+56912345678" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
+                    <div class="md:col-span-6">
+                        <select id="cot-item-select" onchange="seleccionarRepuestoBodegaCot()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-2 text-slate-200">
+                            <option value="">-- Seleccionar de Bodega o Escribir Manual --</option>
+                            {% for r in inventario %}
+                            <option value="{{ r[0] }}" data-nombre="{{ r[3] }}" data-precio="{{ r[5] if r[5] else 0 }}">📦 {{ r[3] }} (Stock: {{ r[4] }})</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" id="cot-item-desc" placeholder="O escribe descripción del trabajo..." class="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-white">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <input type="number" id="cot-item-cant" value="1" min="1" placeholder="Cant." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-2 text-white text-center">
+                    </div>
+
+                    <div class="md:col-span-3">
+                        <input type="number" id="cot-item-precio" placeholder="Precio ($)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-2 text-white">
+                    </div>
+
+                    <div class="md:col-span-1">
+                        <button type="button" onclick="agregarLineaCotizacion()" class="w-full h-full bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-base flex items-center justify-center">+</button>
+                    </div>
+                </div>
+
+                <!-- LISTA DE ÍTEMS AGREGADOS -->
+                <div id="cot-items-contenedor" class="space-y-1.5 pt-2">
+                    <span id="cot-sin-items" class="text-[11px] text-slate-500 italic block text-center py-2">Sin ítems o repuestos añadidos al presupuesto.</span>
                 </div>
             </div>
 
-            <div>
-                <label class="block text-slate-400 mb-1 font-semibold">Trabajos Solicitados / Presupuesto</label>
-                <textarea name="sintomas" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-amber-500" placeholder="Afinamiento completo, cambio de aceite 5W30, pastillas de freno..."></textarea>
-            </div>
+            <input type="hidden" name="items_cotizacion_json" id="items_cotizacion_json" value="[]">
 
             <div class="pt-2 flex gap-2">
                 <button type="button" onclick="document.getElementById('modal-crear-cotizacion').classList.add('hidden')" class="w-1/2 bg-slate-800 text-slate-300 font-semibold py-2.5 rounded-xl">Cancelar</button>
                 <button type="submit" class="w-1/2 bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2.5 rounded-xl shadow-lg shadow-amber-600/20 flex items-center justify-center gap-1">
-                    💾 Generar Presupuesto
+                    💾 Generar Cotización
                 </button>
             </div>
         </form>

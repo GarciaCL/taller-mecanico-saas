@@ -4,6 +4,7 @@ from modulos.cotizaciones import (
     buscar_vehiculo_o_cliente_por_patente, cambiar_estado_cotizacion,
     revalidar_cotizacion_vencida, convertir_cotizacion_a_ot, generar_pdf_cotizacion
 )
+import json
 
 cotizaciones_bp = Blueprint('cotizaciones', __name__)
 
@@ -27,7 +28,13 @@ def crear_cotizacion_web():
     modelo = request.form.get("modelo_input") or "Modelo"
     sintomas = request.form.get("sintomas", "Presupuesto General")
 
-    crear_cotizacion(session["taller_id"], cliente, telefono, patente, marca, modelo, sintomas)
+    raw_items = request.form.get("items_cotizacion_json", "[]")
+    try:
+        items_json = json.loads(raw_items)
+    except Exception:
+        items_json = []
+
+    crear_cotizacion_completa(session["taller_id"], cliente, telefono, patente, marca, modelo, sintomas, items_json)
     return redirect("/#cot")
 
 @cotizaciones_bp.route("/rechazar_cotizacion/<int:cot_id>", methods=["POST"])

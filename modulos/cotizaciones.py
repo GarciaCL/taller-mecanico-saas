@@ -216,3 +216,60 @@ def generar_pdf_cotizacion(cot_id):
     c.save()
     buffer.seek(0)
     return buffer
+
+def crear_cotizacion_completa(taller_id, cliente_nombre, cliente_telefono, patente, marca, modelo, sintomas, items_json=None):
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    # 1. Crear o actualizar Ficha de Cliente
+    cursor.execute(f"""
+        SELECT id FROM clientes WHERE taller_id = {p} AND (telefono = {p} OR (email IS NOT NULL AND email = {p}))
+    """, (taller_id, cliente_telefono.strip(), cliente_telefono.strip()))
+    cli_existente = cursor.fetchone()
+
+    if cli_existente:
+        cliente_id = cli_existente[0]
+        cursor.execute(f"UPDATE clientes SET nombre = {p} WHERE id = {p}", (cliente_nombre.strip(), cliente_id))
+    else:
+        cursor.execute(f"""
+            INSERT INTO clientes (taller_id, nombre, telefono) VALUES ({p}, {p}, {p})
+        """, (taller_id, cliente_nombre.strip(), cliente_telefono.strip()))
+        cursor.execute(f"SELECT id FROM clientes WHERE taller_id = {p} ORDER BY id DESC LIMIT 1", (taller_id,))
+        cliente_id = cursor.fetchone()[0]
+
+    # 2. Registrar Cotización
+    patente_limpia = patente.strip().upper()
+    hash_unico = secrets.token_hex(3).upper()
+    token = f"COT-{patente_limpia}-{hash_unico}"
+
+    cursor.execute(f"""
+        INSERT INTO cotizaciones (taller_id, cliente_nombre, cliente_telefono, patente, marca, modelo, sintomas, total, token)
+        VALUES ({p}, {p}, {p}, {p}, {p}, {p}, {p}, 0.0, {p})
+    """, (taller_id, cliente_nombre.strip(), cliente_telefono.strip(), patente_limpia, marca.strip(), modelo.strip(), sintomas.strip(), token))
+
+    cursor.execute(f"SELECT id FROM cotizaciones WHERE token = {p}", (token,))
+    cot_id = cursor.fetchone()[0]
+
+    # 3. Guardar Ítems y calcular Total Real
+    total_acumulado = 0.0
+    if items_json:
+        for it in items_json:
+            inv_id = it.get("inventario_id")
+            desc = it.get("descripcion", "Servicio/Repuesto")
+            cant = int(it.get("cantidad", 1))
+            precio = float(it.get("precio_unidad", 0))
+            subtotal = cant * precio
+            total_acumulado += subtotal
+
+            cursor.execute(f"""
+                INSERT INTO cotizaciones_items (cotizacion_id, inventario_id, descripcion, cantidad, precio_unidad)
+                VALUES ({p}, {p}, {p}, {p}, {p})
+            """, (cot_id, inv_id if inv_id else None, desc, cant, precio))
+
+    # Actualizar Total Válido en Cotización
+    cursor.execute(f"UPDATE cotizaciones SET total = {p} WHERE id = {p}", (total_acumulado, cot_id))
+
+    conexion.commit()
+    conexion.close()
+    return cot_id, token
