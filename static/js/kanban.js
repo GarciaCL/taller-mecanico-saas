@@ -94,3 +94,9 @@ function filtrarKanbanPorMecanico(mecanicoId) {
         }
     });
 }
+function evaluarNuevoMecanico(select) {
+    if (select.value === 'NUEVO') {
+        select.value = '';
+        document.getElementById('modal-crear-mecanico').classList.remove('hidden');
+    }
+}
