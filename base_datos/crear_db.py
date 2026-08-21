@@ -211,6 +211,23 @@ def inicializar_db_saas():
         );
     """)
 
+# Configuración de Servidor de Correo (SMTP) y Plantillas Email
+    columnas_email = [
+        ("smtp_servidor", "VARCHAR(100) DEFAULT 'smtp.gmail.com'"),
+        ("smtp_puerto", "INT DEFAULT 587"),
+        ("smtp_email", "VARCHAR(100)"),
+        ("smtp_password", "VARCHAR(100)"),
+        ("msg_email_cotizacion", "TEXT DEFAULT 'Hola {cliente},\n\nAdjunto encontrarás la cotización para tu vehículo {patente} por un valor total de ${monto}.\n\nPuedes revisar el avance en línea aquí: {link}\n\nAtentamente,\n{taller}'"),
+        ("msg_email_listo", "TEXT DEFAULT 'Hola {cliente},\n\nTe informamos que tu vehículo {patente} ya se encuentra listo para entrega en nuestro taller.\n\nAtentamente,\n{taller}'")
+    ]
+
+    for col_nombre, col_tipo in columnas_email:
+        try:
+            cursor.execute(f"ALTER TABLE talleres ADD COLUMN {col_nombre} {col_tipo};")
+            conexion.commit()
+        except Exception:
+            conexion.rollback()
+
 # Migración defensiva en tabla 'talleres' para personalización y permisos
     columnas_nuevas = [
         ("rut_taller", "VARCHAR(20)"),
