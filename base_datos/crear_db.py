@@ -211,6 +211,25 @@ def inicializar_db_saas():
         );
     """)
 
+# Migración defensiva en tabla 'talleres' para personalización y permisos
+    columnas_nuevas = [
+        ("rut_taller", "VARCHAR(20)"),
+        ("direccion_taller", "VARCHAR(200)"),
+        ("telefono_taller", "VARCHAR(20)"),
+        ("email_taller", "VARCHAR(100)"),
+        ("msg_whatsapp_listo", "TEXT DEFAULT '¡Hola {cliente}! 🚀 Tu vehículo {vehiculo} ({patente}) ya se encuentra LISTO PARA ENTREGA en el taller. Ver detalle: {link}'"),
+        ("msg_whatsapp_cotizacion", "TEXT DEFAULT 'Hola {cliente} 👋 Adjunto el presupuesto solicitado para tu vehículo {patente} por un total de ${monto}.'"),
+        ("mecanico_puede_finalizar", "BOOLEAN DEFAULT FALSE"),
+        ("mecanico_puede_rechazar", "BOOLEAN DEFAULT FALSE")
+    ]
+
+    for col_nombre, col_tipo in columnas_nuevas:
+        try:
+            cursor.execute(f"ALTER TABLE talleres ADD COLUMN {col_nombre} {col_tipo};")
+            conexion.commit()
+        except Exception:
+            conexion.rollback()
+
     # Migración defensiva en ordenes_trabajo
     try:
         cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN mecanico_id INT;")

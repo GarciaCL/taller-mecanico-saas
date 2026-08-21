@@ -10,6 +10,7 @@ from modulos.vehiculos_crm import obtener_lista_vehiculos_crm
 from modulos.cotizaciones import obtener_lista_cotizaciones
 from modulos.metricas import obtener_metricas_estimadas
 from modulos.mecanicos import obtener_lista_mecanicos
+from modulos.configuracion import obtener_ajustes_taller
 
 # Blueprints
 from rutas.auth_rutas import auth_bp
@@ -20,6 +21,7 @@ from rutas.vehiculos_rutas import vehiculos_bp
 from rutas.cotizaciones_rutas import cotizaciones_bp
 from rutas.metricas_rutas import metricas_bp
 from rutas.mecanicos_rutas import mecanicos_bp
+from rutas.configuracion_rutas import configuracion_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "clave_secreta_saas_taller")
@@ -39,6 +41,7 @@ app.register_blueprint(vehiculos_bp)
 app.register_blueprint(cotizaciones_bp)
 app.register_blueprint(metricas_bp)
 app.register_blueprint(mecanicos_bp)
+app.register_blueprint(configuracion_bp)
 
 @app.route("/")
 def inicio():
@@ -52,9 +55,11 @@ def inicio():
     }
     
     taller_id = session["taller_id"]
+    ajustes_taller = obtener_ajustes_taller(taller_id)
     return render_template(
         "index.html", 
         taller=taller, 
+        ajustes=ajustes_taller,
         ordenes=obtener_ordenes_kanban(taller_id), 
         inventario=obtener_inventario(taller_id), 
         marcas=obtener_marcas_y_modelos(),
