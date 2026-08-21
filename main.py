@@ -57,7 +57,7 @@ def inicio():
         marcas=obtener_marcas_y_modelos(),
         clientes=obtener_lista_clientes(taller_id),
         vehiculos_crm=obtener_lista_vehiculos_crm(taller_id),
-        cotizaciones=obtener_lista_cotizaciones(taller_id)
+        cotizaciones=obtener_lista_cotizaciones(taller_id),
         metricas=obtener_metricas_estimadas(taller_id)
     )
 
