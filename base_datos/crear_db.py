@@ -185,6 +185,27 @@ def inicializar_db_saas():
 
     conexion.commit()
 
+# 10. MECÁNICOS / TÉCNICOS
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS mecanicos (
+            id {serial_pk},
+            taller_id INT NOT NULL,
+            nombre VARCHAR(100) NOT NULL,
+            especialidad VARCHAR(100) DEFAULT 'Mecánica General',
+            telefono VARCHAR(20),
+            activo BOOLEAN DEFAULT TRUE,
+            FOREIGN KEY (taller_id) REFERENCES talleres(id)
+        );
+    """)
+
+    # Migración defensiva en ordenes_trabajo
+    try:
+        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN mecanico_id INT;")
+        conexion.commit()
+    except Exception:
+        conexion.rollback()
+
+        
     # POBLAR CATÁLOGO BASE SI ESTÁ VACÍO
     try:
         cursor.execute("SELECT COUNT(*) FROM catalogo_vehiculos")

@@ -82,3 +82,15 @@ document.querySelectorAll('.kanban-col').forEach(columna => {
         }
     });
 });
+
+function filtrarKanbanPorMecanico(mecanicoId) {
+    const cards = document.querySelectorAll('.card-orden');
+    cards.forEach(card => {
+        const mecId = card.getAttribute('data-mecanico');
+        if (!mecanicoId || mecanicoId === '' || mecId === mecanicoId) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}

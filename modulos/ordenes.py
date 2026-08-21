@@ -68,10 +68,12 @@ def obtener_ordenes_kanban(taller_id):
                c.nombre, COALESCE(c.telefono, ''),
                COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'),
                COALESCE(ot.token, v.patente_vin),
-               ot.fecha_creacion, COALESCE(ot.tiempo_estimado_horas, 4)
+               ot.fecha_creacion, COALESCE(ot.tiempo_estimado_horas, 4),
+               ot.mecanico_id, COALESCE(m.nombre, 'Sin Asignar')
         FROM ordenes_trabajo ot
         JOIN vehiculos v ON ot.vehiculo_id = v.id
         JOIN clientes c ON v.cliente_id = c.id
+        LEFT JOIN mecanicos m ON ot.mecanico_id = m.id
         WHERE ot.taller_id = {p} AND ot.estado != 'finalizado'
         ORDER BY ot.id DESC
     """, (taller_id,))

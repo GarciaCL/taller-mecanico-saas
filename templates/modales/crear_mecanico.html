@@ -1,0 +1,27 @@
+<div id="modal-crear-mecanico" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">👨‍🔧 Registrar Nuevo Técnico / Mecánico</h3>
+            <button type="button" onclick="document.getElementById('modal-crear-mecanico').classList.add('hidden')" class="text-slate-400 hover:text-white font-bold">✕</button>
+        </div>
+
+        <form action="/agregar_mecanico#dash" method="POST" class="space-y-3 text-xs">
+            <div>
+                <label class="block text-slate-400 mb-1">Nombre Completo</label>
+                <input type="text" name="nombre" placeholder="Ej: Carlos Silva" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+            </div>
+            <div>
+                <label class="block text-slate-400 mb-1">Especialidad</label>
+                <input type="text" name="especialidad" placeholder="Ej: Electromecánica / Frenos" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+            </div>
+            <div>
+                <label class="block text-slate-400 mb-1">Teléfono</label>
+                <input type="text" name="telefono" placeholder="+56912345678" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl shadow-lg shadow-blue-600/20">
+                💾 Guardar Técnico
+            </button>
+        </form>
+    </div>
+</div>

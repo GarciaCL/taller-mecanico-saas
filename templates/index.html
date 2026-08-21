@@ -73,14 +73,24 @@
         <!-- 1. TABLERO KANBAN DE ÓRDENES DE TRABAJO -->
         <section id="sec-ot" class="space-y-6">
             <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-bold text-white tracking-tight">Tablero Kanban de Órdenes de Trabajo</h2>
-                    <p class="text-xs text-slate-400">Control de tiempos y estado de reparación en tiempo real.</p>
-                </div>
-                <button onclick="document.getElementById('modal-ot').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all">
-                    <i data-lucide="plus" class="w-4 h-4"></i> Nueva Orden (OT)
-                </button>
-            </div>
+    <div>
+        <h2 class="text-2xl font-bold text-white tracking-tight">Tablero Kanban de Órdenes de Trabajo</h2>
+        <p class="text-xs text-slate-400">Control de tiempos y estado de reparación en tiempo real.</p>
+    </div>
+    <div class="flex gap-2">
+        <!-- FILTRO POR TÉCNICO -->
+        <select id="filtro-mecanico-kanban" onchange="filtrarKanbanPorMecanico(this.value)" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500">
+            <option value="">👨‍🔧 Todos los Mecánicos</option>
+            {% for m in mecanicos %}
+            <option value="{{ m[0] }}">{{ m[1] }} ({{ m[4] }} OTs)</option>
+            {% endfor %}
+        </select>
+
+        <button onclick="document.getElementById('modal-ot').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all">
+            <i data-lucide="plus" class="w-4 h-4"></i> Nueva Orden (OT)
+        </button>
+    </div>
+</div>
 
             <!-- COLUMNAS KANBAN -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -98,6 +108,7 @@
                              data-fecha="{{ o[12] }}"
                              data-horas="{{ o[13] }}"
                              data-estado="{{ o[1] }}"
+                             data-mecanico="{{ o[14] }}"
                              onclick="abrirDetalleOrden('{{ o[0] }}', '{{ o[4] }}', '{{ o[5] }} {{ o[6] }}', '{{ o[7] }}', '{{ o[8] }}', '{{ o[9] }}', '{{ o[10] }}', '{{ o[2] }}', '{{ o[3] }}', '{{ o[11] }}', '{{ o[12] }}', '{{ o[13] }}')"
                              class="kanban-card card-orden bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-pointer hover:border-blue-500/50 transition-all relative overflow-hidden">
                             
@@ -131,6 +142,10 @@
                             <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between items-center">
                                 <span>👤 {{ o[7] }}</span>
                                 <span class="text-blue-400 font-semibold">Editar / Ver →</span>
+                            <div class="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between items-center">
+        <span>👤 {{ o[7] }}</span>
+        <span class="text-amber-400 font-semibold">👨‍🔧 {{ o[15] }}</span>
+    </div>
                             </div>
                         </div>
                         {% endfor %}
@@ -379,6 +394,32 @@
                     </div>
                 </div>
             </div>
+            <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl space-y-4">
+    <div class="flex justify-between items-center">
+        <h3 class="text-sm font-bold text-white">👨‍🔧 Rendimiento por Técnico / Mecánico</h3>
+        <button onclick="document.getElementById('modal-crear-mecanico').classList.remove('hidden')" class="bg-slate-800 hover:bg-slate-700 text-blue-400 font-semibold px-3 py-1.5 rounded-lg text-xs">
+            + Agregar Mecánico
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {% for m in mecanicos %}
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800/80 space-y-2">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="font-bold text-white text-xs block">{{ m[1] }}</span>
+                    <span class="text-[10px] text-slate-400">{{ m[2] }}</span>
+                </div>
+                <span class="bg-blue-500/20 text-blue-400 font-bold px-2 py-0.5 rounded text-[10px]">{{ m[4] }} OTs Activas</span>
+            </div>
+            <div class="flex justify-between items-center pt-2 border-t border-slate-800/80 text-[11px]">
+                <span class="text-slate-400">Completadas: <b class="text-slate-200">{{ m[5] }}</b></span>
+                <span class="text-emerald-400 font-bold">${{ "{:,.0f}".format(m[6]) }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
         </section>
     
         <!-- 4. GESTIÓN DE CLIENTES -->
@@ -578,6 +619,7 @@
     {% include 'modales/editar_cliente.html' %}
     {% include 'modales/historial_modal.html' %}
     {% include 'modales/crear_cotizacion.html' %}
+    {% include 'modales/crear_mecanico.html' %}
 
     <script>
         lucide.createIcons();
