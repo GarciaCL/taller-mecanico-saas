@@ -95,11 +95,12 @@ def cambiar_estado_ot_web():
     return jsonify({"success": True})
 
 @ordenes_bp.route("/seguimiento/<token>")
+@ordenes_bp.route("/seguimiento/<token>")
 def seguimiento_cliente(token):
-    orden = obtener_detalle_orden_por_token(token)
+    orden, repuestos = obtener_detalle_orden_por_token(token)
     if not orden:
         return render_template("seguimiento.html", error="Orden no encontrada"), 404
-    return render_template("seguimiento.html", o=orden)
+    return render_template("seguimiento.html", o=orden, repuestos=repuestos)
 
 @ordenes_bp.route("/historial/<patente>")
 def historial_vehiculo_web(patente):

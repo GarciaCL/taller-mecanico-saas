@@ -122,17 +122,30 @@ def obtener_detalle_orden_por_token(token_o_id):
                v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''), COALESCE(v.anio, 0),
                c.nombre, COALESCE(c.telefono, ''),
                t.nombre_taller, COALESCE(t.logo_url, '/static/logo_defecto.png'), COALESCE(t.color_primario, '#3b82f6'),
-               COALESCE(ot.token, '')
+               COALESCE(ot.token, ''), ot.fecha_creacion, COALESCE(m.nombre, 'Sin Asignar')
         FROM ordenes_trabajo ot
         JOIN vehiculos v ON ot.vehiculo_id = v.id
         JOIN clientes c ON v.cliente_id = c.id
         JOIN talleres t ON ot.taller_id = t.id
+        LEFT JOIN mecanicos m ON ot.mecanico_id = m.id
         WHERE ot.token = {p} OR CAST(ot.id AS TEXT) = {p}
     """, (str(token_o_id), str(token_o_id)))
 
     resultado = cursor.fetchone()
+    if not resultado:
+        conexion.close()
+        return None, []
+
+    cursor.execute(f"""
+        SELECT i.nombre, nr.cantidad, nr.precio_unidad
+        FROM ordenes_repuestos nr
+        JOIN inventario i ON nr.inventario_id = i.id
+        WHERE nr.orden_id = {p}
+    """, (resultado[0],))
+    repuestos = cursor.fetchall()
+
     conexion.close()
-    return resultado
+    return resultado, repuestos
 
 def actualizar_orden_trabajo(taller_id, orden_id, km, combustible, tiempo_horas, sintomas, costo):
     conexion = obtener_conexion()
