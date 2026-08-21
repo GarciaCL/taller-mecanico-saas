@@ -198,6 +198,19 @@ def inicializar_db_saas():
         );
     """)
 
+# 11. PROVEEDORES
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS proveedores (
+            id {serial_pk},
+            taller_id INT NOT NULL,
+            nombre VARCHAR(100) NOT NULL,
+            contacto VARCHAR(100),
+            telefono VARCHAR(20),
+            rut VARCHAR(20),
+            FOREIGN KEY (taller_id) REFERENCES talleres(id)
+        );
+    """)
+
     # Migración defensiva en ordenes_trabajo
     try:
         cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN mecanico_id INT;")
@@ -205,7 +218,7 @@ def inicializar_db_saas():
     except Exception:
         conexion.rollback()
 
-        
+
     # POBLAR CATÁLOGO BASE SI ESTÁ VACÍO
     try:
         cursor.execute("SELECT COUNT(*) FROM catalogo_vehiculos")

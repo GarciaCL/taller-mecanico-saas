@@ -1,8 +1,8 @@
-from flask import Blueprint, request, jsonify, redirect, session
+from flask import Blueprint, request, jsonify, redirect, session, send_file
 from modulos.cotizaciones import (
     crear_cotizacion, obtener_lista_cotizaciones,
     buscar_vehiculo_o_cliente_por_patente, cambiar_estado_cotizacion,
-    revalidar_cotizacion_vencida, convertir_cotizacion_a_ot
+    revalidar_cotizacion_vencida, convertir_cotizacion_a_ot, generar_pdf_cotizacion
 )
 
 cotizaciones_bp = Blueprint('cotizaciones', __name__)
@@ -53,3 +53,10 @@ def convertir_cotizacion_ot_web(cot_id):
 
     exito = convertir_cotizacion_a_ot(cot_id, session["taller_id"])
     return jsonify({"success": exito})
+
+@cotizaciones_bp.route("/descargar_pdf_cotizacion/<int:cot_id>")
+def descargar_pdf_cotizacion_web(cot_id):
+    pdf = generar_pdf_cotizacion(cot_id)
+    if not pdf:
+        return "Cotización no encontrada", 404
+    return send_file(pdf, mimetype='application/pdf', as_attachment=True, download_name=f'Presupuesto_{cot_id}.pdf')

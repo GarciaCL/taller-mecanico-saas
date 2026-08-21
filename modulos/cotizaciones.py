@@ -1,6 +1,9 @@
 import secrets
 from datetime import datetime, timedelta
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 from modulos.conexion import obtener_conexion, obtener_placeholder
+import io
 
 def calcular_dias_habiles(fecha_inicio, fecha_fin):
     dias_habiles = 0
@@ -170,3 +173,44 @@ def convertir_cotizacion_a_ot(cot_id, taller_id):
     conexion.commit()
     conexion.close()
     return True
+
+def generar_pdf_cotizacion(cot_id):
+    cot, items = obtener_detalle_cotizacion(cot_id)
+    if not cot:
+        return None
+
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+    
+    # Encabezado
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, 750, f"PRESUPUESTO / COTIZACIÓN #{cot[0]}")
+    c.setFont("Helvetica", 10)
+    c.drawString(50, 735, f"Taller: {cot[10]}")
+    c.drawString(50, 720, f"Cliente: {cot[1]} ({cot[2]})")
+    c.drawString(50, 705, f"Vehículo: {cot[3]} - {cot[4]} {cot[5]}")
+    
+    # Tabla de Ítems
+    y = 660
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(50, y, "Descripción / Repuesto")
+    c.drawString(350, y, "Cant.")
+    c.drawString(450, y, "Total ($)")
+    c.line(50, y-5, 550, y-5)
+
+    y -= 20
+    c.setFont("Helvetica", 9)
+    for item in items:
+        subtotal = item[2] * item[3]
+        c.drawString(50, y, str(item[1]))
+        c.drawString(350, y, str(item[2]))
+        c.drawString(450, y, f"${subtotal:,.0f}")
+        y -= 18
+
+    # Total
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(350, y-20, f"TOTAL: ${cot[7]:,.0f}")
+
+    c.save()
+    buffer.seek(0)
+    return buffer

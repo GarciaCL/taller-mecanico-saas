@@ -28,3 +28,29 @@ def login():
 def logout():
     session.clear()
     return redirect("/login")
+
+@auth_bp.route("/actualizar_perfil_taller", methods=["POST"])
+def actualizar_perfil_taller_web():
+    if "taller_id" not in session:
+        return redirect("/login")
+
+    nombre = request.form["nombre_taller"]
+    color = request.form.get("color_primario", "#3b82f6")
+
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"""
+        UPDATE talleres
+        SET nombre_taller = {p}, color_primario = {p}
+        WHERE id = {p}
+    """, (nombre, color, session["taller_id"]))
+
+    conexion.commit()
+    conexion.close()
+
+    session["nombre_taller"] = nombre
+    session["color_primario"] = color
+
+    return redirect("/#dash")

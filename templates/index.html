@@ -390,6 +390,13 @@
                         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
                             <span class="text-slate-400 text-[10px] block">🚀 Listos para Entrega</span>
                             <span class="text-lg font-bold text-emerald-400">{{ metricas.estados.entrega }}</span>
+                            {% if o[1] == 'entrega' %}
+<a href="https://wa.me/{{ o[8].replace('+', '').replace(' ', '') }}?text={{ ('¡Hola ' ~ o[7] ~ '! 🚀 Tu vehículo ' ~ o[5] ~ ' ' ~ o[6] ~ ' (' ~ o[4] ~ ') ya se encuentra LISTO PARA ENTREGA en el taller. Puedes ver el detalle aquí: ' ~ request.host_url ~ 'seguimiento/' ~ o[11])|urlencode }}" 
+   target="_blank" 
+   class="mt-2 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 rounded-lg text-[10px] flex items-center justify-center gap-1 shadow-md shadow-emerald-600/20">
+   📲 Notificar 'Vehículo Listo' por WhatsApp
+</a>
+{% endif %}
                         </div>
                     </div>
                 </div>
