@@ -45,9 +45,11 @@ app.register_blueprint(configuracion_bp)
 
 @app.route("/")
 def inicio():
+    # Si el usuario NO ha iniciado sesión, le mostramos la Landing Page Comercial
     if "taller_id" not in session:
-        return redirect("/login")
+        return render_template("landing.html")
     
+    # Si YA inició sesión, le mostramos el software del taller (App)
     taller = {
         "nombre": session.get("nombre_taller", "Taller Mecánico"),
         "logo": session.get("logo_url", "/static/logo_defecto.png"),
@@ -55,11 +57,10 @@ def inicio():
     }
     
     taller_id = session["taller_id"]
-    ajustes_taller = obtener_ajustes_taller(taller_id)
     return render_template(
         "index.html", 
         taller=taller, 
-        ajustes=ajustes_taller,
+        ajustes=obtener_ajustes_taller(taller_id),
         ordenes=obtener_ordenes_kanban(taller_id), 
         inventario=obtener_inventario(taller_id), 
         marcas=obtener_marcas_y_modelos(),
