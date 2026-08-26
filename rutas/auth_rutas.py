@@ -56,65 +56,12 @@ def actualizar_perfil_taller_web():
 
     return redirect("/#dash")
 
-# --- NUEVAS RUTAS DE REGISTRO COMERCIAL ---
+# --- RUTAS DEL FLUJO COMERCIAL Y REGISTRO ---
 
 @auth_bp.route("/registro")
 def vista_registro():
     return render_template("registro.html")
 
-@auth_bp.route("/procesar_registro", methods=["POST"])
-def procesar_registro_web():
-    nombre_taller = request.form["nombre_taller"].strip()
-    nombre_admin = request.form["nombre_admin"].strip()
-    email = request.form["email"].strip().lower()
-    telefono = request.form["telefono"].strip()
-    password = request.form["password"].strip()
-    plan = request.form.get("plan", "mensual")
-
-    conexion = obtener_conexion()
-    cursor = conexion.cursor()
-    p = obtener_placeholder()
-
-    # 1. Verificar si el correo ya existe en usuarios
-    cursor.execute(f"SELECT id FROM usuarios WHERE email = {p}", (email,))
-    if cursor.fetchone():
-        conexion.close()
-        return "El correo ya está registrado en el sistema. <a href='/login'>Iniciar sesión</a>", 400
-
-    # 2. Crear el nuevo taller
-    cursor.execute(f"""
-        INSERT INTO talleres (nombre_taller, telefono_taller, email_taller)
-        VALUES ({p}, {p}, {p})
-    """, (nombre_taller, telefono, email))
-    
-    cursor.execute(f"SELECT id FROM talleres WHERE email_taller = {p} ORDER BY id DESC LIMIT 1", (email,))
-    taller_id = cursor.fetchone()[0]
-
-    # 3. Crear el usuario administrador del taller
-    cursor.execute(f"""
-        INSERT INTO usuarios (taller_id, nombre, email, password, rol)
-        VALUES ({p}, {p}, {p}, {p}, 'admin')
-    """, (taller_id, nombre_admin, email, password))
-
-    conexion.commit()
-    conexion.close()
-
-    # 4. Iniciar sesión automáticamente
-    session["usuario_id"] = None
-    session["taller_id"] = taller_id
-    session["usuario"] = email
-    session["usuario_nombre"] = nombre_admin
-    session["rol"] = "admin"
-    session["nombre_taller"] = nombre_taller
-    session["logo_url"] = "/static/logo_defecto.png"
-    session["color_primario"] = "#3b82f6"
-
-    # Redirigir a la aplicación
-    return redirect("/#ajustes")
-
-#Procesar pago#
-
-# 1. Al enviar el formulario de registro, guardamos en sesión y redirigimos a Pago
 @auth_bp.route("/procesar_registro", methods=["POST"])
 def procesar_registro_web():
     plan = request.form.get("plan", "mensual")
@@ -134,7 +81,6 @@ def procesar_registro_web():
 
     return redirect("/pago")
 
-# 2. Vista de la Pasarela de Pago
 @auth_bp.route("/pago")
 def vista_pago():
     datos = session.get("registro_temp")
@@ -142,7 +88,6 @@ def vista_pago():
         return redirect("/registro")
     return render_template("pago.html", datos_registro=datos)
 
-# 3. Confirmación del Pago y Creación de la Cuenta en BD
 @auth_bp.route("/confirmar_pago_registro", methods=["POST"])
 def confirmar_pago_registro_web():
     datos = session.get("registro_temp")
@@ -188,8 +133,7 @@ def confirmar_pago_registro_web():
     session["logo_url"] = "/static/logo_defecto.png"
     session["color_primario"] = "#3b82f6"
 
-    # Limpiar datos temporales de registro
+    # Limpiar datos temporales
     session.pop("registro_temp", None)
 
-    # Redirigir directamente al panel del taller
     return redirect("/#ajustes")
