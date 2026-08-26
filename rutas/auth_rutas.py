@@ -105,12 +105,11 @@ def confirmar_pago_registro_web():
             VALUES ({p}, {p}, {p})
         """, (datos["nombre_taller"], datos["telefono"], datos["email"]))
         
-        # Obtener ID del taller creado
+        # Obtener el ID del taller creado
         cursor.execute(f"SELECT id FROM talleres WHERE email_taller = {p} ORDER BY id DESC LIMIT 1", (datos["email"],))
         taller_id = cursor.fetchone()[0]
 
-        # 2. Crear el usuario administrador del taller
-        # Intentamos primero con la columna 'usuario' o 'email'
+        # 2. Crear el usuario administrador usando los campos compatibles (usuario y password)
         try:
             cursor.execute(f"""
                 INSERT INTO usuarios (taller_id, usuario, password, rol)
@@ -118,14 +117,15 @@ def confirmar_pago_registro_web():
             """, (taller_id, datos["email"], datos["password"]))
         except Exception:
             conexion.rollback()
+            # Alternativa por si existen columnas con nombres distintos
             cursor.execute(f"""
-                INSERT INTO usuarios (taller_id, nombre, email, password, rol)
+                INSERT INTO usuarios (taller_id, usuario, email, password, rol)
                 VALUES ({p}, {p}, {p}, {p}, 'admin')
-            """, (taller_id, datos["nombre_admin"], datos["email"], datos["password"]))
+            """, (taller_id, datos["email"], datos["email"], datos["password"]))
 
         conexion.commit()
 
-        # 3. Guardar datos en sesión
+        # 3. Iniciar sesión automáticamente
         session["usuario_id"] = None
         session["taller_id"] = taller_id
         session["usuario"] = datos["email"]
