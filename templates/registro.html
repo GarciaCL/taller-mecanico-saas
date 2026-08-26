@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Taller - AutoTaller SaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .bg-industrial {
+            background-color: #090d16;
+            background-image: radial-gradient(rgba(30, 41, 59, 0.8) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-industrial min-h-full py-10 px-4 flex flex-col justify-between">
+
+    <div class="max-w-4xl mx-auto w-full space-y-8">
+        
+        <!-- HEADER -->
+        <div class="text-center space-y-2">
+            <a href="/" class="inline-flex items-center gap-2 mb-2">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-xl text-white shadow-lg shadow-blue-500/20">🛠️</div>
+                <span class="font-extrabold text-xl text-white">AutoTaller <span class="text-blue-500">SaaS</span></span>
+            </a>
+            <h1 class="text-2xl md:text-3xl font-bold text-white">Comienza a gestionar tu taller hoy</h1>
+            <p class="text-xs text-slate-400">Selecciona tu plan y crea tu cuenta en menos de 1 minuto.</p>
+        </div>
+
+        <form action="/procesar_registro" method="POST" class="space-y-8">
+            
+            <!-- SELECCIÓN DE PLANES -->
+            <div class="space-y-3">
+                <label class="block text-xs font-bold text-amber-400 uppercase tracking-wider text-center">1. Selecciona tu Plan</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <!-- PLAN MENSUAL -->
+                    <label class="relative bg-slate-900/90 border-2 border-slate-800 rounded-2xl p-5 cursor-pointer hover:border-blue-500/50 transition-all flex flex-col justify-between space-y-4 has-[:checked]:border-blue-500 has-[:checked]:bg-slate-900">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-sm font-bold text-white block">Plan Mensual</span>
+                                <span class="text-[11px] text-slate-400">Suscripción mes a mes</span>
+                            </div>
+                            <input type="radio" name="plan" value="mensual" checked class="w-4 h-4 text-blue-600 focus:ring-0">
+                        </div>
+                        <div>
+                            <span class="text-2xl font-black text-white">$29.900</span>
+                            <span class="text-xs text-slate-400"> / mes</span>
+                        </div>
+                        <ul class="text-[11px] text-slate-400 space-y-1 pt-2 border-t border-slate-800">
+                            <li>✓ Vehículos e Historiales ilimitados</li>
+                            <li>✓ Kanban OT e Inspección de fotos</li>
+                            <li>✓ WhatsApp y PDF de Cotizaciones</li>
+                        </ul>
+                    </label>
+
+                    <!-- PLAN ANUAL -->
+                    <label class="relative bg-slate-900/90 border-2 border-slate-800 rounded-2xl p-5 cursor-pointer hover:border-emerald-500/50 transition-all flex flex-col justify-between space-y-4 has-[:checked]:border-emerald-500 has-[:checked]:bg-slate-900">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-sm font-bold text-white block flex items-center gap-2">
+                                    Plan Anual
+                                    <span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-bold">Ahorra 20%</span>
+                                </span>
+                                <span class="text-[11px] text-slate-400">Pago único por 12 meses</span>
+                            </div>
+                            <input type="radio" name="plan" value="anual" class="w-4 h-4 text-emerald-600 focus:ring-0">
+                        </div>
+                        <div>
+                            <span class="text-2xl font-black text-emerald-400">$287.000</span>
+                            <span class="text-xs text-slate-400"> / año</span>
+                        </div>
+                        <ul class="text-[11px] text-slate-400 space-y-1 pt-2 border-t border-slate-800">
+                            <li>✓ Todo lo del plan mensual</li>
+                            <li>✓ 2 Meses de regalo incluidos</li>
+                            <li>✓ Soporte prioritario para tu taller</li>
+                        </ul>
+                    </label>
+
+                </div>
+            </div>
+
+            <!-- FORMULARIO DE REGISTRO -->
+            <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
+                <label class="block text-xs font-bold text-amber-400 uppercase tracking-wider">2. Datos de tu Taller y Administrador</label>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <label class="block text-slate-300 font-semibold mb-1">Nombre Comercial del Taller *</label>
+                        <input type="text" name="nombre_taller" placeholder="Ej: Taller Mecánico Central" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-300 font-semibold mb-1">Nombre del Administrador / Dueño *</label>
+                        <input type="text" name="nombre_admin" placeholder="Ej: Carlos Silva" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-300 font-semibold mb-1">Correo Electrónico (Tu usuario de acceso) *</label>
+                        <input type="email" name="email" placeholder="contacto@tutaller.com" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-300 font-semibold mb-1">Teléfono Móvil / WhatsApp *</label>
+                        <input type="text" name="telefono" placeholder="+56912345678" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-slate-300 font-semibold mb-1">Contraseña de Acceso *</label>
+                        <input type="password" name="password" placeholder="••••••••" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <span class="text-[11px] text-slate-400">¿Ya tienes una cuenta? <a href="/login" class="text-blue-400 font-bold hover:underline">Inicia Sesión</a></span>
+                    <button type="submit" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl text-xs shadow-lg shadow-blue-600/20 transition-all">
+                        Crear Mi Cuenta & Continuar →
+                    </button>
+                </div>
+            </div>
+
+        </form>
+
+    </div>
+
+    <footer class="text-center text-xs text-slate-500 py-6">
+        <p>© 2026 AutoTaller SaaS. Registro de clientes.</p>
+    </footer>
+
+</body>
+</html>
