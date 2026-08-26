@@ -98,42 +98,51 @@ def confirmar_pago_registro_web():
     cursor = conexion.cursor()
     p = obtener_placeholder()
 
-    # Verificar si el correo ya existe
-    cursor.execute(f"SELECT id FROM usuarios WHERE email = {p}", (datos["email"],))
-    if cursor.fetchone():
-        conexion.close()
+    try:
+        # 1. Crear el nuevo taller
+        cursor.execute(f"""
+            INSERT INTO talleres (nombre_taller, telefono_taller, email_taller)
+            VALUES ({p}, {p}, {p})
+        """, (datos["nombre_taller"], datos["telefono"], datos["email"]))
+        
+        # Obtener ID del taller creado
+        cursor.execute(f"SELECT id FROM talleres WHERE email_taller = {p} ORDER BY id DESC LIMIT 1", (datos["email"],))
+        taller_id = cursor.fetchone()[0]
+
+        # 2. Crear el usuario administrador del taller
+        # Intentamos primero con la columna 'usuario' o 'email'
+        try:
+            cursor.execute(f"""
+                INSERT INTO usuarios (taller_id, usuario, password, rol)
+                VALUES ({p}, {p}, {p}, 'admin')
+            """, (taller_id, datos["email"], datos["password"]))
+        except Exception:
+            conexion.rollback()
+            cursor.execute(f"""
+                INSERT INTO usuarios (taller_id, nombre, email, password, rol)
+                VALUES ({p}, {p}, {p}, {p}, 'admin')
+            """, (taller_id, datos["nombre_admin"], datos["email"], datos["password"]))
+
+        conexion.commit()
+
+        # 3. Guardar datos en sesión
+        session["usuario_id"] = None
+        session["taller_id"] = taller_id
+        session["usuario"] = datos["email"]
+        session["usuario_nombre"] = datos["nombre_admin"]
+        session["rol"] = "admin"
+        session["nombre_taller"] = datos["nombre_taller"]
+        session["logo_url"] = "/static/logo_defecto.png"
+        session["color_primario"] = "#3b82f6"
+
+        # Limpiar datos temporales
         session.pop("registro_temp", None)
-        return "El correo ya está registrado en el sistema. <a href='/login'>Iniciar sesión</a>", 400
 
-    # Crear el nuevo taller
-    cursor.execute(f"""
-        INSERT INTO talleres (nombre_taller, telefono_taller, email_taller)
-        VALUES ({p}, {p}, {p})
-    """, (datos["nombre_taller"], datos["telefono"], datos["email"]))
-    
-    cursor.execute(f"SELECT id FROM talleres WHERE email_taller = {p} ORDER BY id DESC LIMIT 1", (datos["email"],))
-    taller_id = cursor.fetchone()[0]
+        conexion.close()
+        return redirect("/#ajustes")
 
-    # Crear el usuario administrador
-    cursor.execute(f"""
-        INSERT INTO usuarios (taller_id, nombre, email, password, rol)
-        VALUES ({p}, {p}, {p}, {p}, 'admin')
-    """, (taller_id, datos["nombre_admin"], datos["email"], datos["password"]))
-
-    conexion.commit()
-    conexion.close()
-
-    # Iniciar sesión automáticamente
-    session["usuario_id"] = None
-    session["taller_id"] = taller_id
-    session["usuario"] = datos["email"]
-    session["usuario_nombre"] = datos["nombre_admin"]
-    session["rol"] = "admin"
-    session["nombre_taller"] = datos["nombre_taller"]
-    session["logo_url"] = "/static/logo_defecto.png"
-    session["color_primario"] = "#3b82f6"
-
-    # Limpiar datos temporales
-    session.pop("registro_temp", None)
-
-    return redirect("/#ajustes")
+    except Exception as e:
+        conexion.rollback()
+        conexion.close()
+        print(f"Error en confirmar_pago_registro: {e}")
+        return f"Ocurrió un detalle al activar la cuenta: {e}. <a href='/registro'>Volver a intentar</a>", 500
