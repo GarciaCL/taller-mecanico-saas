@@ -3,78 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoTaller SaaS - El Sistema Inteligente para tu Taller Mecánico</title>
+    <title>AutoTaller - Sistema de Control y Gestión para Talleres Mecánicos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+        }
+        /* Fondo Industrial con patrón de herramientas y opacidad suave */
+        .bg-industrial {
+            background-color: #090d16;
+            background-image: radial-gradient(rgba(30, 41, 59, 0.8) 1px, transparent 0), url('https://encrypted-tbn3.gstatic.com/licensed-image?q=tbn:ANd9GcTqgmcrA-oudx0M19bFyqQ16xzF51jpoJ_uLbXED1hhoPPC8MBk6DsFNoI98bKt5a33SO3SpMbhroXIATk');
+            background-size: 24px 24px, 420px;
+            background-blend-mode: normal, overlay;
+        }
+    </style>
 </head>
-<body class="bg-slate-950 min-h-full flex flex-col justify-between">
+<body class="bg-industrial min-h-full flex flex-col justify-between">
 
-    <!-- NAVEGACIÓN SUPERIOR -->
-    <header class="border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+    <!-- NAVEGACIÓN PRINCIPAL -->
+    <header class="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">🔧</div>
-                <span class="font-extrabold text-lg text-white">AutoTaller <span class="text-blue-500">SaaS</span></span>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-xl text-white shadow-lg shadow-blue-500/20">
+                    🛠️
+                </div>
+                <div>
+                    <span class="font-extrabold text-lg text-white block leading-tight">AutoTaller <span class="text-blue-500">SaaS</span></span>
+                    <span class="text-[10px] text-slate-400 font-semibold block">Sistema Operativo de Taller Mecánico</span>
+                </div>
             </div>
             
             <div class="flex items-center gap-4">
-                <a href="/login" class="text-xs font-semibold text-slate-300 hover:text-white transition-colors">Iniciar Sesión</a>
-                <a href="/registro" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-lg shadow-blue-600/20 transition-all">
-                    Probar Gratis →
+                <a href="/login" class="text-xs font-bold text-slate-300 hover:text-white transition-colors">🔑 Acceso Taller</a>
+                <a href="/registro" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs shadow-lg shadow-blue-600/20 transition-all">
+                    🚀 Registrar Mi Taller
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- HERO SECTION (MENSAJE PRINCIPAL) -->
-    <main class="max-w-6xl mx-auto px-6 py-16 space-y-20">
-        <div class="text-center max-w-3xl mx-auto space-y-6">
-            <span class="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider">
-                ⚡ Software de Gestión Automotriz En Vivo
-            </span>
-            <h1 class="text-4xl md:text-6xl font-black text-white leading-tight">
-                Controla tu taller mecánico como un profesional
-            </h1>
-            <p class="text-slate-400 text-sm md:text-base leading-relaxed">
-                Olvídate del papel. Gestiona órdenes en un Tablero Kanban, envía presupuestos por WhatsApp en 1 clic y dale a tus clientes seguimiento en tiempo real.
+    <!-- HERO SECTION EXTENDIDO -->
+    <main class="max-w-6xl mx-auto px-6 py-12 space-y-16">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            <div class="space-y-6">
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold">
+                    ⚙️ Diseñado por y para mecánicos
+                </span>
+                
+                <h1 class="text-3xl md:text-5xl font-extrabold text-white leading-tight">
+                    El control total de tus vehículos, clientes y repuestos en un solo lugar.
+                </h1>
+
+                <p class="text-slate-300 text-sm leading-relaxed">
+                    Sabemos lo difícil que es llevar un taller en papel o cuadernos: repuestos que no se cobran, clientes llamando a cada hora preguntando por su auto, trabajos atrasados y falta de claridad en las ganancias del mes.
+                </p>
+
+                <p class="text-slate-400 text-xs leading-relaxed">
+                    <b>AutoTaller SaaS</b> es la plataforma digital en la nube que conecta la recepción del auto con los mecánicos en fosa y les envía a los clientes el estado del vehículo a su WhatsApp automáticamente.
+                </p>
+
+                <div class="pt-2 flex flex-col sm:flex-row gap-4">
+                    <a href="/registro" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-8 py-3.5 rounded-xl text-xs shadow-xl shadow-emerald-600/25 transition-all text-center">
+                        Comenzar Prueba Gratuita →
+                    </a>
+                    <a href="#detalles" class="bg-slate-900 border border-slate-800 text-slate-300 hover:text-white font-semibold px-6 py-3.5 rounded-xl text-xs transition-all text-center">
+                        Ver Módulos Incluidos
+                    </a>
+                </div>
+            </div>
+
+            <!-- IMAGEN DE SOPORTE -->
+            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 shadow-2xl">
+                <img src="https://encrypted-tbn3.gstatic.com/licensed-image?q=tbn:ANd9GcS1G3-ocQgQ5_-ZPfC6-jVjc9b3fvDHnzPZ1jHQKTtkLwpBspAOlv8G-ZbTfINRte2Bv-olYyNpmwhNkUI" alt="Mecánico trabajando en taller" class="w-full h-80 object-cover rounded-xl border border-slate-800">
+                <div class="p-4 text-center">
+                    <span class="text-xs font-bold text-slate-300 block">Digitaliza el flujo de trabajo en tu taller mecánico</span>
+                    <span class="text-[10px] text-slate-500 block">Lleva la inspección con fotos, kilometraje y repuestos consumidos.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE PROBLEMAS Y SOLUCIONES -->
+        <div id="detalles" class="space-y-8 pt-6">
+            <div class="text-center max-w-2xl mx-auto space-y-2">
+                <h2 class="text-2xl font-bold text-white">¿Por qué cambiar el cuaderno por AutoTaller?</h2>
+                <p class="text-xs text-slate-400">Diseñado para resolver los problemas cotidianos del taller mecánico diario.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- TARJETA 1 -->
+                <div class="bg-slate-900/80 border border-slate-800/80 p-6 rounded-2xl space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-lg">📋</div>
+                    <h3 class="font-bold text-white text-sm">1. Tablero Kanban de Órdenes (OT)</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Mueve las tarjetas entre <i>Recepción, Diagnóstico, En Reparación y Listo para Entrega</i>. Controla el tiempo transcurrido de cada auto en el elevador.
+                    </p>
+                </div>
+
+                <!-- TARJETA 2 -->
+                <div class="bg-slate-900/80 border border-slate-800/80 p-6 rounded-2xl space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-lg">📲</div>
+                    <h3 class="font-bold text-white text-sm">2. Link de Seguimiento por WhatsApp</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Envía al cliente una vista en vivo de su auto. Podrá revisar las fotos tomadas en la recepción, el avance del trabajo y el resumen de la cuenta desde su celular.
+                    </p>
+                </div>
+
+                <!-- TARJETA 3 -->
+                <div class="bg-slate-900/80 border border-slate-800/80 p-6 rounded-2xl space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-600/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-lg">🧾</div>
+                    <h3 class="font-bold text-white text-sm">3. Presupuestos & Cotizaciones PDF</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Genera cotizaciones profesionales con validez de 15 días hábiles. Al ser aprobadas por el cliente, conviértelas en Orden de Trabajo con un solo clic.
+                    </p>
+                </div>
+
+                <!-- TARJETA 4 -->
+                <div class="bg-slate-900/80 border border-slate-800/80 p-6 rounded-2xl space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/30 flex items-center justify-center font-bold text-lg">📦</div>
+                    <h3 class="font-bold text-white text-sm">4. Inventario & Compatibilidades</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Controla el stock de repuestos en bodega, registra compatibilidad por marca/modelo/año e importa tus insumos masivamente desde plantillas Excel/CSV.
+                    </p>
+                </div>
+
+                <!-- TARJETA 5 -->
+                <div class="bg-slate-900/80 border border-slate-800/80 p-6 rounded-2xl space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-rose-600/20 text-rose-400 border border-rose-500/30 flex items-center justify-center font-bold text-lg">🚘</div>
+                    <h3 class="font-bold text-white text-sm">5. CRM & Alerta de Revisión Técnica</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        El sistema calcula automáticamente el mes de vencimiento de la Revisión Técnica según la patente del vehículo y te permite enviar recordatorios de mantención.
+                    </p>
+                </div>
+
+                <!-- TARJETA 6 -->
+                <div class="bg-slate-900/80 border border-slate-800/80 p-6 rounded-2xl space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold text-lg">👨‍🔧</div>
+                    <h3 class="font-bold text-white text-sm">6. Productividad por Mecánico</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Asigna un mecánico responsable a cada auto, filtra el tablero Kanban por técnico y revisa en el Dashboard el rendimiento e ingresos generados por cada uno.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- RESUMEN FINAL / LLAMADO A LA ACCIÓN -->
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl text-center space-y-4">
+            <h2 class="text-2xl font-bold text-white">Lleva tu Taller Mecánico al Siguiente Nivel</h2>
+            <p class="text-xs text-slate-400 max-w-xl mx-auto leading-relaxed">
+                Empieza hoy mismo sin instalaciones complicadas. Funciona desde tu computador, tablet o teléfono móvil.
             </p>
-            <div class="pt-4 flex flex-col sm:flex-row justify-center gap-4">
-                <a href="/registro" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3.5 rounded-2xl text-sm shadow-xl shadow-blue-600/25 transition-all">
-                    Comenzar Ahora
-                </a>
-                <a href="#funciones" class="bg-slate-900 border border-slate-800 text-slate-300 hover:text-white font-semibold px-8 py-3.5 rounded-2xl text-sm transition-all">
-                    Ver Funcionalidades
+            <div class="pt-2">
+                <a href="/registro" class="inline-block bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl text-xs shadow-lg shadow-blue-600/20 transition-all">
+                    Probar el Sistema Ahora →
                 </a>
             </div>
         </div>
 
-        <!-- TARJETAS DE CARACTERÍSTICAS -->
-        <div id="funciones" class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-10">
-            <div class="bg-slate-900/60 border border-slate-800 p-6 rounded-2xl space-y-3">
-                <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">📊</div>
-                <h3 class="font-bold text-white text-base">Tablero Kanban En Vivo</h3>
-                <p class="text-xs text-slate-400 leading-relaxed">Organiza la recepción, diagnóstico, reparación y entrega de vehículos en tiempo real con fotos e inspección.</p>
-            </div>
-
-            <div class="bg-slate-900/60 border border-slate-800 p-6 rounded-2xl space-y-3">
-                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">📱</div>
-                <h3 class="font-bold text-white text-base">WhatsApp & Seguimiento Móvil</h3>
-                <p class="text-xs text-slate-400 leading-relaxed">Envía avisos de 'Auto Listo' y presupuestos a tus clientes. Ellos verán el avance de su vehículo desde su celular.</p>
-            </div>
-
-            <div class="bg-slate-900/60 border border-slate-800 p-6 rounded-2xl space-y-3">
-                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">📑</div>
-                <h3 class="font-bold text-white text-base">Cotizaciones Validadas PDF</h3>
-                <p class="text-xs text-slate-400 leading-relaxed">Crea cotizaciones formales con control de 15 días de vigencia y conviértelas a Órdenes de Trabajo en un solo clic.</p>
-            </div>
-        </div>
     </main>
 
     <!-- FOOTER -->
-    <footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">
-        <p>© 2026 AutoTaller SaaS. Todos los derechos reservados.</p>
+    <footer class="border-t border-slate-800/80 py-6 text-center text-xs text-slate-500 bg-slate-950">
+        <p>© 2026 AutoTaller SaaS. Plataforma de Control de Talleres Mecánicos.</p>
     </footer>
 
     <script>lucide.createIcons();</script>
