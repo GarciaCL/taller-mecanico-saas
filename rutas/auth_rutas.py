@@ -111,3 +111,85 @@ def procesar_registro_web():
 
     # Redirigir a la aplicación
     return redirect("/#ajustes")
+
+#Procesar pago#
+
+# 1. Al enviar el formulario de registro, guardamos en sesión y redirigimos a Pago
+@auth_bp.route("/procesar_registro", methods=["POST"])
+def procesar_registro_web():
+    plan = request.form.get("plan", "mensual")
+    precio = 287000 if plan == "anual" else 29900
+
+    session["registro_temp"] = {
+        "nombre_taller": request.form["nombre_taller"].strip(),
+        "nombre_admin": request.form["nombre_admin"].strip(),
+        "email": request.form["email"].strip().lower(),
+        "telefono": request.form["telefono"].strip(),
+        "password": request.form["password"].strip(),
+        "plan": plan,
+        "plan_nombre": "Plan Anual (Ahorras 20%)" if plan == "anual" else "Plan Mensual",
+        "precio": precio,
+        "frecuencia": "Anual" if plan == "anual" else "Mensual"
+    }
+
+    return redirect("/pago")
+
+# 2. Vista de la Pasarela de Pago
+@auth_bp.route("/pago")
+def vista_pago():
+    datos = session.get("registro_temp")
+    if not datos:
+        return redirect("/registro")
+    return render_template("pago.html", datos_registro=datos)
+
+# 3. Confirmación del Pago y Creación de la Cuenta en BD
+@auth_bp.route("/confirmar_pago_registro", methods=["POST"])
+def confirmar_pago_registro_web():
+    datos = session.get("registro_temp")
+    if not datos:
+        return redirect("/registro")
+
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    # Verificar si el correo ya existe
+    cursor.execute(f"SELECT id FROM usuarios WHERE email = {p}", (datos["email"],))
+    if cursor.fetchone():
+        conexion.close()
+        session.pop("registro_temp", None)
+        return "El correo ya está registrado en el sistema. <a href='/login'>Iniciar sesión</a>", 400
+
+    # Crear el nuevo taller
+    cursor.execute(f"""
+        INSERT INTO talleres (nombre_taller, telefono_taller, email_taller)
+        VALUES ({p}, {p}, {p})
+    """, (datos["nombre_taller"], datos["telefono"], datos["email"]))
+    
+    cursor.execute(f"SELECT id FROM talleres WHERE email_taller = {p} ORDER BY id DESC LIMIT 1", (datos["email"],))
+    taller_id = cursor.fetchone()[0]
+
+    # Crear el usuario administrador
+    cursor.execute(f"""
+        INSERT INTO usuarios (taller_id, nombre, email, password, rol)
+        VALUES ({p}, {p}, {p}, {p}, 'admin')
+    """, (taller_id, datos["nombre_admin"], datos["email"], datos["password"]))
+
+    conexion.commit()
+    conexion.close()
+
+    # Iniciar sesión automáticamente
+    session["usuario_id"] = None
+    session["taller_id"] = taller_id
+    session["usuario"] = datos["email"]
+    session["usuario_nombre"] = datos["nombre_admin"]
+    session["rol"] = "admin"
+    session["nombre_taller"] = datos["nombre_taller"]
+    session["logo_url"] = "/static/logo_defecto.png"
+    session["color_primario"] = "#3b82f6"
+
+    # Limpiar datos temporales de registro
+    session.pop("registro_temp", None)
+
+    # Redirigir directamente al panel del taller
+    return redirect("/#ajustes")

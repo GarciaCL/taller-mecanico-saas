@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pasarela de Pago - AutoTaller SaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .bg-industrial {
+            background-color: #090d16;
+            background-image: radial-gradient(rgba(30, 41, 59, 0.8) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-industrial min-h-full py-10 px-4 flex flex-col justify-between">
+
+    <div class="max-w-2xl mx-auto w-full space-y-6">
+        
+        <!-- HEADER -->
+        <div class="text-center space-y-2">
+            <a href="/" class="inline-flex items-center gap-2 mb-2">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-xl text-white shadow-lg shadow-blue-500/20">🛠️</div>
+                <span class="font-extrabold text-xl text-white">AutoTaller <span class="text-blue-500">SaaS</span></span>
+            </a>
+            <h1 class="text-2xl font-bold text-white">Finaliza tu Suscripción</h1>
+            <p class="text-xs text-slate-400">Estás a un solo paso de activar tu taller mecánico.</p>
+        </div>
+
+        <!-- TARJETA RESUMEN DEL PEDIDO -->
+        <div class="bg-slate-900/90 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <div>
+                    <span class="text-xs text-slate-400 block">Plan Seleccionado</span>
+                    <h3 class="text-base font-bold text-white uppercase">{{ datos_registro.plan_nombre }}</h3>
+                    <span class="text-[11px] text-slate-400">Taller: <b>{{ datos_registro.nombre_taller }}</b></span>
+                </div>
+                <div class="text-right">
+                    <span class="text-2xl font-black text-emerald-400">${{ "{:,.0f}".format(datos_registro.precio) }}</span>
+                    <span class="text-[10px] text-slate-400 block">Facturación {{ datos_registro.frecuencia }}</span>
+                </div>
+            </div>
+
+            <!-- MÉTODOS DE PAGO -->
+            <form action="/confirmar_pago_registro" method="POST" class="space-y-4 pt-2">
+                <span class="block text-xs font-bold text-amber-400 uppercase tracking-wider">Selecciona tu Medio de Pago</span>
+                
+                <div class="space-y-2 text-xs">
+                    <label class="flex items-center justify-between p-3.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer hover:border-blue-500 transition-all">
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="metodo_pago" value="tarjeta" checked class="text-blue-600 focus:ring-0">
+                            <div>
+                                <span class="font-bold text-white block">💳 Tarjeta de Débito / Crédito (Webpay / Mercado Pago)</span>
+                                <span class="text-[10px] text-slate-400">Activación inmediata e instantánea</span>
+                            </div>
+                        </div>
+                    </label>
+
+                    <label class="flex items-center justify-between p-3.5 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer hover:border-blue-500 transition-all">
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="metodo_pago" value="transferencia" class="text-blue-600 focus:ring-0">
+                            <div>
+                                <span class="font-bold text-white block">🏦 Transferencia Bancaria Directa</span>
+                                <span class="text-[10px] text-slate-400">Recibirás los datos bancarios al confirmar</span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <a href="/registro" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-3 rounded-xl text-xs text-center transition-all">
+                        ← Volver
+                    </a>
+                    <button type="submit" class="w-2/3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2">
+                        🔒 Pagar ${{ "{:,.0f}".format(datos_registro.precio) }} y Activar Taller →
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+    <footer class="text-center text-xs text-slate-500 py-6">
+        <p>© 2026 AutoTaller SaaS. Pasarela de Pago Segura.</p>
+    </footer>
+
+</body>
+</html>
