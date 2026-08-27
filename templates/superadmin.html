@@ -79,70 +79,90 @@
 
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs text-slate-300">
-                    <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold uppercase">
-                        <tr>
-                            <th class="p-4">ID</th>
-                            <th class="p-4">Nombre del Taller</th>
-                            <th class="p-4">Contacto Administrador</th>
-                            <th class="p-4">Email Acceso</th>
-                            <th class="p-4">Estado Cuenta</th>
-                            <th class="p-4 text-right">Acciones de Control</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-800/60">
-                        {% for t in talleres %}
-                        <tr class="hover:bg-slate-900/50">
-                            <td class="p-4 font-mono font-bold text-slate-500">#{{ t[0] }}</td>
-                            <td class="p-4 font-bold text-white">
-                                <span class="block text-sm">{{ t[1] }}</span>
-                                <span class="block text-[10px] text-slate-500">Registrado: {{ t[4] if t[4] else 'Fecha N/I' }}</span>
-                            </td>
-                            <td class="p-4">
-                                <span class="block font-bold text-slate-200">{{ t[5] if t[5] else 'Dueño' }}</span>
-                                <span class="block text-[10px] text-emerald-400">📱 {{ t[2] if t[2] else 'N/I' }}</span>
-                            </td>
-                            <td class="p-4 font-mono text-slate-300">{{ t[3] }}</td>
-                            <td class="p-4">
-                                {% if t[6] == 'suspendido' %}
-                                <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-400 font-bold text-[10px]">🔴 SUSPENDIDO</span>
-                                {% else %}
-                                <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">🟢 ACTIVO</span>
-                                {% endif %}
-                            </td>
-                            <td class="p-4 text-right flex justify-end gap-2">
-                                
-                                <!-- CAMBIAR ESTADO DE CUENTA -->
-                                {% if t[6] == 'suspendido' %}
-                                <form action="/superadmin/cambiar_estado" method="POST">
-                                    <input type="hidden" name="taller_id" value="{{ t[0] }}">
-                                    <input type="hidden" name="nuevo_estado" value="activo">
-                                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] shadow-md shadow-emerald-600/20">
-                                        🟢 Activar Cuenta
-                                    </button>
-                                </form>
-                                {% else %}
-                                <form action="/superadmin/cambiar_estado" method="POST">
-                                    <input type="hidden" name="taller_id" value="{{ t[0] }}">
-                                    <input type="hidden" name="nuevo_estado" value="suspendido">
-                                    <button type="submit" class="bg-rose-600/20 border border-rose-500/30 text-rose-300 hover:bg-rose-600 hover:text-white font-bold px-3 py-1.5 rounded-lg text-[10px]">
-                                        🔴 Suspender
-                                    </button>
-                                </form>
-                                {% endif %}
+    <thead class="bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold uppercase">
+        <tr>
+            <th class="p-4">ID</th>
+            <th class="p-4">Nombre del Taller</th>
+            <th class="p-4">Contacto Administrador</th>
+            <th class="p-4">Vencimiento Suscripción</th>
+            <th class="p-4">Estado Cuenta</th>
+            <th class="p-4 text-right">Acciones de Control</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-800/60">
+        {% for t in talleres %}
+        <tr class="hover:bg-slate-900/50">
+            <td class="p-4 font-mono font-bold text-slate-500">#{{ t[0] }}</td>
+            <td class="p-4 font-bold text-white">
+                <span class="block text-sm">{{ t[1] }}</span>
+                <span class="block text-[10px] text-slate-500">Email: {{ t[3] }}</span>
+            </td>
+            <td class="p-4">
+                <span class="block font-bold text-slate-200">{{ t[5] }}</span>
+                <span class="block text-[10px] text-emerald-400">📱 {{ t[2] }}</span>
+            </td>
+            <td class="p-4">
+                <span class="block font-bold text-slate-200">{{ t[4] }}</span>
+                {% if t[7] != 'N/A' %}
+                    {% if t[7] < 0 %}
+                    <span class="block text-[10px] text-rose-400 font-bold">⚠️ Vencido hace {{ t[7]|abs }} días</span>
+                    {% else %}
+                    <span class="block text-[10px] text-amber-400 font-bold">⏱️ Quedan {{ t[7] }} días de prueba/servicio</span>
+                    {% endif %}
+                {% endif %}
+            </td>
+            <td class="p-4">
+                {% if t[6] == 'suspendido' %}
+                <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-400 font-bold text-[10px]">🔴 SUSPENDIDO</span>
+                {% elif t[6] == 'vencida' or t[6] == 'vencido' %}
+                <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-400 font-bold text-[10px]">⚠️ VENCIDO</span>
+                {% else %}
+                <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">🟢 ACTIVO</span>
+                {% endif %}
+            </td>
+            <td class="p-4 text-right flex justify-end gap-1.5 items-center">
+                
+                <!-- BOTÓN EXTENDER 30 DÍAS -->
+                <form action="/superadmin/extender_dias" method="POST">
+                    <input type="hidden" name="taller_id" value="{{ t[0] }}">
+                    <input type="hidden" name="dias" value="30">
+                    <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-2.5 py-1.5 rounded-lg text-[10px] shadow-md shadow-amber-600/20">
+                        +30 Días
+                    </button>
+                </form>
 
-                                <!-- ACCESO DE SOPORTE TÉCNICO -->
-                                <form action="/superadmin/ingresar_como_taller" method="POST">
-                                    <input type="hidden" name="taller_id" value="{{ t[0] }}">
-                                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] shadow-md shadow-blue-600/20 flex items-center gap-1">
-                                        🔑 Soporte Taller
-                                    </button>
-                                </form>
+                <!-- BOTÓN SUSPENDER / ACTIVAR -->
+                {% if t[6] in ['suspendido', 'vencido', 'vencida'] %}
+                <form action="/superadmin/cambiar_estado" method="POST">
+                    <input type="hidden" name="taller_id" value="{{ t[0] }}">
+                    <input type="hidden" name="nuevo_estado" value="activo">
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2.5 py-1.5 rounded-lg text-[10px]">
+                        🟢 Activar
+                    </button>
+                </form>
+                {% else %}
+                <form action="/superadmin/cambiar_estado" method="POST">
+                    <input type="hidden" name="taller_id" value="{{ t[0] }}">
+                    <input type="hidden" name="nuevo_estado" value="suspendido">
+                    <button type="submit" class="bg-rose-600/20 border border-rose-500/30 text-rose-300 hover:bg-rose-600 hover:text-white font-bold px-2.5 py-1.5 rounded-lg text-[10px]">
+                        🔴 Suspender
+                    </button>
+                </form>
+                {% endif %}
 
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <!-- SOPORTE -->
+                <form action="/superadmin/ingresar_como_taller" method="POST">
+                    <input type="hidden" name="taller_id" value="{{ t[0] }}">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-2.5 py-1.5 rounded-lg text-[10px] shadow-md shadow-blue-600/20 flex items-center gap-1">
+                        🔑 Soporte
+                    </button>
+                </form>
+
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
             </div>
         </div>
 

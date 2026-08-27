@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, session
 from modulos.conexion import obtener_conexion, obtener_placeholder
+from datetime import datetime, timedelta
 
 superadmin_bp = Blueprint('superadmin', __name__)
 
@@ -17,38 +18,54 @@ def vista_superadmin():
     cursor = conexion.cursor()
 
     try:
-        # Intentar consulta con columna 'estado' si existe
         cursor.execute("""
             SELECT t.id, t.nombre_taller, t.telefono_taller, t.email_taller, 
                    COALESCE(u.usuario, u.email, 'Admin') as usuario,
-                   COALESCE(t.estado, 'activo') as estado
+                   COALESCE(t.estado, 'activo') as estado,
+                   t.fecha_vencimiento
             FROM talleres t
             LEFT JOIN usuarios u ON t.id = u.taller_id
             ORDER BY t.id DESC
         """)
         talleres_raw = cursor.fetchall()
-    except Exception as e:
+    except Exception:
         conexion.rollback()
-        # Consulta básica de respaldo si alguna columna falla
         cursor.execute("""
             SELECT t.id, t.nombre_taller, t.telefono_taller, t.email_taller, 
                    'Admin' as usuario,
-                   'activo' as estado
+                   'activo' as estado,
+                   NULL as fecha_vencimiento
             FROM talleres t
             ORDER BY t.id DESC
         """)
         talleres_raw = cursor.fetchall()
 
-    # Eliminar duplicados si hay múltiples usuarios por taller
     talleres_dict = {}
     total_activos = 0
     total_suspendidos = 0
+    ahora = datetime.now()
 
     for t in talleres_raw:
         tid = t[0]
         if tid not in talleres_dict:
             estado = t[5] if len(t) > 5 and t[5] else 'activo'
-            if estado == 'suspendido':
+            fecha_venc = t[6] if len(t) > 6 else None
+
+            # Evaluar si la cuenta está vencida por fecha
+            dias_restantes = None
+            if fecha_venc:
+                if isinstance(fecha_venc, str):
+                    try:
+                        fecha_venc = datetime.strptime(fecha_venc, "%Y-%m-%d %H:%M:%S")
+                    except Exception:
+                        fecha_venc = None
+                
+                if fecha_venc:
+                    dias_restantes = (fecha_venc - ahora).days
+                    if dias_restantes < 0 and estado == 'activo':
+                        estado = 'vencido'
+
+            if estado in ['suspendido', 'vencido']:
                 total_suspendidos += 1
             else:
                 total_activos += 1
@@ -58,25 +75,56 @@ def vista_superadmin():
                 t[1] if t[1] else "Sin Nombre",
                 t[2] if t[2] else "N/I",
                 t[3] if t[3] else "N/I",
-                "Registrado",
+                fecha_venc.strftime("%d/%m/%Y") if fecha_venc else "Sin Fecha",
                 t[4] if t[4] else "Admin",
-                estado
+                estado,
+                dias_restantes if dias_restantes is not None else "N/A"
             )
 
     talleres = list(talleres_dict.values())
-    total_talleres = len(talleres)
     mrr_estimado = total_activos * 29900
 
     conexion.close()
 
     metricas_saas = {
         "mrr": mrr_estimado,
-        "total_talleres": total_talleres,
+        "total_talleres": len(talleres),
         "talleres_activos": total_activos,
         "talleres_suspendidos": total_suspendidos
     }
 
     return render_template("superadmin.html", talleres=talleres, metricas_saas=metricas_saas)
+
+
+@superadmin_bp.route("/superadmin/extender_dias", methods=["POST"])
+def extender_dias_taller():
+    if not verificar_superadmin():
+        return redirect("/login")
+
+    taller_id = request.form["taller_id"]
+    dias_a_sumar = int(request.form.get("dias", 30))
+
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    # Sumar días a la fecha actual o existente
+    nueva_fecha = datetime.now() + timedelta(days=dias_a_sumar)
+
+    try:
+        cursor.execute(f"UPDATE talleres SET fecha_vencimiento = {p}, estado = 'activo' WHERE id = {p}", (nueva_fecha, taller_id))
+    except Exception:
+        conexion.rollback()
+        try:
+            cursor.execute("ALTER TABLE talleres ADD COLUMN fecha_vencimiento TIMESTAMP")
+            cursor.execute(f"UPDATE talleres SET fecha_vencimiento = {p}, estado = 'activo' WHERE id = {p}", (nueva_fecha, taller_id))
+        except Exception as e:
+            print(f"Error actualizando vencimiento: {e}")
+
+    conexion.commit()
+    conexion.close()
+
+    return redirect("/superadmin")
 
 
 @superadmin_bp.route("/superadmin/cambiar_estado", methods=["POST"])
@@ -91,16 +139,7 @@ def cambiar_estado_taller():
     cursor = conexion.cursor()
     p = obtener_placeholder()
 
-    try:
-        cursor.execute(f"UPDATE talleres SET estado = {p} WHERE id = {p}", (nuevo_estado, taller_id))
-    except Exception:
-        conexion.rollback()
-        try:
-            cursor.execute("ALTER TABLE talleres ADD COLUMN estado VARCHAR(20) DEFAULT 'activo'")
-            cursor.execute(f"UPDATE talleres SET estado = {p} WHERE id = {p}", (nuevo_estado, taller_id))
-        except Exception as err:
-            print(f"Error alterando tabla talleres: {err}")
-
+    cursor.execute(f"UPDATE talleres SET estado = {p} WHERE id = {p}", (nuevo_estado, taller_id))
     conexion.commit()
     conexion.close()
 
