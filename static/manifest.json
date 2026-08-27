@@ -3,14 +3,21 @@
   "short_name": "TallerApp",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1e293b",
+  "background_color": "#090d16",
   "theme_color": "#3b82f6",
   "description": "Sistema de Gestión de Clientes, Vehículos, Inventario y Fichas para Talleres Mecánicos",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3202/3202926.png",
+      "src": "/static/logo_defecto.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/logo_defecto.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

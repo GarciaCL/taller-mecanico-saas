@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ taller.nombre }} - Control del Taller</title>
     <link rel="manifest" href="/static/manifest.json">
-    
+    <meta name="theme-color" content="#3b82f6">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -62,7 +62,7 @@
                 <button onclick="cambiarPestana('ajustes')" id="btn-ajustes" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
     <i data-lucide="settings" class="w-4 h-4 text-purple-400"></i> Ajustes Taller
 </button>
-<button id="btn-instalar-pwa" onclick="instalarAppPWA()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all hidden">
+<button id="btn-instalar-pwa" onclick="instalarAppPWA()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all">
     <i data-lucide="download" class="w-4 h-4"></i> Instalar App Escritorio
 </button>
             </nav>
@@ -768,31 +768,43 @@
     <script src="/static/js/vehiculos.js"></script>
     <script src="/static/js/cotizaciones.js"></script>
     <script>
-let eventoInstalacionPWA;
+// 1. Registrar Service Worker indispensable para PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/static/sw.js')
+    .then(() => console.log('Service Worker Registrado'))
+    .catch((err) => console.log('Error al registrar SW:', err));
+}
 
+let eventoInstalacionPWA = null;
+
+// 2. Escuchar evento de instalación
 window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevenir el prompt por defecto y guardar el evento
-    e.preventDefault();
-    eventoInstalacionPWA = e;
-    
-    // Mostrar el botón de instalación si la app no está instalada aún
-    const btn = document.getElementById('btn-instalar-pwa');
-    if (btn) btn.classList.remove('hidden');
+  e.preventDefault();
+  eventoInstalacionPWA = e;
+  
+  const btn = document.getElementById('btn-instalar-pwa');
+  if (btn) btn.classList.remove('hidden');
 });
 
+// 3. Función al hacer clic en el botón
 function instalarAppPWA() {
-    if (eventoInstalacionPWA) {
-        // Lanzar la ventana emergente de instalación nativa
-        eventoInstalacionPWA.prompt();
-        
-        eventoInstalacionPWA.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                console.log('El usuario instaló la PWA');
-                document.getElementById('btn-instalar-pwa').classList.add('hidden');
-            }
-            eventoInstalacionPWA = null;
-        });
-    }
+  if (eventoInstalacionPWA) {
+    eventoInstalacionPWA.prompt();
+    eventoInstalacionPWA.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        document.getElementById('btn-instalar-pwa').classList.add('hidden');
+      }
+      eventoInstalacionPWA = null;
+    });
+  } else {
+    // Si la App ya está instalada o el navegador no soporta el prompt directo
+    Swal.fire({
+      icon: 'info',
+      title: 'Instalar Aplicación',
+      html: 'Para instalar en tu computador o móvil:<br><br><b>1.</b> Haz clic en el ícono de instalación <b>📥</b> en la barra de direcciones de tu navegador (arriba a la derecha).<br><b>2.</b> O abre el menú del navegador (<b>⋮</b>) y selecciona <b>"Instalar aplicación"</b> o <b>"Añadir a la pantalla de inicio"</b>.',
+      confirmButtonColor: '#2563eb'
+    });
+  }
 }
 </script>
 </body>
