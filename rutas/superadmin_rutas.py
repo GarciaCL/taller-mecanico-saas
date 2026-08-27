@@ -262,34 +262,41 @@ def eliminar_taller_definitivo():
     p = obtener_placeholder()
 
     try:
-        # Eliminar en orden para respetar las claves foráneas
-        tablas_a_limpiar = [
-            "ordenes_repuestos", "detalles_cotizacion", "historial_vehiculos",
-            "ordenes_trabajo", "cotizaciones", "inventario", "vehiculos",
-            "clientes", "mecanicos", "usuarios", "talleres"
+        # 1. Limpieza de tablas dependientes directas e indirectas
+        consultas_limpieza = [
+            f"DELETE FROM ordenes_repuestos WHERE orden_id IN (SELECT id FROM ordenes_trabajo WHERE taller_id = {p})",
+            f"DELETE FROM detalles_cotizacion WHERE cotizacion_id IN (SELECT id FROM cotizaciones WHERE taller_id = {p})",
+            f"DELETE FROM historial_vehiculos WHERE taller_id = {p}",
+            f"DELETE FROM ordenes_trabajo WHERE taller_id = {p}",
+            f"DELETE FROM cotizaciones WHERE taller_id = {p}",
+            f"DELETE FROM inventario WHERE taller_id = {p}",
+            f"DELETE FROM vehiculos WHERE taller_id = {p}",
+            f"DELETE FROM clientes WHERE taller_id = {p}",
+            f"DELETE FROM mecanicos WHERE taller_id = {p}",
+            f"DELETE FROM usuarios WHERE taller_id = {p}"
         ]
 
-        for tabla in tablas_a_limpiar:
+        for query in consultas_limpieza:
             try:
-                if tabla in ["ordenes_repuestos", "detalles_cotizacion"]:
-                    # Limpieza indirecta por OTs o Cotizaciones del taller
-                    if tabla == "ordenes_repuestos":
-                        cursor.execute(f"DELETE FROM ordenes_repuestos WHERE orden_id IN (SELECT id FROM ordenes_trabajo WHERE taller_id = {p})", (taller_id,))
-                    elif tabla == "detalles_cotizacion":
-                        cursor.execute(f"DELETE FROM detalles_cotizacion WHERE cotizacion_id IN (SELECT id FROM cotizaciones WHERE taller_id = {p})", (taller_id,))
-                else:
-                    cursor.execute(f"DELETE FROM {tabla} WHERE taller_id = {p}", (taller_id,))
-            except Exception as e_tab:
+                cursor.execute(query, (taller_id,))
+            except Exception as e_sub:
                 conexion.rollback()
-                print(f"Nota limpiando tabla {tabla}: {e_tab}")
+                print(f"Aviso limpiando registros previos ({query}): {e_sub}")
 
-        # Finalmente eliminar la ficha principal del taller
+        # 2. Borrar la entidad principal del taller
         cursor.execute(f"DELETE FROM talleres WHERE id = {p}", (taller_id,))
         conexion.commit()
 
     except Exception as e:
         conexion.rollback()
-        print(f"Error eliminando taller definitivamente: {e}")
+        print(f"Error borrando taller {taller_id}: {e}")
+        # Intento de borrado forzado en cascada si la base de datos lo soporta
+        try:
+            cursor.execute(f"DELETE FROM talleres WHERE id = {p} CASCADE", (taller_id,))
+            conexion.commit()
+        except Exception as e_cascade:
+            conexion.rollback()
+            print(f"Error borrado en cascada: {e_cascade}")
     finally:
         conexion.close()
 
