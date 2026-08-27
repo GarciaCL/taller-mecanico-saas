@@ -22,10 +22,19 @@
     </style>
 </head>
 <body class="h-full text-slate-100 bg-slate-950 flex overflow-hidden">
-
+<!-- HEADER MÓVIL (Solo visible en pantallas pequeñas) -->
+<div class="lg:hidden bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center w-full z-40 sticky top-0">
+    <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-sm text-white">🔧</div>
+        <span class="font-bold text-sm text-white truncate max-w-[180px]">{{ taller.nombre }}</span>
+    </div>
+    <button onclick="toggleSidebarMovil()" class="p-2 text-slate-300 hover:text-white bg-slate-800 rounded-xl border border-slate-700">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+    </button>
+</div>
     <!-- BARRA LATERAL -->
-    <aside class="w-64 bg-slate-900/80 border-r border-slate-800/80 flex flex-col justify-between p-4">
-        <div>
+<!-- BARRA LATERAL (Sidebar) -->
+<aside id="sidebar-movil" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900/95 backdrop-blur-md border-r border-slate-800/80 flex flex-col justify-between p-4 transform -translate-x-full lg:translate-x-0 lg:static lg:flex transition-transform duration-300 ease-in-out">        <div>
             <div class="flex items-center gap-3 px-2 py-3 mb-6">
                 <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-blue-500/20">
                     🔧
@@ -823,6 +832,26 @@
         }
       }
     }
+    </script>
+    <script>
+        // Abrir/Cerrar Sidebar en pantallas móviles
+function toggleSidebarMovil() {
+    const sidebar = document.getElementById('sidebar-movil');
+    if (sidebar.classList.contains('-translate-x-full')) {
+        sidebar.classList.remove('-translate-x-full');
+    } else {
+        sidebar.classList.add('-translate-x-full');
+    }
+}
+
+// Modificar cambiarPestana para cerrar el menú en móvil al hacer clic en una opción
+const cambiarPestanaOriginal = cambiarPestana;
+cambiarPestana = function(id) {
+    cambiarPestanaOriginal(id);
+    if (window.innerWidth < 1024) {
+        document.getElementById('sidebar-movil').classList.add('-translate-x-full');
+    }
+};
     </script>
 </body>
 </html>

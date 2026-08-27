@@ -23,26 +23,30 @@
 <body class="bg-industrial min-h-full flex flex-col justify-between">
 
     <!-- NAVEGACIÓN PRINCIPAL -->
-    <header class="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-xl text-white shadow-lg shadow-blue-500/20">
-                    🛠️
-                </div>
-                <div>
-                    <span class="font-extrabold text-lg text-white block leading-tight">AutoTaller <span class="text-blue-500">SaaS</span></span>
-                    <span class="text-[10px] text-slate-400 font-semibold block">Sistema Operativo de Taller Mecánico</span>
-                </div>
+    <!-- NAV LANDING PAGE RESPONSIVA -->
+<header class="w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+        
+        <!-- LOGO Y MARCA -->
+        <a href="/" class="flex items-center gap-2.5">
+            <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-blue-500/20">
+                🛠️
             </div>
-            
-            <div class="flex items-center gap-4">
-                <a href="/login" class="text-xs font-bold text-slate-300 hover:text-white transition-colors">🔑 Acceso Taller</a>
-                <a href="/registro" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs shadow-lg shadow-blue-600/20 transition-all">
-                    🚀 Registrar Mi Taller
-                </a>
-            </div>
+            <span class="font-extrabold text-lg text-white tracking-tight">AutoTaller <span class="text-blue-500">SaaS</span></span>
+        </a>
+
+        <!-- ACCIONES Y BOTONES DE ACCESO -->
+        <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center">
+            <a href="/login" class="flex-1 sm:flex-initial text-center bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2 rounded-xl text-xs border border-slate-700/50 transition-all">
+                🔑 Iniciar Sesión
+            </a>
+            <a href="/registro" class="flex-1 sm:flex-initial text-center bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-lg shadow-blue-600/20 transition-all">
+                🚀 Probar Gratis 14 Días
+            </a>
         </div>
-    </header>
+
+    </div>
+</header>
 
     <!-- HERO SECTION EXTENDIDO -->
     <main class="max-w-6xl mx-auto px-6 py-12 space-y-16">
