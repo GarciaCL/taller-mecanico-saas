@@ -90,6 +90,8 @@ def vista_pago():
 
 from datetime import datetime, timedelta
 
+from datetime import datetime, timedelta
+
 @auth_bp.route("/confirmar_pago_registro", methods=["POST"])
 def confirmar_pago_registro_web():
     datos = session.get("registro_temp")
@@ -107,32 +109,29 @@ def confirmar_pago_registro_web():
             conexion.close()
             return render_template("pago.html", datos_registro=datos, error="El correo ya se encuentra registrado. Por favor usa otro o inicia sesión.")
 
-        # 2. Calcular fecha de vencimiento (14 días gratis de prueba si es mensual/prueba)
+        # 2. Asegurar que la tabla talleres tenga las columnas 'estado' y 'fecha_vencimiento'
+        try:
+            cursor.execute("ALTER TABLE talleres ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT 'activo'")
+            cursor.execute("ALTER TABLE talleres ADD COLUMN IF NOT EXISTS fecha_vencimiento TIMESTAMP")
+            conexion.commit()
+        except Exception as err_alter:
+            conexion.rollback()
+            print(f"Nota en alter table: {err_alter}")
+
+        # 3. Calcular fecha de vencimiento (14 días de prueba o 365 si es anual)
         dias_gratis = 365 if datos.get("plan") == "anual" else 14
         fecha_vencimiento = datetime.now() + timedelta(days=dias_gratis)
 
-        # 3. Crear el nuevo taller con fecha de vencimiento
-        try:
-            cursor.execute(f"""
-                INSERT INTO talleres (nombre_taller, telefono_taller, email_taller, estado, fecha_vencimiento)
-                VALUES ({p}, {p}, {p}, 'activo', {p})
-            """, (datos["nombre_taller"], datos["telefono"], datos["email"], fecha_vencimiento))
-        except Exception:
-            conexion.rollback()
-            # Si la columna fecha_vencimiento no existe en la BD, la creamos al vuelo
-            try:
-                cursor.execute("ALTER TABLE talleres ADD COLUMN fecha_vencimiento TIMESTAMP")
-            except Exception:
-                pass
-            cursor.execute(f"""
-                INSERT INTO talleres (nombre_taller, telefono_taller, email_taller, estado, fecha_vencimiento)
-                VALUES ({p}, {p}, {p}, 'activo', {p})
-            """, (datos["nombre_taller"], datos["telefono"], datos["email"], fecha_vencimiento))
+        # 4. Insertar el nuevo taller
+        cursor.execute(f"""
+            INSERT INTO talleres (nombre_taller, telefono_taller, email_taller, estado, fecha_vencimiento)
+            VALUES ({p}, {p}, {p}, 'activo', {p})
+        """, (datos["nombre_taller"], datos["telefono"], datos["email"], fecha_vencimiento))
 
         cursor.execute(f"SELECT id FROM talleres WHERE email_taller = {p} ORDER BY id DESC LIMIT 1", (datos["email"],))
         taller_id = cursor.fetchone()[0]
 
-        # 4. Crear el usuario administrador
+        # 5. Crear el usuario administrador
         cursor.execute(f"""
             INSERT INTO usuarios (taller_id, usuario, password, rol)
             VALUES ({p}, {p}, {p}, 'admin')
@@ -140,7 +139,7 @@ def confirmar_pago_registro_web():
 
         conexion.commit()
 
-        # 5. Iniciar sesión automáticamente
+        # 6. Iniciar sesión automáticamente
         session["usuario_id"] = None
         session["taller_id"] = taller_id
         session["usuario"] = datos["email"]
