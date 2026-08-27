@@ -11,7 +11,6 @@ from modulos.cotizaciones import obtener_lista_cotizaciones
 from modulos.metricas import obtener_metricas_estimadas
 from modulos.mecanicos import obtener_lista_mecanicos
 from modulos.configuracion import obtener_ajustes_taller
-from rutas.superadmin_rutas import superadmin_bp
 
 # Blueprints
 from rutas.auth_rutas import auth_bp
@@ -23,7 +22,7 @@ from rutas.cotizaciones_rutas import cotizaciones_bp
 from rutas.metricas_rutas import metricas_bp
 from rutas.mecanicos_rutas import mecanicos_bp
 from rutas.configuracion_rutas import configuracion_bp
-
+from rutas.superadmin_rutas import superadmin_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "clave_secreta_saas_taller")
@@ -53,11 +52,9 @@ def service_worker():
 
 @app.route("/")
 def inicio():
-    # Si el usuario NO ha iniciado sesión, le mostramos la Landing Page Comercial
     if "taller_id" not in session:
         return render_template("landing.html")
     
-    # Si YA inició sesión, le mostramos el software del taller (App)
     taller = {
         "nombre": session.get("nombre_taller", "Taller Mecánico"),
         "logo": session.get("logo_url", "/static/logo_defecto.png"),
