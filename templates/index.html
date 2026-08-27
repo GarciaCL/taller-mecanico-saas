@@ -39,8 +39,6 @@
             </div>
 
             <nav class="space-y-1">
-                <!-- En la barra lateral, dentro de la etiqueta <nav class="space-y-1"> -->
-
                 <button onclick="cambiarPestana('ot')" id="btn-ot" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white bg-slate-800/80 transition-all">
                     <i data-lucide="kanban" class="w-4 h-4 text-blue-400"></i> Tablero Kanban OT
                 </button>
@@ -60,11 +58,11 @@
                     <i data-lucide="file-text" class="w-4 h-4 text-amber-400"></i> Cotizaciones
                 </button>
                 <button onclick="cambiarPestana('ajustes')" id="btn-ajustes" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
-    <i data-lucide="settings" class="w-4 h-4 text-purple-400"></i> Ajustes Taller
-</button>
-<button id="btn-instalar-pwa" onclick="instalarAppPWA()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all">
-    <i data-lucide="download" class="w-4 h-4"></i> Instalar App Escritorio
-</button>
+                    <i data-lucide="settings" class="w-4 h-4 text-purple-400"></i> Ajustes Taller
+                </button>
+                <button id="btn-instalar-pwa" onclick="instalarAppPWA()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all">
+                    <i data-lucide="download" class="w-4 h-4"></i> Instalar App Escritorio
+                </button>
             </nav>
         </div>
 
@@ -767,56 +765,64 @@
     <script src="/static/js/clientes.js"></script>
     <script src="/static/js/vehiculos.js"></script>
     <script src="/static/js/cotizaciones.js"></script>
+
+    <!-- SCRIPT MEJORADO PWA DE RAÍZ -->
     <script>
-// 1. Registrar Service Worker indispensable para PWA
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/static/sw.js')
-    .then(() => console.log('Service Worker Registrado'))
-    .catch((err) => console.log('Error al registrar SW:', err));
-}
+    // 1. Registrar Service Worker desde la raíz /sw.js
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(() => console.log('Service Worker Registrado en /sw.js'))
+        .catch((err) => console.log('Error al registrar SW:', err));
+    }
 
-let eventoInstalacionPWA = null;
+    let deferredPrompt = null;
 
-// Captura la posibilidad de instalación automática (Windows, Mac, Android)
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  eventoInstalacionPWA = e;
-  const btn = document.getElementById('btn-instalar-pwa');
-  if (btn) btn.classList.remove('hidden');
-});
+    // 2. Escuchar el evento oficial de instalación PWA
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('btn-instalar-pwa');
+      if (btn) btn.classList.remove('hidden');
+    });
 
-function instalarAppPWA() {
-  // Detección de iPhone/iPad
-  const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    // 3. Función ejecutada al presionar "Instalar App Escritorio"
+    function instalarAppPWA() {
+      const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-  if (eventoInstalacionPWA) {
-    // 1. INSTALACIÓN AUTOMÁTICA EN 1 CLIC (Windows, Mac OS, Android)
-    eventoInstalacionPWA.prompt();
-    eventoInstalacionPWA.userChoice.then((choiceResult) => {
-      if (choiceResult.outcome === 'accepted') {
-        const btn = document.getElementById('btn-instalar-pwa');
-        if (btn) btn.classList.add('hidden');
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            const btn = document.getElementById('btn-instalar-pwa');
+            if (btn) btn.classList.add('hidden');
+          }
+          deferredPrompt = null;
+        });
+      } else if (esIOS) {
+        Swal.fire({
+          icon: 'info',
+          title: 'Instalar en iPhone / iPad',
+          html: '<b>1.</b> Toca el botón <b>Compartir</b> <span style="font-size:16px;">⎘</span> (abajo en Safari).<br><b>2.</b> Selecciona <b>"Añadir a la pantalla de inicio"</b> 📲.',
+          confirmButtonColor: '#2563eb'
+        });
+      } else {
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+          Swal.fire({
+            icon: 'info',
+            title: 'App ya instalada',
+            text: 'Ya estás utilizando AutoTaller desde la aplicación de escritorio.',
+            confirmButtonColor: '#2563eb'
+          });
+        } else {
+          Swal.fire({
+            icon: 'info',
+            title: 'Instalar Aplicación',
+            html: 'Para instalar en tu equipo:<br><br><b>1.</b> Haz clic en el ícono <b>📥 Instalar</b> arriba en la barra de direcciones del navegador.<br><b>2.</b> O abre el menú (<b>⋮</b>) y selecciona <b>"Instalar AutoTaller"</b>.',
+            confirmButtonColor: '#2563eb'
+          });
+        }
       }
-      eventoInstalacionPWA = null;
-    });
-  } else if (esIOS) {
-    // 2. GUÍA EXCLUSIVA PARA IPHONE / IPAD
-    Swal.fire({
-      icon: 'info',
-      title: 'Instalar en iPhone / iPad',
-      html: '<b>1.</b> Toca el botón <b>Compartir</b> <span style="font-size:16px;">⎘</span> (abajo en Safari).<br><b>2.</b> Selecciona <b>"Añadir a la pantalla de inicio"</b> 📲.',
-      confirmButtonColor: '#2563eb'
-    });
-  } else {
-    // 3. SI YA ESTÁ INSTALADA O NAVEGADOR ANTIGUO
-    Swal.fire({
-      icon: 'success',
-      title: 'Aplicación Lista',
-      text: 'Tu aplicación ya se encuentra instalada o ejecutándose desde el escritorio.',
-      confirmButtonColor: '#2563eb'
-    });
-  }
-}
-</script>
+    }
+    </script>
 </body>
 </html>

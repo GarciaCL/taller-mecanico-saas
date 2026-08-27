@@ -43,6 +43,11 @@ app.register_blueprint(metricas_bp)
 app.register_blueprint(mecanicos_bp)
 app.register_blueprint(configuracion_bp)
 
+# --- RUTA PARA SERVICE WORKER DE LA PWA ---
+@app.route('/sw.js')
+def service_worker():
+    return app.send_static_file('sw.js')
+
 @app.route("/")
 def inicio():
     # Si el usuario NO ha iniciado sesión, le mostramos la Landing Page Comercial
