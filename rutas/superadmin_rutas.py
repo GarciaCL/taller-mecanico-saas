@@ -18,7 +18,7 @@ def vista_superadmin():
         conexion = obtener_conexion()
         cursor = conexion.cursor()
 
-        # 1. Intentar asegurar las columnas en la tabla talleres
+        # 1. Asegurar que las columnas en talleres existan
         try:
             cursor.execute("ALTER TABLE talleres ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT 'activo'")
             cursor.execute("ALTER TABLE talleres ADD COLUMN IF NOT EXISTS fecha_vencimiento TIMESTAMP")
@@ -27,13 +27,13 @@ def vista_superadmin():
             conexion.rollback()
             print(f"[SUPERADMIN] Nota en alter table: {e_alter}")
 
-        # 2. Consultar talleres
+        # 2. Consultar talleres usando unicamente u.usuario (sin u.email)
         cursor.execute("""
             SELECT t.id, 
                    t.nombre_taller, 
                    t.telefono_taller, 
                    t.email_taller, 
-                   COALESCE(u.usuario, u.email, 'Admin') as usuario,
+                   COALESCE(u.usuario, 'Admin') as usuario,
                    COALESCE(t.estado, 'activo') as estado,
                    t.fecha_vencimiento
             FROM talleres t
@@ -57,14 +57,14 @@ def vista_superadmin():
                 estado = str(t[5]) if t[5] else "activo"
                 fecha_venc = t[6]
 
-                # Convertir cadenas de texto a datetime si vienen en formato string de BD
+                # Convertir string a datetime si es necesario
                 if isinstance(fecha_venc, str):
                     try:
                         fecha_venc = datetime.strptime(fecha_venc[:19], "%Y-%m-%d %H:%M:%S")
                     except Exception:
                         fecha_venc = None
 
-                # Si no tiene fecha, asignar HOY + 14 días y actualizar en BD
+                # Si no tiene fecha, asignar HOY + 14 días y guardar en BD
                 if not fecha_venc:
                     fecha_venc = ahora + timedelta(days=14)
                     try:
@@ -73,9 +73,8 @@ def vista_superadmin():
                         conexion.commit()
                     except Exception as e_upd:
                         conexion.rollback()
-                        print(f"[SUPERADMIN] Error asignando fecha por defecto: {e_upd}")
 
-                # Formatear la fecha para la vista de forma segura
+                # Formato de fecha
                 try:
                     fecha_fmt = fecha_venc.strftime("%d/%m/%Y")
                 except Exception:
