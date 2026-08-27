@@ -105,23 +105,15 @@ def confirmar_pago_registro_web():
             VALUES ({p}, {p}, {p})
         """, (datos["nombre_taller"], datos["telefono"], datos["email"]))
         
-        # Obtener el ID del taller creado
+        # Obtener el ID del taller recien creado
         cursor.execute(f"SELECT id FROM talleres WHERE email_taller = {p} ORDER BY id DESC LIMIT 1", (datos["email"],))
         taller_id = cursor.fetchone()[0]
 
-        # 2. Crear el usuario administrador usando los campos compatibles (usuario y password)
-        try:
-            cursor.execute(f"""
-                INSERT INTO usuarios (taller_id, usuario, password, rol)
-                VALUES ({p}, {p}, {p}, 'admin')
-            """, (taller_id, datos["email"], datos["password"]))
-        except Exception:
-            conexion.rollback()
-            # Alternativa por si existen columnas con nombres distintos
-            cursor.execute(f"""
-                INSERT INTO usuarios (taller_id, usuario, email, password, rol)
-                VALUES ({p}, {p}, {p}, {p}, 'admin')
-            """, (taller_id, datos["email"], datos["email"], datos["password"]))
+        # 2. Insertar en la tabla usuarios usando solo las columnas existentes (usuario, password, rol, taller_id)
+        cursor.execute(f"""
+            INSERT INTO usuarios (taller_id, usuario, password, rol)
+            VALUES ({p}, {p}, {p}, 'admin')
+        """, (taller_id, datos["email"], datos["password"]))
 
         conexion.commit()
 
@@ -135,7 +127,7 @@ def confirmar_pago_registro_web():
         session["logo_url"] = "/static/logo_defecto.png"
         session["color_primario"] = "#3b82f6"
 
-        # Limpiar datos temporales
+        # Limpiar los datos temporales
         session.pop("registro_temp", None)
 
         conexion.close()
