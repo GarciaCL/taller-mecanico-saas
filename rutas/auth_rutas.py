@@ -99,17 +99,33 @@ def confirmar_pago_registro_web():
     p = obtener_placeholder()
 
     try:
-        # 1. Crear el nuevo taller
+        # 1. Validar previamente si el correo ya está registrado
+        cursor.execute(f"SELECT id FROM usuarios WHERE usuario = {p}", (datos["email"],))
+        if cursor.fetchone():
+            conexion.close()
+            return f"""
+                <div style="font-family: sans-serif; background: #0f172a; color: #f8fafc; padding: 40px; text-align: center; min-height: 100vh; flex-direction: column; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: #1e293b; border: 1px solid #334155; padding: 30px; border-radius: 16px; max-width: 400px;">
+                        <h2 style="color: #f59e0b; margin-top: 0;">⚠️ El correo ya está registrado</h2>
+                        <p style="color: #94a3b8; font-size: 14px;">El correo <b>{datos['email']}</b> ya tiene una cuenta asociada.</p>
+                        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                            <a href="/login" style="background: #2563eb; color: white; padding: 10px 16px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 12px;">Iniciar Sesión</a>
+                            <a href="/registro" style="background: #334155; color: white; padding: 10px 16px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 12px;">Probar otro correo</a>
+                        </div>
+                    </div>
+                </div>
+            """, 400
+
+        # 2. Crear el nuevo taller
         cursor.execute(f"""
             INSERT INTO talleres (nombre_taller, telefono_taller, email_taller)
             VALUES ({p}, {p}, {p})
         """, (datos["nombre_taller"], datos["telefono"], datos["email"]))
         
-        # Obtener el ID del taller recien creado
         cursor.execute(f"SELECT id FROM talleres WHERE email_taller = {p} ORDER BY id DESC LIMIT 1", (datos["email"],))
         taller_id = cursor.fetchone()[0]
 
-        # 2. Insertar en la tabla usuarios usando solo las columnas existentes (usuario, password, rol, taller_id)
+        # 3. Crear el usuario administrador
         cursor.execute(f"""
             INSERT INTO usuarios (taller_id, usuario, password, rol)
             VALUES ({p}, {p}, {p}, 'admin')
@@ -117,7 +133,7 @@ def confirmar_pago_registro_web():
 
         conexion.commit()
 
-        # 3. Iniciar sesión automáticamente
+        # 4. Iniciar sesión automáticamente
         session["usuario_id"] = None
         session["taller_id"] = taller_id
         session["usuario"] = datos["email"]
@@ -127,7 +143,7 @@ def confirmar_pago_registro_web():
         session["logo_url"] = "/static/logo_defecto.png"
         session["color_primario"] = "#3b82f6"
 
-        # Limpiar los datos temporales
+        # Limpiar datos temporales
         session.pop("registro_temp", None)
 
         conexion.close()
