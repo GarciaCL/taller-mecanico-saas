@@ -187,3 +187,67 @@ document.addEventListener('DOMContentLoaded', function() {
     evaluarTiemposKanban();
     generarBotonesMovilKanban();
 });
+
+// FUNCIÓN PARA ARCHIVAR/ENTREGAR ORDEN DE TRABAJO
+function confirmarArchivar() {
+    const ordenId = document.getElementById('archivar-orden-id').value;
+
+    if (!ordenId) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se identificó el número de la orden de trabajo.'
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: '¿Entregar y Archivar Vehículo?',
+        text: 'La orden pasará al historial de entregados y se liberará espacio en el tablero Kanban.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '✅ Sí, Entregar y Archivar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('/archivar_ot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orden_id: ordenId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    cerrarDetalleOrden();
+                    // Remover la tarjeta del tablero en tiempo real
+                    const card = document.querySelector(`.card-orden[data-id="${ordenId}"]`);
+                    if (card) card.remove();
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Vehículo Entregado!',
+                        text: 'La orden fue archivada con éxito.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Atención',
+                        text: data.mensaje || 'No se pudo archivar la orden.'
+                    });
+                }
+            })
+            .catch(err => {
+                console.error('Error al archivar la orden:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de Conexión',
+                    text: 'Ocurrió un problema procesando la entrega.'
+                });
+            });
+        }
+    });
+}
