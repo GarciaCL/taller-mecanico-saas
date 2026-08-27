@@ -161,3 +161,44 @@ def api_historial_vehiculo(patente):
     except Exception as e:
         print(f"Error en API historial: {e}")
         return jsonify([])
+
+
+@ordenes_bp.route("/archivar_ot", methods=["POST"])
+def archivar_ot_ajax():
+    if "taller_id" not in session:
+        return jsonify({"status": "error", "mensaje": "Sesión expirada"}), 401
+
+    try:
+        datos = request.get_json()
+        orden_id = datos.get("orden_id")
+
+        if not orden_id:
+            return jsonify({"status": "error", "mensaje": "ID de orden no proporcionado"}), 400
+
+        taller_id = session["taller_id"]
+        conexion = obtener_conexion()
+        cursor = conexion.cursor()
+        p = obtener_placeholder()
+
+        # Asegurar columna 'archivada' en la tabla
+        try:
+            cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN IF NOT EXISTS archivada BOOLEAN DEFAULT FALSE")
+            conexion.commit()
+        except Exception:
+            conexion.rollback()
+
+        # Marcar la orden como archivada y estado 'entrega'
+        cursor.execute(f"""
+            UPDATE ordenes_trabajo 
+            SET archivada = TRUE, estado = 'entrega' 
+            WHERE id = {p} AND taller_id = {p}
+        """, (orden_id, taller_id))
+
+        conexion.commit()
+        conexion.close()
+
+        return jsonify({"status": "ok", "mensaje": "Orden archivada con éxito"})
+
+    except Exception as e:
+        print(f"Error al archivar OT: {e}")
+        return jsonify({"status": "error", "mensaje": str(e)}), 500
