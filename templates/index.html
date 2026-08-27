@@ -777,31 +777,42 @@ if ('serviceWorker' in navigator) {
 
 let eventoInstalacionPWA = null;
 
-// 2. Escuchar evento de instalación
+// Captura la posibilidad de instalación automática (Windows, Mac, Android)
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   eventoInstalacionPWA = e;
-  
   const btn = document.getElementById('btn-instalar-pwa');
   if (btn) btn.classList.remove('hidden');
 });
 
-// 3. Función al hacer clic en el botón
 function instalarAppPWA() {
+  // Detección de iPhone/iPad
+  const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
   if (eventoInstalacionPWA) {
+    // 1. INSTALACIÓN AUTOMÁTICA EN 1 CLIC (Windows, Mac OS, Android)
     eventoInstalacionPWA.prompt();
     eventoInstalacionPWA.userChoice.then((choiceResult) => {
       if (choiceResult.outcome === 'accepted') {
-        document.getElementById('btn-instalar-pwa').classList.add('hidden');
+        const btn = document.getElementById('btn-instalar-pwa');
+        if (btn) btn.classList.add('hidden');
       }
       eventoInstalacionPWA = null;
     });
-  } else {
-    // Si la App ya está instalada o el navegador no soporta el prompt directo
+  } else if (esIOS) {
+    // 2. GUÍA EXCLUSIVA PARA IPHONE / IPAD
     Swal.fire({
       icon: 'info',
-      title: 'Instalar Aplicación',
-      html: 'Para instalar en tu computador o móvil:<br><br><b>1.</b> Haz clic en el ícono de instalación <b>📥</b> en la barra de direcciones de tu navegador (arriba a la derecha).<br><b>2.</b> O abre el menú del navegador (<b>⋮</b>) y selecciona <b>"Instalar aplicación"</b> o <b>"Añadir a la pantalla de inicio"</b>.',
+      title: 'Instalar en iPhone / iPad',
+      html: '<b>1.</b> Toca el botón <b>Compartir</b> <span style="font-size:16px;">⎘</span> (abajo en Safari).<br><b>2.</b> Selecciona <b>"Añadir a la pantalla de inicio"</b> 📲.',
+      confirmButtonColor: '#2563eb'
+    });
+  } else {
+    // 3. SI YA ESTÁ INSTALADA O NAVEGADOR ANTIGUO
+    Swal.fire({
+      icon: 'success',
+      title: 'Aplicación Lista',
+      text: 'Tu aplicación ya se encuentra instalada o ejecutándose desde el escritorio.',
       confirmButtonColor: '#2563eb'
     });
   }
