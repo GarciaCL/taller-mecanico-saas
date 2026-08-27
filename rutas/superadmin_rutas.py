@@ -17,21 +17,18 @@ def vista_superadmin():
     conexion = obtener_conexion()
     cursor = conexion.cursor()
 
-    # 1. Asegurar que existan las columnas de estado y vencimiento
+    # 1. Asegurar que la tabla talleres tenga las columnas necesarias
     try:
         cursor.execute("ALTER TABLE talleres ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT 'activo'")
         cursor.execute("ALTER TABLE talleres ADD COLUMN IF NOT EXISTS fecha_vencimiento TIMESTAMP")
         conexion.commit()
-    except Exception:
+    except Exception as e:
         conexion.rollback()
+        print(f"Error alter table: {e}")
 
-    # 2. Consultar talleres evitando duplicados de usuarios
+    # 2. Consultar todos los talleres
     cursor.execute("""
-        SELECT DISTINCT ON (t.id) 
-               t.id, 
-               t.nombre_taller, 
-               t.telefono_taller, 
-               t.email_taller, 
+        SELECT t.id, t.nombre_taller, t.telefono_taller, t.email_taller, 
                COALESCE(u.usuario, u.email, 'Admin') as usuario,
                COALESCE(t.estado, 'activo') as estado,
                t.fecha_vencimiento
@@ -41,49 +38,61 @@ def vista_superadmin():
     """)
     talleres_raw = cursor.fetchall()
 
-    talleres = []
+    talleres_dict = {}
     total_activos = 0
     total_suspendidos = 0
     ahora = datetime.now()
 
     for t in talleres_raw:
         tid = t[0]
-        nombre = t[1] if t[1] else "Sin Nombre"
-        telefono = t[2] if t[2] else "N/I"
-        email = t[3] if t[3] else "N/I"
-        usuario = t[4] if t[4] else "Admin"
-        estado = t[5] if t[5] else "activo"
-        fecha_venc = t[6]
+        if tid not in talleres_dict:
+            nombre = t[1] if len(t) > 1 and t[1] else "Sin Nombre"
+            telefono = t[2] if len(t) > 2 and t[2] else "N/I"
+            email = t[3] if len(t) > 3 and t[3] else "N/I"
+            usuario = t[4] if len(t) > 4 and t[4] else "Admin"
+            estado = t[5] if len(t) > 5 and t[5] else "activo"
+            fecha_venc = t[6] if len(t) > 6 else None
 
-        # Si no tiene fecha asignada aún, asignarle 14 días por defecto desde ahora
-        if not fecha_venc:
-            fecha_venc = ahora + timedelta(days=14)
-            p = obtener_placeholder()
-            cursor.execute(f"UPDATE talleres SET fecha_vencimiento = {p} WHERE id = {p}", (fecha_venc, tid))
-            conexion.commit()
+            # Asignar 14 días si no tiene fecha de vencimiento
+            if not fecha_venc:
+                fecha_venc = ahora + timedelta(days=14)
+                try:
+                    p = obtener_placeholder()
+                    cursor.execute(f"UPDATE talleres SET fecha_vencimiento = {p} WHERE id = {p}", (fecha_venc, tid))
+                    conexion.commit()
+                except Exception as err_upd:
+                    conexion.rollback()
+                    print(f"Error actualizando fecha_vencimiento: {err_upd}")
 
-        # Calcular días restantes
-        dias_restantes = (fecha_venc - ahora).days
+            # Convertir a datetime si viene en formato texto
+            if isinstance(fecha_venc, str):
+                try:
+                    fecha_venc = datetime.strptime(fecha_venc, "%Y-%m-%d %H:%M:%S")
+                except Exception:
+                    fecha_venc = ahora + timedelta(days=14)
 
-        if dias_restantes < 0 and estado == 'activo':
-            estado = 'vencido'
+            dias_restantes = (fecha_venc - ahora).days if fecha_venc else 14
 
-        if estado in ['suspendido', 'vencido']:
-            total_suspendidos += 1
-        else:
-            total_activos += 1
+            if dias_restantes < 0 and estado == 'activo':
+                estado = 'vencido'
 
-        talleres.append({
-            "id": tid,
-            "nombre": nombre,
-            "telefono": telefono,
-            "email": email,
-            "usuario": usuario,
-            "estado": estado,
-            "fecha_vencimiento": fecha_venc.strftime("%d/%m/%Y"),
-            "dias_restantes": dias_restantes
-        })
+            if estado in ['suspendido', 'vencido']:
+                total_suspendidos += 1
+            else:
+                total_activos += 1
 
+            talleres_dict[tid] = {
+                "id": tid,
+                "nombre": nombre,
+                "telefono": telefono,
+                "email": email,
+                "usuario": usuario,
+                "estado": estado,
+                "fecha_vencimiento": fecha_venc.strftime("%d/%m/%Y") if fecha_venc else "Sin Fecha",
+                "dias_restantes": dias_restantes
+            }
+
+    talleres = list(talleres_dict.values())
     mrr_estimado = total_activos * 29900
     conexion.close()
 
@@ -109,14 +118,18 @@ def extender_dias_taller():
     cursor = conexion.cursor()
     p = obtener_placeholder()
 
-    # Consultar fecha actual de vencimiento
     cursor.execute(f"SELECT fecha_vencimiento FROM talleres WHERE id = {p}", (taller_id,))
     res = cursor.fetchone()
     
     ahora = datetime.now()
     fecha_actual = res[0] if res and res[0] else ahora
 
-    # Si ya estaba vencido, sumamos 14 días a partir de HOY. Si estaba activo, le sumamos 14 días a su fecha actual.
+    if isinstance(fecha_actual, str):
+        try:
+            fecha_actual = datetime.strptime(fecha_actual, "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            fecha_actual = ahora
+
     if fecha_actual < ahora:
         nueva_fecha = ahora + timedelta(days=dias_a_sumar)
     else:
