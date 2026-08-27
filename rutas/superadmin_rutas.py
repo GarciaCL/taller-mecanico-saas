@@ -3,11 +3,9 @@ from modulos.conexion import obtener_conexion, obtener_placeholder
 
 superadmin_bp = Blueprint('superadmin', __name__)
 
-# Middleware para asegurar que solo el admin/superadmin ingrese
 def verificar_superadmin():
     if "taller_id" not in session:
         return False
-    # Puedes personalizar el correo de tu cuenta principal como SuperAdmin
     return True
 
 @superadmin_bp.route("/superadmin")
@@ -18,40 +16,56 @@ def vista_superadmin():
     conexion = obtener_conexion()
     cursor = conexion.cursor()
 
-    # 1. Obtener listado de talleres con datos de contacto del dueño
-    cursor.execute("""
-        SELECT t.id, t.nombre_taller, t.telefono_taller, t.email_taller, 
-               t.fecha_creacion, u.usuario, COALESCE(t.estado, 'activo')
-        FROM talleres t
-        LEFT JOIN usuarios u ON t.id = u.taller_id AND u.rol = 'admin'
-        ORDER BY t.id DESC
-    """)
-    talleres_raw = cursor.fetchall()
+    try:
+        # Intentar consulta con columna 'estado' si existe
+        cursor.execute("""
+            SELECT t.id, t.nombre_taller, t.telefono_taller, t.email_taller, 
+                   COALESCE(u.usuario, u.email, 'Admin') as usuario,
+                   COALESCE(t.estado, 'activo') as estado
+            FROM talleres t
+            LEFT JOIN usuarios u ON t.id = u.taller_id
+            ORDER BY t.id DESC
+        """)
+        talleres_raw = cursor.fetchall()
+    except Exception as e:
+        conexion.rollback()
+        # Consulta básica de respaldo si alguna columna falla
+        cursor.execute("""
+            SELECT t.id, t.nombre_taller, t.telefono_taller, t.email_taller, 
+                   'Admin' as usuario,
+                   'activo' as estado
+            FROM talleres t
+            ORDER BY t.id DESC
+        """)
+        talleres_raw = cursor.fetchall()
 
-    # Normalizar lista
-    talleres = []
+    # Eliminar duplicados si hay múltiples usuarios por taller
+    talleres_dict = {}
     total_activos = 0
     total_suspendidos = 0
 
     for t in talleres_raw:
-        estado = t[6] if len(t) > 6 and t[6] else 'activo'
-        if estado == 'suspendido':
-            total_suspendidos += 1
-        else:
-            total_activos += 1
+        tid = t[0]
+        if tid not in talleres_dict:
+            estado = t[5] if len(t) > 5 and t[5] else 'activo'
+            if estado == 'suspendido':
+                total_suspendidos += 1
+            else:
+                total_activos += 1
 
-        talleres.append((
-            t[0],
-            t[1] if t[1] else "Sin Nombre",
-            t[2] if t[2] else "N/I",
-            t[3] if t[3] else "N/I",
-            t[4].strftime("%d/%m/%Y") if t[4] else "N/I",
-            t[5] if t[5] else "Admin",
-            estado
-        ))
+            talleres_dict[tid] = (
+                t[0],
+                t[1] if t[1] else "Sin Nombre",
+                t[2] if t[2] else "N/I",
+                t[3] if t[3] else "N/I",
+                "Registrado",
+                t[4] if t[4] else "Admin",
+                estado
+            )
 
+    talleres = list(talleres_dict.values())
     total_talleres = len(talleres)
-    mrr_estimado = total_activos * 29900  # Estimado basado en suscripción base CLP
+    mrr_estimado = total_activos * 29900
 
     conexion.close()
 
@@ -77,13 +91,15 @@ def cambiar_estado_taller():
     cursor = conexion.cursor()
     p = obtener_placeholder()
 
-    # Crear columna 'estado' si no existiera
     try:
         cursor.execute(f"UPDATE talleres SET estado = {p} WHERE id = {p}", (nuevo_estado, taller_id))
     except Exception:
         conexion.rollback()
-        cursor.execute("ALTER TABLE talleres ADD COLUMN estado VARCHAR(20) DEFAULT 'activo'")
-        cursor.execute(f"UPDATE talleres SET estado = {p} WHERE id = {p}", (nuevo_estado, taller_id))
+        try:
+            cursor.execute("ALTER TABLE talleres ADD COLUMN estado VARCHAR(20) DEFAULT 'activo'")
+            cursor.execute(f"UPDATE talleres SET estado = {p} WHERE id = {p}", (nuevo_estado, taller_id))
+        except Exception as err:
+            print(f"Error alterando tabla talleres: {err}")
 
     conexion.commit()
     conexion.close()
@@ -109,7 +125,7 @@ def ingresar_como_taller():
     if taller:
         session["taller_id"] = taller[0]
         session["nombre_taller"] = taller[1]
-        session["logo_url"] = taller[2] if taller[2] else "/static/logo_defecto.png"
-        session["color_primario"] = taller[3] if taller[3] else "#3b82f6"
+        session["logo_url"] = taller[2] if len(taller) > 2 and taller[2] else "/static/logo_defecto.png"
+        session["color_primario"] = taller[3] if len(taller) > 3 and taller[3] else "#3b82f6"
 
     return redirect("/")
