@@ -62,6 +62,13 @@ def obtener_ordenes_kanban(taller_id):
     cursor = conexion.cursor()
     p = obtener_placeholder()
 
+    # Asegurar que la columna 'archivada' exista en la tabla ordenes_trabajo
+    try:
+        cursor.execute("ALTER TABLE ordenes_trabajo ADD COLUMN IF NOT EXISTS archivada BOOLEAN DEFAULT FALSE")
+        conexion.commit()
+    except Exception:
+        conexion.rollback()
+
     cursor.execute(f"""
         SELECT ot.id, ot.estado, COALESCE(ot.sintomas_cliente, ''), COALESCE(ot.costo_estimado, 0),
                v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''),
@@ -74,7 +81,9 @@ def obtener_ordenes_kanban(taller_id):
         JOIN vehiculos v ON ot.vehiculo_id = v.id
         JOIN clientes c ON v.cliente_id = c.id
         LEFT JOIN mecanicos m ON ot.mecanico_id = m.id
-        WHERE ot.taller_id = {p} AND ot.estado != 'finalizado'
+        WHERE ot.taller_id = {p} 
+          AND ot.estado != 'finalizado'
+          AND (ot.archivada IS FALSE OR ot.archivada IS NULL)
         ORDER BY ot.id DESC
     """, (taller_id,))
 
