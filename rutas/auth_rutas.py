@@ -99,22 +99,12 @@ def confirmar_pago_registro_web():
     p = obtener_placeholder()
 
     try:
-        # 1. Validar previamente si el correo ya está registrado
+        # 1. Validar si el correo ya existe
         cursor.execute(f"SELECT id FROM usuarios WHERE usuario = {p}", (datos["email"],))
         if cursor.fetchone():
             conexion.close()
-            return f"""
-                <div style="font-family: sans-serif; background: #0f172a; color: #f8fafc; padding: 40px; text-align: center; min-height: 100vh; flex-direction: column; display: flex; align-items: center; justify-content: center;">
-                    <div style="background: #1e293b; border: 1px solid #334155; padding: 30px; border-radius: 16px; max-width: 400px;">
-                        <h2 style="color: #f59e0b; margin-top: 0;">⚠️ El correo ya está registrado</h2>
-                        <p style="color: #94a3b8; font-size: 14px;">El correo <b>{datos['email']}</b> ya tiene una cuenta asociada.</p>
-                        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
-                            <a href="/login" style="background: #2563eb; color: white; padding: 10px 16px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 12px;">Iniciar Sesión</a>
-                            <a href="/registro" style="background: #334155; color: white; padding: 10px 16px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 12px;">Probar otro correo</a>
-                        </div>
-                    </div>
-                </div>
-            """, 400
+            # En lugar de pantalla blanca, volvemos a la plantilla 'pago.html' pasando la alerta
+            return render_template("pago.html", datos_registro=datos, error="El correo ya se encuentra registrado. Por favor usa otro o inicia sesión.")
 
         # 2. Crear el nuevo taller
         cursor.execute(f"""
@@ -153,4 +143,4 @@ def confirmar_pago_registro_web():
         conexion.rollback()
         conexion.close()
         print(f"Error en confirmar_pago_registro: {e}")
-        return f"Ocurrió un detalle al activar la cuenta: {e}. <a href='/registro'>Volver a intentar</a>", 500
+        return render_template("pago.html", datos_registro=datos, error=f"Ocurrió un detalle al activar la cuenta: {e}")
