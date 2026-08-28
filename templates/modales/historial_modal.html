@@ -1,15 +1,95 @@
-<div id="modal-historial" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
-    <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl p-6 rounded-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+<!-- MODAL HISTORIAL DE VEHÍCULO -->
+<div id="modal-historial" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-3xl w-full space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
+        
         <div class="flex justify-between items-center border-b border-slate-800 pb-3">
             <div>
-                <span id="hist-modal-patente" class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded"></span>
-                <h3 class="text-base font-bold text-white mt-1">📜 Historial de Reparaciones del Vehículo</h3>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    📜 Historial de Atenciones: <span id="modal-historial-patente" class="text-blue-400 font-mono"></span>
+                </h3>
+                <p class="text-xs text-slate-400">Registro histórico de todas las OTs e ingresos al taller.</p>
             </div>
-            <button type="button" onclick="cerrarModalHistorial()" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+            <button onclick="cerrarHistorialModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
         </div>
 
-        <div id="hist-modal-contenedor" class="space-y-3 min-h-[150px]">
-            <!-- Se carga dinámicamente mediante AJAX -->
+        <div id="contenedor-historial-lista" class="overflow-y-auto space-y-3 flex-1 pr-1 text-xs">
+            <!-- Se llena dinámicamente con JS -->
+        </div>
+
+        <div class="border-t border-slate-800 pt-3 text-right">
+            <button onclick="cerrarHistorialModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2 rounded-xl font-bold">
+                Cerrar
+            </button>
         </div>
     </div>
 </div>
+
+<script>
+function abrirHistorialModal(patente) {
+    document.getElementById('modal-historial-patente').innerText = patente;
+    const contenedor = document.getElementById('contenedor-historial-lista');
+    contenedor.innerHTML = '<p class="text-center text-slate-500 py-6">Cargando historial...</p>';
+    
+    document.getElementById('modal-historial').classList.remove('hidden');
+    document.getElementById('modal-historial').classList.add('flex');
+
+    fetch('/api/historial/' + patente)
+        .then(r => r.json())
+        .then(data => {
+            if (!data || data.length === 0) {
+                contenedor.innerHTML = '<p class="text-center text-slate-500 py-6">No hay registros de atenciones previas para este vehículo.</p>';
+                return;
+            }
+
+            let html = '';
+            data.forEach(h => {
+                let badgeEstado = '';
+                
+                if (h.archivada || h.estado === 'finalizado') {
+                    badgeEstado = '<span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">✅ ENTREGADO Y ARCHIVADO</span>';
+                } else if (h.estado === 'entrega') {
+                    badgeEstado = '<span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">🚀 LISTO PARA ENTREGA</span>';
+                } else {
+                    badgeEstado = `<span class="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-400 font-bold border border-blue-500/30">🔧 EN TALLER (${h.estado.toUpperCase()})</span>`;
+                }
+
+                html += `
+                    <div class="bg-slate-950 border ${h.archivada ? 'border-slate-800/60' : 'border-blue-500/40'} p-4 rounded-xl space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="font-mono font-bold text-amber-400 text-sm">OT #${h.id}</span>
+                                <span class="text-slate-500 text-[11px] block">📅 Ingreso: ${h.fecha}</span>
+                            </div>
+                            <div class="text-right">
+                                ${badgeEstado}
+                                <span class="block text-emerald-400 font-bold text-sm mt-1">$${Number(h.costo).toLocaleString('es-CL')}</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-[11px] bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
+                            <div><b class="text-slate-400">Kilometraje:</b> <span class="text-slate-200">${Number(h.km).toLocaleString('es-CL')} KM</span></div>
+                            <div><b class="text-slate-400">Combustible:</b> <span class="text-slate-200">${h.combustible}</span></div>
+                        </div>
+
+                        <p class="text-slate-300 text-xs bg-slate-900/40 p-2 rounded-lg"><b class="text-slate-400">Motivo / Síntomas:</b> ${h.sintomas || 'Sin detalle'}</p>
+
+                        <div class="text-right pt-1">
+                            <a href="/descargar_pdf/${h.token}" target="_blank" class="text-amber-400 hover:text-amber-300 font-semibold text-[11px]">📄 Descargar PDF Ficha</a>
+                        </div>
+                    </div>
+                `;
+            });
+
+            contenedor.innerHTML = html;
+        })
+        .catch(err => {
+            console.error(err);
+            contenedor.innerHTML = '<p class="text-center text-rose-400 py-6">Error al obtener el historial.</p>';
+        });
+}
+
+function cerrarHistorialModal() {
+    document.getElementById('modal-historial').classList.add('hidden');
+    document.getElementById('modal-historial').classList.remove('flex');
+}
+</script>

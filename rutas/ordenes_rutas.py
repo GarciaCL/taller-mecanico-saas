@@ -153,7 +153,8 @@ def api_historial_vehiculo(patente):
                 "marca": h[9] or "",
                 "modelo": h[10] or "",
                 "cliente": h[12] or "Cliente General",
-                "telefono": h[13] or ""
+                "telefono": h[13] or "",
+                "archivada": h[14] if len(h) > 14 else False
             })
         return jsonify(resultado)
     except Exception as e:

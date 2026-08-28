@@ -184,7 +184,7 @@ def obtener_historial_vehiculo(taller_id, patente):
         SELECT ot.id, ot.estado, COALESCE(ot.sintomas_cliente, ''), COALESCE(ot.costo_estimado, 0),
                COALESCE(ot.km_ingreso, 0), COALESCE(ot.nivel_combustible, '1/2'), ot.token, ot.fecha_creacion,
                v.patente_vin, COALESCE(v.marca, ''), COALESCE(v.modelo, ''), COALESCE(v.anio, 0),
-               c.nombre, COALESCE(c.telefono, '')
+               c.nombre, COALESCE(c.telefono, ''), COALESCE(ot.archivada, FALSE) as archivada
         FROM ordenes_trabajo ot
         JOIN vehiculos v ON ot.vehiculo_id = v.id
         JOIN clientes c ON v.cliente_id = c.id
