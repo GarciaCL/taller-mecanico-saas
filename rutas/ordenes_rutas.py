@@ -2,6 +2,7 @@ import os
 import io
 from flask import Blueprint, request, redirect, session, jsonify, send_file, render_template
 from werkzeug.utils import secure_filename
+from modulos.conexion import obtener_conexion, obtener_placeholder
 from modulos.ordenes import (
     crear_orden_recepcion_guiada, actualizar_estado_orden, 
     obtener_detalle_orden_por_token, actualizar_orden_trabajo, 
@@ -95,7 +96,6 @@ def cambiar_estado_ot_web():
     return jsonify({"success": True})
 
 @ordenes_bp.route("/seguimiento/<token>")
-@ordenes_bp.route("/seguimiento/<token>")
 def seguimiento_cliente(token):
     orden, repuestos = obtener_detalle_orden_por_token(token)
     if not orden:
@@ -124,7 +124,6 @@ def descargar_pdf_web(token):
         download_name=f"Ficha_Recepcion_{orden[12]}.pdf"
     )
 
-
 @ordenes_bp.route("/api/historial/<patente>")
 def api_historial_vehiculo(patente):
     if "taller_id" not in session:
@@ -135,7 +134,6 @@ def api_historial_vehiculo(patente):
         
         resultado = []
         for h in historial:
-            # Formatear la fecha de forma segura independientemente del tipo
             fecha_val = h[7]
             if isinstance(fecha_val, datetime):
                 fecha_str = fecha_val.strftime("%d/%m/%Y %H:%M")
@@ -161,7 +159,6 @@ def api_historial_vehiculo(patente):
     except Exception as e:
         print(f"Error en API historial: {e}")
         return jsonify([])
-
 
 @ordenes_bp.route("/archivar_ot", methods=["POST"])
 def archivar_ot_ajax():
