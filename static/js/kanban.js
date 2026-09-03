@@ -260,3 +260,85 @@ function confirmarArchivar() {
         }
     });
 }
+
+function cerrarModalMecanico() {
+    document.getElementById('modal-crear-mecanico').classList.add('hidden');
+}
+
+function guardarMecanicoAjax() {
+    const nombre = document.getElementById('mec-nombre').value.trim();
+    const especialidad = document.getElementById('mec-especialidad').value.trim();
+
+    if (!nombre) {
+        Swal.fire({ icon: 'warning', title: 'Atención', text: 'Ingresa el nombre del mecánico.' });
+        return;
+    }
+
+    fetch('/crear_mecanico_ajax', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: nombre, especialidad: especialidad })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            // Agregar al select del modal de la OT activa
+            const selectOT = document.getElementById('select-mecanico-ot'); // Asegúrate que tu select en crear_ot.html tenga id="select-mecanico-ot"
+            if (selectOT) {
+                const opt = document.createElement('option');
+                opt.value = data.id;
+                opt.textContent = data.nombre;
+                opt.selected = true;
+                selectOT.appendChild(opt);
+            }
+
+            cerrarModalMecanico();
+            document.getElementById('form-crear-mecanico-ajax').reset();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Mecánico Registrado',
+                text: `${data.nombre} ha sido asignado a la orden actual.`,
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } else {
+            Swal.fire({ icon: 'error', title: 'Error', text: data.mensaje });
+        }
+    });
+}
+
+function previsualizarFoto(input, imgId) {
+    const img = document.getElementById(imgId);
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            img.src = e.target.result;
+            img.classList.remove('hidden');
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function buscarPatenteExistente(patente) {
+    if (!patente || patente.trim().length < 3) return;
+
+    fetch('/api/buscar_vehiculo/' + encodeURIComponent(patente.trim()))
+        .then(r => r.json())
+        .then(data => {
+            if (data.encontrado) {
+                // Auto-completar pero dejando los campos editables si es un nuevo usuario/dueño
+                if (data.cliente) document.getElementById('ot-input-cliente').value = data.cliente;
+                if (data.telefono) document.getElementById('ot-input-telefono').value = data.telefono;
+                if (data.marca) document.getElementById('ot-input-marca').value = data.marca;
+                if (data.modelo) document.getElementById('ot-input-modelo').value = data.modelo;
+
+                const banner = document.getElementById('banner-vehiculo-encontrado');
+                if (banner) {
+                    banner.classList.remove('hidden');
+                    banner.innerText = "ℹ️ Vehículo registrado previamente. Puedes modificar el cliente si cambió de dueño.";
+                }
+            }
+        })
+        .catch(err => console.error("Error buscando patente:", err));
+}

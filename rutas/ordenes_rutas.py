@@ -223,3 +223,80 @@ def archivar_ot_ajax():
     except Exception as e:
         print(f"Error al archivar OT: {e}")
         return jsonify({"status": "error", "mensaje": str(e)}), 500
+
+@configuracion_bp.route("/crear_mecanico_ajax", methods=["POST"])
+def crear_mecanico_ajax():
+    if "taller_id" not in session:
+        return jsonify({"status": "error", "mensaje": "Sesión expirada"}), 401
+
+    data = request.get_json()
+    nombre = data.get("nombre", "").strip()
+    especialidad = data.get("especialidad", "").strip()
+
+    if not nombre:
+        return jsonify({"status": "error", "mensaje": "El nombre es obligatorio"}), 400
+
+    taller_id = session["taller_id"]
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    try:
+        # Verificar si ya existe para evitar duplicados
+        cursor.execute(f"SELECT id FROM mecanicos WHERE taller_id = {p} AND LOWER(nombre) = LOWER({p})", (taller_id, nombre))
+        existe = cursor.fetchone()
+
+        if existe:
+            conexion.close()
+            return jsonify({"status": "ok", "id": existe[0], "nombre": nombre, "mensaje": "El mecánico ya existía"})
+
+        cursor.execute(f"""
+            INSERT INTO mecanicos (taller_id, nombre, especialidad)
+            VALUES ({p}, {p}, {p})
+        """, (taller_id, nombre, especialidad))
+        conexion.commit()
+
+        cursor.execute(f"SELECT id FROM mecanicos WHERE taller_id = {p} ORDER BY id DESC LIMIT 1", (taller_id,))
+        nuevo_id = cursor.fetchone()[0]
+        conexion.close()
+
+        return jsonify({"status": "ok", "id": nuevo_id, "nombre": nombre})
+
+    except Exception as e:
+        conexion.rollback()
+        conexion.close()
+        return jsonify({"status": "error", "mensaje": str(e)}), 500
+
+    @ordenes_bp.route("/api/buscar_vehiculo/<patente>")
+def api_buscar_vehiculo(patente):
+    if "taller_id" not in session:
+        return jsonify({"encontrado": False}), 401
+
+    patente_limpia = patente.strip().upper()
+    taller_id = session["taller_id"]
+
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    p = obtener_placeholder()
+
+    cursor.execute(f"""
+        SELECT v.marca, v.modelo, c.nombre, c.telefono
+        FROM vehiculos v
+        JOIN clientes c ON v.cliente_id = c.id
+        WHERE c.taller_id = {p} AND UPPER(v.patente_vin) = {p}
+        ORDER BY v.id DESC LIMIT 1
+    """, (taller_id, patente_limpia))
+
+    res = cursor.fetchone()
+    conexion.close()
+
+    if res:
+        return jsonify({
+            "encontrado": True,
+            "marca": res[0] or "",
+            "modelo": res[1] or "",
+            "cliente": res[2] or "",
+            "telefono": res[3] or ""
+        })
+    else:
+        return jsonify({"encontrado": False})

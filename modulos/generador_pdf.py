@@ -1,5 +1,7 @@
 import os
 import io
+import urllib.request
+from reportlab.platypus import Image
 import qrcode
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
