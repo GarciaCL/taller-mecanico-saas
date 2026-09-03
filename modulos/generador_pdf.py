@@ -1,7 +1,6 @@
 import os
 import io
 import urllib.request
-from reportlab.platypus import Image
 import qrcode
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -9,9 +8,33 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 
+def obtener_imagen_reportlab(url_o_path, ancho=150, alto=100):
+    """
+    Intenta cargar una imagen desde una URL (Cloudinary) o disco local
+    y devuelve un objeto Image de ReportLab.
+    """
+    if not url_o_path:
+        return None
+    try:
+        if url_o_path.startswith("http"):
+            # Es una URL de Cloudinary
+            req = urllib.request.urlopen(url_o_path)
+            img_data = io.BytesIO(req.read())
+            return RLImage(img_data, width=ancho, height=alto)
+        else:
+            # Es una ruta local (resguardo)
+            ruta_limpia = url_o_path.lstrip('/')
+            if os.path.exists(ruta_limpia):
+                return RLImage(ruta_limpia, width=ancho, height=alto)
+            return None
+    except Exception as e:
+        print(f"Error cargando imagen en PDF ({url_o_path}): {e}")
+        return None
+
 def generar_pdf_ficha_recepcion(orden_detalle, host_base="https://taller-mecanico-saas.onrender.com"):
     """
-    Genera en memoria un documento PDF profesional para la Ficha de Recepción a prueba de fallos.
+    Genera en memoria un documento PDF profesional para la Ficha de Recepción.
+    Soporta imágenes locales y URLs de Cloudinary.
     """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -62,7 +85,9 @@ def generar_pdf_ficha_recepcion(orden_detalle, host_base="https://taller-mecanic
     )
 
     # Extraer variables con valores por defecto seguros
+    # Asumiendo el orden basado en tu código original, ajusta si es necesario
     taller_nombre = orden_detalle[18] if len(orden_detalle) > 18 and orden_detalle[18] else "Taller Mecánico"
+    taller_logo_url = orden_detalle[19] if len(orden_detalle) > 19 and orden_detalle[19] else None
     patente = orden_detalle[12] if len(orden_detalle) > 12 and orden_detalle[12] else "SIN-PATENTE"
     marca = orden_detalle[13] if len(orden_detalle) > 13 and orden_detalle[13] else ""
     modelo = orden_detalle[14] if len(orden_detalle) > 14 and orden_detalle[14] else ""
@@ -90,22 +115,32 @@ def generar_pdf_ficha_recepcion(orden_detalle, host_base="https://taller-mecanic
     except Exception:
         qr_rl_img = Paragraph("<b>[QR]</b>", texto_normal)
 
+    # Cargar Logo del taller (Soporte Cloudinary)
+    taller_logo = obtener_imagen_reportlab(taller_logo_url, ancho=1.0*inch, alto=1.0*inch)
+
     # 2. ENCABEZADO
+    if taller_logo:
+        header_content = [taller_logo, Paragraph(f"<b>{taller_nombre}</b>", titulo_style)]
+    else:
+        header_content = [Paragraph(f"<b>{taller_nombre}</b>", titulo_style), ""]
+
     info_encabezado = [
-        [
-            Paragraph(f"<b>{taller_nombre}</b>", titulo_style),
-            qr_rl_img
-        ],
+        header_content + [qr_rl_img],
         [
             Paragraph("<b>FICHA DE RECEPCIÓN Y ESTADO DE VEHÍCULO</b><br/>Comprobante oficial de ingreso al taller", subtitulo_style),
+            "",
             Paragraph("<font size=7 color='#64748b'>Escanear para ver estado en vivo</font>", subtitulo_style)
         ]
     ]
 
-    tabla_encabezado = Table(info_encabezado, colWidths=[5.2*inch, 2.0*inch])
+    # Ajustar colWidths dependiendo de si hay logo
+    col_widths = [1.2*inch, 4.0*inch, 2.0*inch] if taller_logo else [5.2*inch, 0, 2.0*inch]
+    
+    tabla_encabezado = Table(info_encabezado, colWidths=col_widths)
     tabla_encabezado.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('ALIGN', (1,0), (1,-1), 'CENTER'),
+        ('ALIGN', (2,0), (2,-1), 'CENTER'), # QR centrado
+        ('SPAN', (0,1), (1,1)) if not taller_logo else ('SPAN', (0,1), (0,1)), # Ajuste span subtitulo
     ]))
     story.append(tabla_encabezado)
     story.append(Spacer(1, 10))
@@ -146,22 +181,14 @@ def generar_pdf_ficha_recepcion(orden_detalle, host_base="https://taller-mecanic
     story.append(tabla_sintomas)
     story.append(Spacer(1, 12))
 
-    # 5. INSPECCIÓN FOTOGRÁFICA (PROTEGIDA ANTE RUTA FALTANTE)
-    fotos_rutas = []
+    # 5. INSPECCIÓN FOTOGRÁFICA (Soporte Cloudinary)
+    elementos_fotos = []
+    # Asumiendo índices 7 a 11 para las 5 fotos en orden_detalle
     for idx in range(7, 12):
         if len(orden_detalle) > idx and orden_detalle[idx]:
-            fotos_rutas.append(orden_detalle[idx])
-
-    elementos_fotos = []
-    for f_path in fotos_rutas:
-        if f_path and isinstance(f_path, str) and f_path.strip() != '':
-            ruta_limpia = f_path.lstrip('/')
-            if os.path.exists(ruta_limpia):
-                try:
-                    img_obj = RLImage(ruta_limpia, width=2.1*inch, height=1.4*inch)
-                    elementos_fotos.append(img_obj)
-                except Exception:
-                    pass
+            img_obj = obtener_imagen_reportlab(orden_detalle[idx], ancho=2.1*inch, alto=1.4*inch)
+            if img_obj:
+                elementos_fotos.append(img_obj)
 
     if elementos_fotos:
         story.append(Paragraph("Inspección Fotográfica Inicial", seccion_style))
