@@ -45,49 +45,85 @@ function ordenarVehiculosCRM(criterio) {
 }
 
 function abrirHistorialModal(patente) {
-    document.getElementById('hist-modal-patente').innerText = patente;
-    const cont = document.getElementById('hist-modal-contenedor');
-    cont.innerHTML = '<div class="text-center text-slate-500 py-6">🔍 Cargando historial de intervenciones...</div>';
-    document.getElementById('modal-historial').classList.remove('hidden');
+    const elPatente = document.getElementById('modal-historial-patente');
+    const contenedor = document.getElementById('contenedor-historial-lista');
+    const modal = document.getElementById('modal-historial');
 
-    fetch('/api/historial/' + encodeURIComponent(patente))
-        .then(res => {
-            if (!res.ok) throw new Error('Error al obtener datos');
-            return res.json();
-        })
+    if (!modal || !contenedor) {
+        console.error("No se encontraron los elementos del modal de historial en el DOM.");
+        return;
+    }
+
+    if (elPatente) {
+        elPatente.innerText = patente;
+    }
+
+    contenedor.innerHTML = '<p class="text-center text-slate-500 py-6">Cargando historial...</p>';
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    fetch('/api/historial/' + patente)
+        .then(r => r.json())
         .then(data => {
             if (!data || data.length === 0) {
-                cont.innerHTML = '<div class="text-center text-slate-500 py-6">No hay registros de atenciones previas para este vehículo.</div>';
+                contenedor.innerHTML = '<p class="text-center text-slate-500 py-6">No hay registros de atenciones previas para este vehículo.</p>';
                 return;
             }
 
-            let html = '<div class="space-y-3">';
-            data.forEach(ot => {
-                const subtotalStr = Number(ot.costo).toLocaleString('es-CL');
-                const kmStr = Number(ot.km).toLocaleString('es-CL');
+            let html = '';
+            data.forEach(h => {
+                let badgeEstado = '';
+                
+                if (h.archivada || h.estado === 'finalizado') {
+                    badgeEstado = '<span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">✅ ENTREGADO Y ARCHIVADO</span>';
+                } else if (h.estado === 'entrega') {
+                    badgeEstado = '<span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">🚀 LISTO PARA ENTREGA</span>';
+                } else {
+                    badgeEstado = `<span class="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-400 font-bold border border-blue-500/30">🔧 EN TALLER (${h.estado.toUpperCase()})</span>`;
+                }
 
                 html += `
-                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-2">
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="font-bold text-blue-400 font-mono">OT #${ot.id} - ${ot.fecha}</span>
-                            <span class="bg-slate-800 text-emerald-400 font-bold px-2 py-0.5 rounded">$${subtotalStr}</span>
+                    <div class="bg-slate-950 border ${h.archivada ? 'border-slate-800/60' : 'border-blue-500/40'} p-4 rounded-xl space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="font-mono font-bold text-amber-400 text-sm">OT #${h.id}</span>
+                                <span class="text-slate-500 text-[11px] block">📅 Ingreso: ${h.fecha}</span>
+                            </div>
+                            <div class="text-right">
+                                ${badgeEstado}
+                                <span class="block text-emerald-400 font-bold text-sm mt-1">$${Number(h.costo).toLocaleString('es-CL')}</span>
+                            </div>
                         </div>
-                        <div class="text-xs text-white font-semibold">👤 ${ot.cliente} (${ot.telefono})</div>
-                        <p class="text-xs text-slate-300 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">🔧 ${ot.sintomas}</p>
-                        <div class="flex justify-between items-center pt-1 text-[11px] text-slate-400">
-                            <span>🏎️ ${kmStr} KM | ⛽ ${ot.combustible}</span>
-                            <a href="/descargar_pdf/${ot.token}" target="_blank" class="text-blue-400 hover:underline font-semibold flex items-center gap-1">📄 Ver PDF OT</a>
+
+                        <div class="grid grid-cols-2 gap-2 text-[11px] bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
+                            <div><b class="text-slate-400">Kilometraje:</b> <span class="text-slate-200">${Number(h.km).toLocaleString('es-CL')} KM</span></div>
+                            <div><b class="text-slate-400">Combustible:</b> <span class="text-slate-200">${h.combustible}</span></div>
+                        </div>
+
+                        <p class="text-slate-300 text-xs bg-slate-900/40 p-2 rounded-lg"><b class="text-slate-400">Motivo / Síntomas:</b> ${h.sintomas || 'Sin detalle'}</p>
+
+                        <div class="text-right pt-1">
+                            <a href="/descargar_pdf/${h.token}" target="_blank" class="text-amber-400 hover:text-amber-300 font-semibold text-[11px]">📄 Descargar PDF Ficha</a>
                         </div>
                     </div>
                 `;
             });
-            html += '</div>';
-            cont.innerHTML = html;
+
+            contenedor.innerHTML = html;
         })
         .catch(err => {
-            console.error(err);
-            cont.innerHTML = '<div class="text-center text-rose-400 py-6">⚠️ Ocurrió un error al cargar el historial del vehículo.</div>';
+            console.error("Error cargando historial:", err);
+            contenedor.innerHTML = '<p class="text-center text-rose-400 py-6">Error al obtener el historial.</p>';
         });
+}
+
+function cerrarHistorialModal() {
+    const modal = document.getElementById('modal-historial');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
 }
 
 function cerrarModalHistorial() {
