@@ -24,7 +24,11 @@ function evaluarTiemposKanban() {
     });
 }
 
+let patenteActualModalOT = '';
+
 function abrirDetalleOrden(id, patente, vehiculo, cliente, telefono, km, combustible, sintomas, costo, token, fechaStr, horasEst) {
+    patenteActualModalOT = patente; // Guardar patente seleccionada
+
     document.getElementById('edit-orden-id').value = id;
     document.getElementById('archivar-orden-id').value = id;
     document.getElementById('m-patente').innerText = patente;
@@ -37,7 +41,6 @@ function abrirDetalleOrden(id, patente, vehiculo, cliente, telefono, km, combust
     document.getElementById('edit-sintomas').value = sintomas;
     document.getElementById('edit-costo').value = costo;
 
-    document.getElementById('btn-historial-patente').setAttribute('href', '/historial/' + patente);
     document.getElementById('btn-pdf-modal').setAttribute('href', '/descargar_pdf/' + token);
 
     if (typeof cargarRepuestosVinculadosOT === 'function') {
@@ -64,6 +67,12 @@ function abrirDetalleOrden(id, patente, vehiculo, cliente, telefono, km, combust
     document.getElementById('modal-detalle').classList.remove('hidden');
 }
 
+// Función para abrir el modal del historial directamente desde el modal de detalle de OT
+function abrirHistorialModalDesdeOT() {
+    if (patenteActualModalOT) {
+        abrirHistorialModal(patenteActualModalOT);
+    }
+}
 function cerrarDetalleOrden() {
     document.getElementById('modal-detalle').classList.add('hidden');
 }

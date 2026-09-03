@@ -149,7 +149,9 @@
                              class="kanban-card card-orden bg-slate-900 border border-slate-800/80 rounded-xl p-4 cursor-pointer hover:border-blue-500/50 transition-all relative overflow-hidden">
                             
                             <div class="flex justify-between items-start mb-2">
-                                <span class="font-bold text-white font-mono text-sm bg-slate-800 px-2 py-0.5 rounded">{{ o[4] }}</span>
+                                <span onclick="event.stopPropagation(); abrirHistorialModal('{{ o[4] }}')" class="font-bold text-blue-400 font-mono text-sm bg-slate-800/90 hover:bg-slate-800 px-2 py-0.5 rounded cursor-pointer hover:underline border border-blue-500/30" title="Ver Historial de Atenciones">
+    🚗 {{ o[4] }}
+</span>
                                 <span class="text-xs text-emerald-400 font-bold">${{ "{:,.0f}".format(o[3]) }}</span>
                             </div>
 
@@ -496,9 +498,9 @@
                                 <span class="block text-[10px] text-slate-400">✉️ {{ c[4] if c[4] else 'Sin correo' }}</span>
                             </td>
                             <td class="p-4">
-                                <span class="bg-slate-800 text-blue-300 font-mono text-[10px] px-2 py-1 rounded-lg">
-                                    🚗 {{ c[7] if c[7] else 'Sin vehículo' }}
-                                </span>
+                                <span onclick="abrirHistorialModal('{{ c[7] }}')" class="bg-slate-800/90 hover:bg-slate-800 text-blue-400 font-mono text-[10px] px-2 py-1 rounded-lg cursor-pointer hover:underline border border-blue-500/30" title="Ver Historial">
+    🚗 {{ c[7] if c[7] else 'Sin vehículo' }}
+</span>
                             </td>
                             <td class="p-4 font-bold text-slate-200">{{ c[6] }} OTs</td>
                             <td class="p-4 text-right">
@@ -617,7 +619,10 @@
                                 <span class="block font-bold text-white">{{ c[1] }}</span>
                                 <span class="block text-[10px] text-slate-400">📱 {{ c[2] }}</span>
                             </td>
-                            <td class="p-4 font-bold text-slate-200">{{ c[3] }} ({{ c[4] }} {{ c[5] }})</td>
+                            <td class="p-4 font-bold text-slate-200">
+    <span onclick="abrirHistorialModal('{{ c[3] }}')" class="text-blue-400 font-mono cursor-pointer hover:underline font-bold" title="Ver Historial">🚗 {{ c[3] }}</span> 
+    <span class="text-xs text-slate-400">({{ c[4] }} {{ c[5] }})</span>
+</td>
                             <td class="p-4 font-bold text-emerald-400">${{ "{:,.0f}".format(c[7]) }}</td>
                             <td class="p-4 font-semibold text-slate-400">
                                 {{ c[10] }}
