@@ -1,5 +1,7 @@
 import os
 import io
+import cloudinary
+import cloudinary.uploader
 from flask import Blueprint, request, redirect, session, jsonify, send_file, render_template
 from werkzeug.utils import secure_filename
 from modulos.conexion import obtener_conexion, obtener_placeholder
@@ -12,17 +14,38 @@ from modulos.inventario import descontar_stock_orden
 from modulos.generador_pdf import generar_pdf_ficha_recepcion
 from datetime import datetime
 
-
+# CONFIGURACIÓN DE CLOUDINARY
+# Puedes colocar tus claves directamente o cargarlas desde variables de entorno
+cloudinary.config(
+    cloud_name = os.environ.get("CLOUDINARY_CLOUD_NAME", "hylsaomw"),
+    api_key = os.environ.get("CLOUDINARY_API_KEY", "342238895435546"),
+    api_secret = os.environ.get("CLOUDINARY_API_SECRET", "WWzr1lNjdqEZVDD9BqcYPuOU4Is"),
+    secure = True
+)
 ordenes_bp = Blueprint('ordenes', __name__)
 
 def guardar_foto(file, nombre_base):
     if not file or file.filename == '':
         return ''
-    filename = secure_filename(f"{nombre_base}_{file.filename}")
-    path = os.path.join('static', 'uploads', filename)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    file.save(path)
-    return f"/static/uploads/{filename}"
+    
+    try:
+        # Subir directamente la imagen desde la memoria a Cloudinary
+        upload_result = cloudinary.uploader.upload(
+            file,
+            public_id=f"taller_ot/{nombre_base}",
+            overwrite=True,
+            resource_type="image"
+        )
+        # Retorna la URL pública segura en la nube (https://res.cloudinary.com/...)
+        return upload_result.get("secure_url", "")
+    except Exception as e:
+        print(f"[CLOUDINARY ERROR]: {e}")
+        # Caída de respaldo local en caso de que falle la API de Cloudinary
+        filename = secure_filename(f"{nombre_base}_{file.filename}")
+        path = os.path.join('static', 'uploads', filename)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        file.save(path)
+        return f"/static/uploads/{filename}"
 
 @ordenes_bp.route("/crear_ot", methods=["POST"])
 def crear_ot_web():
