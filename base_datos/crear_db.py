@@ -61,7 +61,7 @@ def inicializar_db_saas():
         );
     """)
 
-    # 4. CLIENTES
+   # 4. CLIENTES
     cursor.execute(f"""
         CREATE TABLE IF NOT EXISTS clientes (
             id {serial_pk},
@@ -73,6 +73,8 @@ def inicializar_db_saas():
             FOREIGN KEY (taller_id) REFERENCES talleres(id)
         );
     """)
+    conexion.commit()  # <-- AGREGA ESTA LÍNEA AQUÍ
+
     # Migración defensiva para bases de datos existentes
     try:
         cursor.execute("ALTER TABLE clientes ADD COLUMN email VARCHAR(100);")
