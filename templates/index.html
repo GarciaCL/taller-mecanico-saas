@@ -49,6 +49,9 @@
         <button onclick="toggleSidebarMovil()" class="p-2 text-slate-300 hover:text-white bg-slate-800 rounded-xl border border-slate-700">
             <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
+        <span class="text-[10px] bg-yellow-500 text-black font-bold px-2 py-0.5 rounded">
+    VERSIÓN TEST 2.0 - CON AGENDA
+</span>
     </div>
 
     <!-- OVERLAY OSCURO PARA MÓVIL -->
@@ -66,6 +69,9 @@
                     <span class="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Sistema En Vivo
                     </span>
+                    <span class="text-[10px] bg-yellow-500 text-black font-bold px-2 py-0.5 rounded">
+    VERSIÓN TEST 2.0 - CON AGENDA
+</span>
                 </div>
             </div>
 
@@ -810,7 +816,7 @@
             if (id === 'res') {
                 setTimeout(inicializarCalendarioReservas, 100);
             }
-            
+
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('text-white', 'bg-slate-800/80');
                 btn.classList.add('text-slate-400');
