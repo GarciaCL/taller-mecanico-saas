@@ -5,7 +5,7 @@
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
                 <i data-lucide="calendar-plus" class="w-4 h-4 text-cyan-400"></i> Agendar Cupo de Ingreso
             </h3>
-            <button onclick="document.getElementById('modal-nueva-reserva').classList.add('hidden')" class="text-slate-400 hover:text-white">
+            <button onclick="cerrarModalReserva()" class="text-slate-400 hover:text-white">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
@@ -13,7 +13,11 @@
         <form id="form-reserva-tailwind" class="p-5 space-y-4 text-xs">
             <div>
                 <label class="block font-semibold text-slate-300 mb-1">Patente del Vehículo *</label>
-                <input type="text" id="res_patente" uppercase required placeholder="Ej: AB123CD" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono focus:outline-none focus:border-blue-500 uppercase">
+
+                <div class="relative">
+                    <input type="text" id="res_patente" oninput="buscarDatosPorPatente(this.value)" required placeholder="Ej: AB123CD" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono focus:outline-none focus:border-blue-500 uppercase">
+                    <span id="indicador-patente" class="absolute right-3 top-2.5 text-[10px] hidden font-semibold"></span>
+                </div>
             </div>
 
             <div>
@@ -37,19 +41,27 @@
                 <textarea id="res_servicio" rows="2" placeholder="Mantención de 10.000 KM, revisión de frenos..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-blue-500"></textarea>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <!-- FECHA Y HORAS EN CAMPOS SEPARADOS -->
+            <div class="space-y-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/80">
                 <div>
-                    <label class="block font-semibold text-slate-300 mb-1">Fecha/Hora Inicio *</label>
-                    <input type="datetime-local" id="res_inicio" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                    <label class="block font-semibold text-slate-300 mb-1">Fecha de Ingreso *</label>
+                    <input type="date" id="res_fecha" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
                 </div>
-                <div>
-                    <label class="block font-semibold text-slate-300 mb-1">Fecha/Hora Fin *</label>
-                    <input type="datetime-local" id="res_fin" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Hora Inicio *</label>
+                        <input type="time" id="res_hora_inicio" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Hora Término *</label>
+                        <input type="time" id="res_hora_fin" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                    </div>
                 </div>
             </div>
 
             <div class="flex justify-end gap-2 pt-3 border-t border-slate-800/80">
-                <button type="button" onclick="document.getElementById('modal-nueva-reserva').classList.add('hidden')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold">Cancelar</button>
+                <button type="button" onclick="cerrarModalReserva()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold">Cancelar</button>
                 <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20">💾 Guardar Reserva</button>
             </div>
         </form>
@@ -73,6 +85,7 @@
 
 <script>
 var miCalendario = null;
+var timerBusquedaPatente = null;
 
 function inicializarCalendarioReservas() {
     var calendarEl = document.getElementById('calendar');
@@ -81,12 +94,19 @@ function inicializarCalendarioReservas() {
     miCalendario = new FullCalendar.Calendar(calendarEl, {
         initialView: 'timeGridWeek',
         locale: 'es',
+        selectable: true, // PERMITIR SELECCIÓN HACIENDO CLIC
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         },
         events: '/api/reservas',
+        
+        // Clic en un día o rango de hora en el calendario
+        select: function(info) {
+            abrirModalReservaConFecha(info.startStr, info.endStr);
+        },
+
         eventClick: function(info) {
             var p = info.event.extendedProps;
             Swal.fire({
@@ -105,18 +125,82 @@ function inicializarCalendarioReservas() {
     miCalendario.render();
 }
 
-// Escuchar envío del formulario de reserva
+function abrirModalReservaConFecha(startStr, endStr) {
+    var inicio = new Date(startStr);
+    var fin = endStr ? new Date(endStr) : new Date(inicio.getTime() + 60*60*1000); // 1 hora por defecto
+
+    // Formatear Fecha (YYYY-MM-DD)
+    var yyyy = inicio.getFullYear();
+    var mm = String(inicio.getMonth() + 1).padStart(2, '0');
+    var dd = String(inicio.getDate()).padStart(2, '0');
+    document.getElementById('res_fecha').value = `${yyyy}-${mm}-${dd}`;
+
+    // Formatear Horas (HH:MM)
+    var horaInicio = String(inicio.getHours()).padStart(2, '0') + ':' + String(inicio.getMinutes()).padStart(2, '0');
+    var horaFin = String(fin.getHours()).padStart(2, '0') + ':' + String(fin.getMinutes()).padStart(2, '0');
+    
+    document.getElementById('res_hora_inicio').value = horaInicio;
+    document.getElementById('res_hora_fin').value = horaFin;
+
+    document.getElementById('modal-nueva-reserva').classList.remove('hidden');
+}
+
+function cerrarModalReserva() {
+    document.getElementById('modal-nueva-reserva').classList.add('hidden');
+    document.getElementById('form-reserva-tailwind').reset();
+    var ind = document.getElementById('indicador-patente');
+    ind.classList.add('hidden');
+}
+
+// Búsqueda automática del cliente/vehículo al escribir la patente
+function buscarDatosPorPatente(patente) {
+    clearTimeout(timerBusquedaPatente);
+    var patenteLimpia = patente.trim().toUpperCase();
+    var ind = document.getElementById('indicador-patente');
+
+    if (patenteLimpia.length < 5) {
+        ind.classList.add('hidden');
+        return;
+    }
+
+    timerBusquedaPatente = setTimeout(function() {
+        // Buscar en la lista global de vehículos CRM cargada en index.html
+        if (typeof listadoVehiculosCRM !== 'undefined') {
+            var encontrado = listadoVehiculosCRM.find(v => v.patente.toUpperCase() === patenteLimpia);
+            if (encontrado) {
+                document.getElementById('res_cliente').value = encontrado.cliente || '';
+                document.getElementById('res_telefono').value = encontrado.telefono || '';
+                document.getElementById('res_modelo').value = encontrado.vehiculo || '';
+                
+                ind.innerText = '✓ Cliente Registrado';
+                ind.className = 'absolute right-3 top-2.5 text-[10px] font-bold text-emerald-400';
+                ind.classList.remove('hidden');
+                return;
+            }
+        }
+        
+        ind.innerText = '• Nuevo Vehículo';
+        ind.className = 'absolute right-3 top-2.5 text-[10px] font-bold text-blue-400';
+        ind.classList.remove('hidden');
+    }, 300);
+}
+
+// Guardar Reserva
 document.getElementById('form-reserva-tailwind').addEventListener('submit', function(e) {
     e.preventDefault();
     
+    var fecha = document.getElementById('res_fecha').value;
+    var hInicio = document.getElementById('res_hora_inicio').value;
+    var hFin = document.getElementById('res_hora_fin').value;
+
     var datos = {
-        patente: document.getElementById('res_patente').value,
+        patente: document.getElementById('res_patente').value.toUpperCase(),
         cliente_nombre: document.getElementById('res_cliente').value,
         cliente_telefono: document.getElementById('res_telefono').value,
         vehiculo_modelo: document.getElementById('res_modelo').value,
         servicio_requerido: document.getElementById('res_servicio').value,
-        fecha_inicio: document.getElementById('res_inicio').value,
-        fecha_fin: document.getElementById('res_fin').value
+        fecha_inicio: `${fecha}T${hInicio}:00`,
+        fecha_fin: `${fecha}T${hFin}:00`
     };
 
     fetch('/api/reservas/crear', {
@@ -127,8 +211,7 @@ document.getElementById('form-reserva-tailwind').addEventListener('submit', func
     .then(res => res.json())
     .then(data => {
         if(data.success) {
-            document.getElementById('modal-nueva-reserva').classList.add('hidden');
-            document.getElementById('form-reserva-tailwind').reset();
+            cerrarModalReserva();
             if (miCalendario) miCalendario.refetchEvents();
             Swal.fire({ icon: 'success', title: '¡Reserva Agendada!', timer: 1500, showConfirmButton: false });
         } else {
