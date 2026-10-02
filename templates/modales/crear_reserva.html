@@ -1,0 +1,139 @@
+<!-- MODAL NUEVA RESERVA EN TAILWIND -->
+<div id="modal-nueva-reserva" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+        <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="calendar-plus" class="w-4 h-4 text-cyan-400"></i> Agendar Cupo de Ingreso
+            </h3>
+            <button onclick="document.getElementById('modal-nueva-reserva').classList.add('hidden')" class="text-slate-400 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form id="form-reserva-tailwind" class="p-5 space-y-4 text-xs">
+            <div>
+                <label class="block font-semibold text-slate-300 mb-1">Patente del Vehículo *</label>
+                <input type="text" id="res_patente" uppercase required placeholder="Ej: AB123CD" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono focus:outline-none focus:border-blue-500 uppercase">
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-300 mb-1">Nombre del Cliente *</label>
+                <input type="text" id="res_cliente" required placeholder="Nombre Apellido" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Teléfono</label>
+                    <input type="text" id="res_telefono" placeholder="+56912345678" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Modelo / Vehículo</label>
+                    <input type="text" id="res_modelo" placeholder="Ej: Toyota Yaris" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-300 mb-1">Servicio Requerido</label>
+                <textarea id="res_servicio" rows="2" placeholder="Mantención de 10.000 KM, revisión de frenos..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Fecha/Hora Inicio *</label>
+                    <input type="datetime-local" id="res_inicio" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Fecha/Hora Fin *</label>
+                    <input type="datetime-local" id="res_fin" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-800/80">
+                <button type="button" onclick="document.getElementById('modal-nueva-reserva').classList.add('hidden')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold">Cancelar</button>
+                <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20">💾 Guardar Reserva</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Estilos Oscuros para FullCalendar -->
+<style>
+    .fc { --fc-border-color: #334155; --fc-page-bg-color: transparent; }
+    .fc-theme-standard td, .fc-theme-standard th { border-color: #1e293b !important; }
+    .fc .fc-toolbar-title { font-size: 1rem !important; font-weight: 700; color: #f8fafc; }
+    .fc .fc-button-primary { background-color: #1e293b !important; border-color: #334155 !important; color: #f8fafc !important; border-radius: 0.75rem !important; }
+    .fc .fc-button-primary:hover { background-color: #334155 !important; }
+    .fc .fc-button-active { background-color: #2563eb !important; border-color: #2563eb !important; }
+    .fc-col-header-cell-cushion, .fc-timegrid-slot-label-cushion { color: #94a3b8 !important; }
+</style>
+
+<!-- Cargar Librería FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/es.global.min.js"></script>
+
+<script>
+var miCalendario = null;
+
+function inicializarCalendarioReservas() {
+    var calendarEl = document.getElementById('calendar');
+    if (!calendarEl || miCalendario) return;
+
+    miCalendario = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        locale: 'es',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        },
+        events: '/api/reservas',
+        eventClick: function(info) {
+            var p = info.event.extendedProps;
+            Swal.fire({
+                title: info.event.title,
+                html: `<div class="text-left text-xs space-y-2 mt-2">
+                    <p><b>Servicio:</b> ${p.servicio || 'No especificado'}</p>
+                    <p><b>Modelo:</b> ${p.modelo || 'N/I'}</p>
+                    <p><b>Teléfono:</b> ${p.telefono || 'Sin teléfono'}</p>
+                    <p><b>Estado:</b> <span class="uppercase font-bold text-amber-400">${p.estado}</span></p>
+                </div>`,
+                icon: 'info',
+                confirmButtonColor: '#2563eb'
+            });
+        }
+    });
+    miCalendario.render();
+}
+
+// Escuchar envío del formulario de reserva
+document.getElementById('form-reserva-tailwind').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    var datos = {
+        patente: document.getElementById('res_patente').value,
+        cliente_nombre: document.getElementById('res_cliente').value,
+        cliente_telefono: document.getElementById('res_telefono').value,
+        vehiculo_modelo: document.getElementById('res_modelo').value,
+        servicio_requerido: document.getElementById('res_servicio').value,
+        fecha_inicio: document.getElementById('res_inicio').value,
+        fecha_fin: document.getElementById('res_fin').value
+    };
+
+    fetch('/api/reservas/crear', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(datos)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            document.getElementById('modal-nueva-reserva').classList.add('hidden');
+            document.getElementById('form-reserva-tailwind').reset();
+            if (miCalendario) miCalendario.refetchEvents();
+            Swal.fire({ icon: 'success', title: '¡Reserva Agendada!', timer: 1500, showConfirmButton: false });
+        } else {
+            Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'No se pudo agendar' });
+        }
+    });
+});
+</script>

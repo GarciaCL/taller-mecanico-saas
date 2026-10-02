@@ -88,12 +88,16 @@
                 <button onclick="cambiarPestana('cot')" id="btn-cot" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
                     <i data-lucide="file-text" class="w-4 h-4 text-amber-400"></i> Cotizaciones
                 </button>
+                <button onclick="cambiarPestana('res')" id="btn-res" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
+    <i data-lucide="calendar-days" class="w-4 h-4 text-cyan-400"></i> Agenda & Reservas
+</button>
                 <button onclick="cambiarPestana('ajustes')" id="btn-ajustes" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all">
                     <i data-lucide="settings" class="w-4 h-4 text-purple-400"></i> Ajustes Taller
                 </button>
                 <button id="btn-instalar-pwa" onclick="instalarAppPWA()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all">
                     <i data-lucide="download" class="w-4 h-4"></i> Agregar acceso en Escritorio
                 </button>
+                
             </nav>
         </div>
 
@@ -658,7 +662,23 @@
                 </table>
             </div>
         </section>
+        <!-- 8. AGENDA Y RESERVAS DE INGRESO -->
+        <section id="sec-res" class="space-y-6 hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-xl md:text-2xl font-bold text-white tracking-tight">Agenda & Reservas de Ingreso</h2>
+                    <p class="text-xs text-slate-400">Planificación de cupos de taller y citas agendadas.</p>
+                </div>
+                <button onclick="document.getElementById('modal-nueva-reserva').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all shrink-0">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Nueva Reserva
+                </button>
+            </div>
 
+            <!-- CONTENEDOR DEL CALENDARIO -->
+            <div class="bg-slate-900/60 border border-slate-800/80 p-4 md:p-6 rounded-2xl shadow-xl">
+                <div id="calendar" class="text-slate-200"></div>
+            </div>
+        </section>
         <!-- 7. CONFIGURACIÓN, EMAIL Y LOGO DEL TALLER -->
         <section id="sec-ajustes" class="space-y-6 hidden">
             <div>
@@ -760,6 +780,7 @@
     {% include 'modales/historial_modal.html' %}
     {% include 'modales/crear_cotizacion.html' %}
     {% include 'modales/crear_mecanico.html' %}
+    {% include 'modales/crear_reserva.html' %}
 
     <script>
         lucide.createIcons();
@@ -785,6 +806,11 @@
 
             window.location.hash = id;
 
+            // Inicializar calendario si se abre la pestaña de reservas
+            if (id === 'res') {
+                setTimeout(inicializarCalendarioReservas, 100);
+            }
+            
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('text-white', 'bg-slate-800/80');
                 btn.classList.add('text-slate-400');

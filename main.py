@@ -23,6 +23,7 @@ from rutas.metricas_rutas import metricas_bp
 from rutas.mecanicos_rutas import mecanicos_bp
 from rutas.configuracion_rutas import configuracion_bp
 from rutas.superadmin_rutas import superadmin_bp
+from rutas.reservas_rutas import reservas_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "clave_secreta_saas_taller")
@@ -44,6 +45,7 @@ app.register_blueprint(metricas_bp)
 app.register_blueprint(mecanicos_bp)
 app.register_blueprint(configuracion_bp)
 app.register_blueprint(superadmin_bp)
+app.register_blueprint(reservas_bp)
 
 # --- RUTA PARA SERVICE WORKER DE LA PWA ---
 @app.route('/sw.js')
