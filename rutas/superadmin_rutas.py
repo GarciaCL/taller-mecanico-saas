@@ -5,7 +5,11 @@ from datetime import datetime, timedelta
 superadmin_bp = Blueprint('superadmin', __name__)
 
 def verificar_superadmin():
-    if "taller_id" not in session:
+    # 1. Verificar si existe sesión iniciada
+    if "usuario" not in session and "taller_id" not in session:
+        return False
+    # 2. Verificar que el rol o indicador de la sesión sea superadmin
+    if not session.get("es_superadmin") and session.get("rol") != "superadmin":
         return False
     return True
 
@@ -57,14 +61,12 @@ def vista_superadmin():
                 estado = str(t[5]) if t[5] else "activo"
                 fecha_venc = t[6]
 
-                # Convertir string a datetime si es necesario
                 if isinstance(fecha_venc, str):
                     try:
                         fecha_venc = datetime.strptime(fecha_venc[:19], "%Y-%m-%d %H:%M:%S")
                     except Exception:
                         fecha_venc = None
 
-                # Si no tiene fecha, asignar HOY + 14 días y guardar en BD
                 if not fecha_venc:
                     fecha_venc = ahora + timedelta(days=14)
                     try:
@@ -74,13 +76,11 @@ def vista_superadmin():
                     except Exception as e_upd:
                         conexion.rollback()
 
-                # Formato de fecha
                 try:
                     fecha_fmt = fecha_venc.strftime("%d/%m/%Y")
                 except Exception:
                     fecha_fmt = "14 días asignados"
 
-                # Calcular días restantes
                 try:
                     dias_restantes = (fecha_venc - ahora).days
                 except Exception:
@@ -127,7 +127,6 @@ def vista_superadmin():
                 <a href="/" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold;">Volver al Inicio</a>
             </div>
         """, 500
-
 
 @superadmin_bp.route("/superadmin/extender_dias", methods=["POST"])
 def extender_dias_taller():

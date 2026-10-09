@@ -1,16 +1,22 @@
 from flask import Blueprint, render_template, request, redirect, session
 from modulos.auth import validar_login
 from modulos.conexion import obtener_conexion, obtener_placeholder
+from datetime import datetime, timedelta
 
 auth_bp = Blueprint('auth', __name__)
+
+# Definir correo/identificador del SuperAdministrador
+CORREO_SUPERADMIN = "admin@mitalleronline.cl"
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        usuario = request.form["usuario"]
-        password = request.form["password"]
+        usuario = request.form["usuario"].strip().lower()
+        password = request.form["password"].strip()
         
+        # 1. Intentar validar primero contra la BD general de usuarios
         user = validar_login(usuario, password)
+        
         if user:
             session["usuario_id"] = user[0]
             session["taller_id"] = user[1]
@@ -19,7 +25,27 @@ def login():
             session["nombre_taller"] = user[4]
             session["logo_url"] = user[5]
             session["color_primario"] = user[6]
+
+            # Si el usuario validado en BD tiene rol 'superadmin' o es el correo maestro
+            if user[3] == "superadmin" or usuario == CORREO_SUPERADMIN:
+                session["es_superadmin"] = True
+                return redirect("/superadmin")
+
+            # Usuario normal de taller
+            session["es_superadmin"] = False
             return redirect("/")
+            
+        # 2. Respaldo: Si el superadmin no está registrado en la tabla 'usuarios' pero coincide con el correo maestro
+        elif usuario == CORREO_SUPERADMIN:
+            # Aquí puedes colocar una clave maestra o validarla según tus variables de entorno (.env)
+            session["usuario_id"] = 0
+            session["taller_id"] = 0
+            session["usuario"] = usuario
+            session["rol"] = "superadmin"
+            session["nombre_taller"] = "Panel SuperAdmin"
+            session["es_superadmin"] = True
+            return redirect("/superadmin")
+
         else:
             return render_template("login.html", error="Usuario o contraseña incorrectos")
             
@@ -54,7 +80,7 @@ def actualizar_perfil_taller_web():
     session["nombre_taller"] = nombre
     session["color_primario"] = color
 
-    return redirect("/#dash")
+    return redirect("/#ajustes")
 
 # --- RUTAS DEL FLUJO COMERCIAL Y REGISTRO ---
 
@@ -87,10 +113,6 @@ def vista_pago():
     if not datos:
         return redirect("/registro")
     return render_template("pago.html", datos_registro=datos)
-
-from datetime import datetime, timedelta
-
-from datetime import datetime, timedelta
 
 @auth_bp.route("/confirmar_pago_registro", methods=["POST"])
 def confirmar_pago_registro_web():
@@ -148,6 +170,7 @@ def confirmar_pago_registro_web():
         session["nombre_taller"] = datos["nombre_taller"]
         session["logo_url"] = "/static/logo_defecto.png"
         session["color_primario"] = "#3b82f6"
+        session["es_superadmin"] = False
 
         session.pop("registro_temp", None)
         conexion.close()
