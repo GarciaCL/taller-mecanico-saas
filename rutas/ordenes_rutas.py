@@ -152,14 +152,20 @@ def cambiar_estado_ot_web():
     if "taller_id" not in session:
         return jsonify({"error": "No autorizado"}), 401
 
-    orden_id = request.form.get("orden_id")
-    nuevo_estado = request.form.get("nuevo_estado")
+    # Detectar si los datos vienen en JSON (JavaScript fetch) o Formulario (Form HTML)
+    if request.is_json:
+        datos = request.get_json() or {}
+        orden_id = datos.get("orden_id")
+        nuevo_estado = datos.get("nuevo_estado")
+    else:
+        orden_id = request.form.get("orden_id")
+        nuevo_estado = request.form.get("nuevo_estado")
 
     if not orden_id or not nuevo_estado:
-        return jsonify({"error": "Faltan parámetros"}), 400
+        return jsonify({"error": "Faltan parámetros obrigatorios"}), 400
 
     try:
-        # Llamar a la función que actualiza la BD y envía el correo automático
+        # Llamar a la función que actualiza la BD y envía el correo automático al cliente
         actualizar_estado_orden(int(orden_id), session["taller_id"], nuevo_estado)
         return jsonify({"exito": True, "mensaje": "Estado actualizado correctamente"})
     except Exception as e:
