@@ -107,29 +107,38 @@ def actualizar_estado_orden(orden_id, taller_id, nuevo_estado):
     cursor = conexion.cursor()
     p = obtener_placeholder()
 
-    # 1. Actualizar el estado en la base de datos
-    cursor.execute(f"""
-        UPDATE ordenes_trabajo
-        SET estado = {p}
-        WHERE id = {p} AND taller_id = {p}
-    """, (nuevo_estado, orden_id, taller_id))
-
-    conexion.commit()
-
-    # 2. Consultar datos para enviar la notificación por correo
     try:
+        # 1. Actualizar el estado en la base de datos
+        if taller_id:
+            cursor.execute(f"""
+                UPDATE ordenes_trabajo
+                SET estado = {p}
+                WHERE id = {p} AND taller_id = {p}
+            """, (nuevo_estado, orden_id, taller_id))
+        else:
+            cursor.execute(f"""
+                UPDATE ordenes_trabajo
+                SET estado = {p}
+                WHERE id = {p}
+            """, (nuevo_estado, orden_id))
+
+        conexion.commit()
+        print(f"[BD OK] Orden ID {orden_id} actualizada a estado: {nuevo_estado}")
+
+        # 2. Consultar datos para enviar la notificación por correo
         cursor.execute(f"""
             SELECT c.email, c.nombre, v.patente_vin, t.nombre_taller
             FROM ordenes_trabajo ot
             JOIN vehiculos v ON ot.vehiculo_id = v.id
             JOIN clientes c ON v.cliente_id = c.id
             JOIN talleres t ON ot.taller_id = t.id
-            WHERE ot.id = {p} AND ot.taller_id = {p}
-        """, (orden_id, taller_id))
+            WHERE ot.id = {p}
+        """, (orden_id,))
 
         datos = cursor.fetchone()
-        if datos and datos[0]:  # Si existe el registro y el cliente tiene un email
+        if datos and datos[0]:  # Si existe el registro y el cliente tiene un email válido
             email_cliente, nombre_cliente, patente, nombre_taller = datos
+            print(f"[DISPARANDO CORREO] A: {email_cliente} - Estado: {nuevo_estado}")
             enviar_aviso_estado_ot(
                 email_cliente=email_cliente,
                 nombre_cliente=nombre_cliente,
@@ -137,10 +146,14 @@ def actualizar_estado_orden(orden_id, taller_id, nuevo_estado):
                 nuevo_estado=nuevo_estado,
                 nombre_taller=nombre_taller
             )
-    except Exception as e:
-        print(f"[ALERTA NOTIFICACIÓN ESTADO OT] No se envió el correo: {e}")
+        else:
+            print(f"[NOTA CORREO] La orden {orden_id} no tiene correo de cliente registrado.")
 
-    conexion.close()
+    except Exception as e:
+        conexion.rollback()
+        print(f"[ERROR ACTUALIZAR ESTADO] Fallo en orden {orden_id}: {e}")
+    finally:
+        conexion.close()
 
 def finalizar_orden_trabajo(orden_id, taller_id):
     return actualizar_estado_orden(orden_id, taller_id, 'finalizado')
