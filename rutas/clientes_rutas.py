@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, redirect, session
+from modulos.conexion import obtener_conexion, obtener_placeholder
 from modulos.clientes import actualizar_cliente, obtener_detalle_cliente, agregar_vehiculo_a_cliente
 
 clientes_bp = Blueprint('clientes', __name__)
