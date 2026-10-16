@@ -141,3 +141,39 @@ def enviar_aviso_vencimiento(email_usuario, fecha_vencimiento):
     </html>
     """
     enviar_correo(email_usuario, asunto, html)
+
+    # ==========================================
+# 5. AVISO DE CAMBIO DE ESTADO EN ORDEN DE TRABAJO
+# ==========================================
+def enviar_aviso_estado_ot(email_cliente, nombre_cliente, patente, nuevo_estado, nombre_taller):
+    asunto = f"🚗 Actualización de tu Vehículo [{patente}] - {nombre_taller}"
+    
+    # Mensaje o estilo personalizado según el estado
+    color_banner = "#3b82f6" # Azul por defecto
+    if nuevo_estado.lower() in ["listo", "listo para retiro", "completado"]:
+        color_banner = "#22c55e" # Verde
+    elif nuevo_estado.lower() in ["en proceso", "en reparacion"]:
+        color_banner = "#f59e0b" # Naranja
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 30px; margin: 0;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 16px; padding: 25px; border: 1px solid #334155;">
+            <h2 style="color: {color_banner}; margin-top: 0;">¡Hola, {nombre_cliente}! 👋</h2>
+            <p style="font-size: 15px; color: #cbd5e1; line-height: 1.6;">
+                Te informamos que tu vehículo con patente <strong style="color: #f8fafc; font-size: 16px;">{patente}</strong> en <strong>{nombre_taller}</strong> ha actualizado su estado a:
+            </p>
+            <div style="text-align: center; background-color: #0f172a; padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid #334155;">
+                <span style="color: {color_banner}; font-weight: bold; font-size: 18px; text-transform: uppercase;">
+                    {nuevo_estado}
+                </span>
+            </div>
+            <p style="font-size: 14px; color: #94a3b8; text-align: center;">
+                Si tienes dudas o necesitas coordinar el retiro, por favor ponte en contacto directo con el taller.
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+    enviar_correo(email_cliente, asunto, html)

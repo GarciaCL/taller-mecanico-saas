@@ -1,6 +1,7 @@
 import secrets
 from datetime import datetime
 from modulos.conexion import obtener_conexion, obtener_placeholder
+from modulos.notificaciones import enviar_aviso_estado_ot
 
 def crear_orden_recepcion_guiada(taller_id, patente, sintomas, costo_estimado, km_ingreso, combustible, detalles, fotos, tiempo_horas=4, nombre_cliente="Cliente General", telefono_cliente="", marca="Marca", modelo="Modelo"):
     conexion = obtener_conexion()
@@ -106,6 +107,7 @@ def actualizar_estado_orden(orden_id, taller_id, nuevo_estado):
     cursor = conexion.cursor()
     p = obtener_placeholder()
 
+    # 1. Actualizar el estado en la base de datos
     cursor.execute(f"""
         UPDATE ordenes_trabajo
         SET estado = {p}
@@ -113,6 +115,31 @@ def actualizar_estado_orden(orden_id, taller_id, nuevo_estado):
     """, (nuevo_estado, orden_id, taller_id))
 
     conexion.commit()
+
+    # 2. Consultar datos para enviar la notificación por correo
+    try:
+        cursor.execute(f"""
+            SELECT c.email, c.nombre, v.patente_vin, t.nombre_taller
+            FROM ordenes_trabajo ot
+            JOIN vehiculos v ON ot.vehiculo_id = v.id
+            JOIN clientes c ON v.cliente_id = c.id
+            JOIN talleres t ON ot.taller_id = t.id
+            WHERE ot.id = {p} AND ot.taller_id = {p}
+        """, (orden_id, taller_id))
+
+        datos = cursor.fetchone()
+        if datos and datos[0]:  # Si existe el registro y el cliente tiene un email
+            email_cliente, nombre_cliente, patente, nombre_taller = datos
+            enviar_aviso_estado_ot(
+                email_cliente=email_cliente,
+                nombre_cliente=nombre_cliente,
+                patente=patente,
+                nuevo_estado=nuevo_estado,
+                nombre_taller=nombre_taller
+            )
+    except Exception as e:
+        print(f"[ALERTA NOTIFICACIÓN ESTADO OT] No se envió el correo: {e}")
+
     conexion.close()
 
 def finalizar_orden_trabajo(orden_id, taller_id):
