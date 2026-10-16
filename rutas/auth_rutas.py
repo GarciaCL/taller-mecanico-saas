@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, session
 from modulos.auth import validar_login
 from modulos.conexion import obtener_conexion, obtener_placeholder
+from modulos.notificaciones import enviar_bienvenida_usuario, enviar_aviso_registro_admin, enviar_notificacion_pago
 from datetime import datetime, timedelta
 
 auth_bp = Blueprint('auth', __name__)
@@ -161,7 +162,20 @@ def confirmar_pago_registro_web():
 
         conexion.commit()
 
-        # 6. Iniciar sesión automáticamente
+        # 6. Notificaciones automáticas por correo
+        try:
+            # A) Bienvenida al usuario
+            enviar_bienvenida_usuario(datos["email"], datos["nombre_admin"])
+            
+            # B) Notificación de Pago / Suscripción
+            enviar_notificacion_pago(datos["email"], datos["precio"], datos["plan_nombre"])
+
+            # C) Alerta al SuperAdmin
+            enviar_aviso_registro_admin(datos["nombre_taller"], datos["email"])
+        except Exception as err_mail:
+            print(f"[ALERTA NOTIFICACIÓN REGISTRO] No se enviaron correos: {err_mail}")
+
+        # 7. Iniciar sesión automáticamente
         session["usuario_id"] = None
         session["taller_id"] = taller_id
         session["usuario"] = datos["email"]
