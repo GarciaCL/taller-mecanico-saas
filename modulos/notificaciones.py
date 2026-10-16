@@ -1,6 +1,10 @@
 import os
 import threading
 import resend
+from dotenv import load_dotenv
+
+# Cargar las variables del archivo .env explícitamente
+load_dotenv()
 
 # Cargar configuración desde las variables de entorno (.env)
 resend.api_key = os.getenv("RESEND_API_KEY")
