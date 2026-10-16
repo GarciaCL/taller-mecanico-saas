@@ -145,3 +145,23 @@ def descargar_pdf_web(token):
     except Exception as e:
         print(f"Error generando PDF para token {token}: {e}")
         return "Error interno al generar PDF", 500
+
+@ordenes_bp.route("/cambiar_estado_ot", methods=["POST"])
+@ordenes_bp.route("/ordenes/cambiar_estado_ot", methods=["POST"])
+def cambiar_estado_ot_web():
+    if "taller_id" not in session:
+        return jsonify({"error": "No autorizado"}), 401
+
+    orden_id = request.form.get("orden_id")
+    nuevo_estado = request.form.get("nuevo_estado")
+
+    if not orden_id or not nuevo_estado:
+        return jsonify({"error": "Faltan parámetros"}), 400
+
+    try:
+        # Llamar a la función que actualiza la BD y envía el correo automático
+        actualizar_estado_orden(int(orden_id), session["taller_id"], nuevo_estado)
+        return jsonify({"exito": True, "mensaje": "Estado actualizado correctamente"})
+    except Exception as e:
+        print(f"[ERROR CAMBIAR ESTADO OT]: {e}")
+        return jsonify({"error": str(e)}), 500
